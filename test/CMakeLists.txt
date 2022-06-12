@@ -8,11 +8,12 @@ set_target_properties(${TARGET}
 )
 
 target_sources(${TARGET}
-    PRIVATE src/DummyTest.cpp
+    PRIVATE src/UriTest.cpp
 )
 
 target_link_libraries(
     ${TARGET}
+    PRIVATE Jarvis::Intent
     PRIVATE GTest::gtest_main GTest::gmock_main
 )
 
