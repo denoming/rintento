@@ -15,9 +15,15 @@ target_sources(${TARGET}
         main.cpp
 )
 
-target_compile_features(${TARGET} PRIVATE cxx_std_17)
+target_link_libraries(${TARGET}
+    PRIVATE Jarvis::Intent
+)
+
+target_compile_features(${TARGET} PUBLIC cxx_std_20)
 
 install(
     TARGETS ${TARGET}
     COMPONENT JarvisExecutor_Runtime
 )
+
+add_subdirectory(intent)
