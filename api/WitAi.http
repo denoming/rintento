@@ -1,0 +1,3 @@
+### Recognize intent from phrase "turn of the light"
+GET https://{{host}}/message?v=20220607&q=turn%20off%20the%20light
+Authorization: Bearer {{token}}
