@@ -17,3 +17,5 @@ else()
 endif()
 
 include(AddBoost)
+include(AddOpenSsl)
+include(AddFmt)

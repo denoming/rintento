@@ -9,6 +9,7 @@ set_target_properties(${TARGET}
 
 target_sources(${TARGET}
     PRIVATE src/UriTest.cpp
+            src/WitIntentRecognizerTest.cpp
 )
 
 target_link_libraries(

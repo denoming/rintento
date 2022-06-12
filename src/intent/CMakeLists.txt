@@ -9,10 +9,13 @@ target_include_directories(${TARGET}
 
 target_link_libraries(${TARGET}
     PUBLIC Boost::headers
+    PRIVATE fmt::fmt OpenSSL::SSL OpenSSL::Crypto
 )
 
 target_sources(${TARGET}
-    PRIVATE src/IntentRecognizer.cpp
+    PRIVATE src/WitIntentSession.cpp
+            src/WitIntentRecognizer.cpp
+            src/WitPendingRecognition.cpp
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_20)
