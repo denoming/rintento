@@ -1,20 +1,21 @@
 #pragma once
 
-#include "intent/IntentRecognizer.hpp"
+#include "Types.hpp"
+#include "PendingRecognition.hpp"
 #include "intent/WitCommon.hpp"
 
 namespace jar {
 
-class WitIntentRecognizer : public IntentRecognizer {
+class WitIntentRecognizer {
 public:
-    explicit WitIntentRecognizer(net::any_io_executor executor, ssl::context& context);
+    explicit WitIntentRecognizer(net::any_io_executor executor);
 
     PendingRecognition::Ptr
-    recognize(std::string_view message, RecognitionCalback callback) override;
+    recognize(std::string_view message, RecognitionCalback callback);
 
 private:
+    ssl::context _context;
     net::any_io_executor _executor;
-    ssl::context& _context;
 };
 
 } // namespace jar

@@ -2,7 +2,6 @@
 
 #include "intent/WitCommon.hpp"
 #include "intent/Types.hpp"
-#include "intent/Uri.hpp"
 
 #include <string>
 #include <memory>
@@ -25,10 +24,10 @@ public:
 
 private:
     friend class WitIntentRecognizer;
-    explicit WitIntentSession(net::any_io_executor& executor, ssl::context& context);
+    explicit WitIntentSession(ssl::context& context, net::any_io_executor& executor);
 
     static Ptr
-    create(net::any_io_executor& executor, ssl::context& context);
+    create(ssl::context& context, net::any_io_executor& executor);
 
     void
     onResolveDone(sys::error_code ec, tcp::resolver::results_type result);

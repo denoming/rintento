@@ -10,7 +10,7 @@
 
 namespace jar {
 
-WitIntentSession::WitIntentSession(net::any_io_executor& executor, ssl::context& context)
+WitIntentSession::WitIntentSession(ssl::context& context, net::any_io_executor& executor)
     : _resolver{executor}
     , _stream{executor, context}
 {
@@ -61,9 +61,9 @@ WitIntentSession::cancel()
 }
 
 WitIntentSession::Ptr
-WitIntentSession::create(net::any_io_executor& executor, ssl::context& context)
+WitIntentSession::create(ssl::context& context, net::any_io_executor& executor)
 {
-    return std::shared_ptr<WitIntentSession>(new WitIntentSession(executor, context));
+    return std::shared_ptr<WitIntentSession>(new WitIntentSession(context, executor));
 }
 
 void
