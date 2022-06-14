@@ -26,4 +26,5 @@ install(
     COMPONENT JarvisExecutor_Runtime
 )
 
+add_subdirectory(common)
 add_subdirectory(intent)

@@ -8,6 +8,7 @@ target_include_directories(${TARGET}
 )
 
 target_link_libraries(${TARGET}
+    PUBLIC Jarvis::Common
     PUBLIC Boost::headers
     PRIVATE fmt::fmt OpenSSL::SSL OpenSSL::Crypto
 )

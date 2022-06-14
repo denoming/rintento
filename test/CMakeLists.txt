@@ -14,8 +14,7 @@ target_sources(${TARGET}
 
 target_link_libraries(
     ${TARGET}
-    PRIVATE Jarvis::Intent
-    PRIVATE GTest::gtest_main GTest::gmock_main
+    PRIVATE Jarvis::Intent Jarvis::Tests
 )
 
 if (NOT CMAKE_CROSSCOMPILING)

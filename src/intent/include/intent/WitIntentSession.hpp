@@ -30,10 +30,10 @@ private:
     create(ssl::context& context, net::any_io_executor& executor);
 
     void
-    onResolveDone(sys::error_code ec, tcp::resolver::results_type result);
+    onResolveDone(sys::error_code ec, const tcp::resolver::results_type& result);
 
     void
-    onConnectDone(sys::error_code ec, tcp::resolver::results_type::endpoint_type endpoint);
+    onConnectDone(sys::error_code ec, const tcp::resolver::results_type::endpoint_type& endpoint);
 
     void
     onHandshakeDone(sys::error_code ec);

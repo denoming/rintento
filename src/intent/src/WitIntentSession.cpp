@@ -1,11 +1,11 @@
 #include "intent/WitIntentSession.hpp"
 
 #include "intent/Uri.hpp"
+#include "common/Logger.hpp"
 
 #include <fmt/format.h>
 #include <fmt/chrono.h>
 
-#include <iostream>
 #include <chrono>
 
 namespace jar {
@@ -25,7 +25,7 @@ WitIntentSession::run(std::string_view host,
 {
     using namespace std::chrono;
 
-    static const std::string_view kRequestFormat{"/message?v={:%Y%m%d}&q={}"};
+    static constexpr std::string_view kRequestFormat{"/message?v={:%Y%m%d}&q={}"};
 
     assert(!host.empty());
     assert(!port.empty());
@@ -38,7 +38,7 @@ WitIntentSession::run(std::string_view host,
     // Set SNI Hostname (many hosts need this to handshake successfully)
     if (!SSL_set_tlsext_host_name(_stream.native_handle(), host.data())) {
         sys::error_code ec{static_cast<int>(::ERR_get_error()), net::error::get_ssl_category()};
-        std::cerr << ec.message() << "\n";
+        LOGE("Failed to set TLS hostname: ", ec.message());
         return;
     }
 
@@ -67,12 +67,14 @@ WitIntentSession::create(ssl::context& context, net::any_io_executor& executor)
 }
 
 void
-WitIntentSession::onResolveDone(sys::error_code ec, tcp::resolver::results_type result)
+WitIntentSession::onResolveDone(sys::error_code ec, const tcp::resolver::results_type& result)
 {
     if (ec) {
-        std::cerr << ec.what() << '\n';
+        LOGE("Failed to resolve: <{}>", ec.what());
         return;
     }
+
+    LOGD("Resolve address was successful: <{}>", result.size());
 
     beast::get_lowest_layer(_stream).async_connect(
         result, beast::bind_front_handler(&WitIntentSession::onConnectDone, shared_from_this()));
@@ -80,14 +82,14 @@ WitIntentSession::onResolveDone(sys::error_code ec, tcp::resolver::results_type 
 
 void
 WitIntentSession::onConnectDone(beast::error_code ec,
-                                tcp::resolver::results_type::endpoint_type endpoint)
+                                const tcp::resolver::results_type::endpoint_type& endpoint)
 {
-    boost::ignore_unused(endpoint);
-
     if (ec) {
-        std::cerr << ec.what() << '\n';
+        LOGE("Failed to connect: <{}>", ec.what());
         return;
     }
+
+    LOGD("Connection with <{}> was established", endpoint.address().to_string());
 
     _stream.async_handshake(
         ssl::stream_base::client,
@@ -98,9 +100,11 @@ void
 WitIntentSession::onHandshakeDone(sys::error_code ec)
 {
     if (ec) {
-        std::cerr << ec.what() << '\n';
+        LOGE("Failed to handshake: <{}>", ec.what());
         return;
     }
+
+    LOGD("Handshaking was successful");
 
     http::async_write(
         _stream,
@@ -111,12 +115,12 @@ WitIntentSession::onHandshakeDone(sys::error_code ec)
 void
 WitIntentSession::onWriteDone(sys::error_code ec, std::size_t bytesTransferred)
 {
-    boost::ignore_unused(bytesTransferred);
-
     if (ec) {
-        std::cerr << ec.what() << '\n';
+        LOGE("Failed to write: <{}>", ec.what());
         return;
     }
+
+    LOGD("Writing was successful: <{}> bytes", bytesTransferred);
 
     http::async_read(_stream,
                      _buffer,
@@ -127,12 +131,12 @@ WitIntentSession::onWriteDone(sys::error_code ec, std::size_t bytesTransferred)
 void
 WitIntentSession::onReadDone(sys::error_code ec, std::size_t bytesTransferred)
 {
-    boost::ignore_unused(bytesTransferred);
-
     if (ec) {
-        std::cerr << ec.what() << '\n';
+        LOGE("Failed to read: <{}>", ec.what());
         return;
     }
+
+    LOGD("Reading was successful: <{}> bytes", bytesTransferred);
 
     _stream.async_shutdown(
         beast::bind_front_handler(&WitIntentSession::onShutdownDone, shared_from_this()));
@@ -146,7 +150,9 @@ WitIntentSession::onShutdownDone(sys::error_code ec)
     }
 
     if (ec) {
-        std::cerr << ec.what() << '\n';
+        LOGE("Failed to shutdown: <{}>", ec.what());
+    } else {
+        LOGD("Shutdown was successful");
     }
 
     assert(_callback);
