@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Types.hpp"
-#include "PendingRecognition.hpp"
+#include "intent/Types.hpp"
+#include "intent/PendingRecognition.hpp"
 #include "intent/WitCommon.hpp"
 
 namespace jar {
