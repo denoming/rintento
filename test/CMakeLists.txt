@@ -10,10 +10,14 @@ set_target_properties(${TARGET}
 target_sources(${TARGET}
     PRIVATE src/UriTest.cpp
             src/WitIntentRecognizerTest.cpp
+            src/WitIntentParserTest.cpp
 )
 
-target_link_libraries(
-    ${TARGET}
+target_include_directories(${TARGET}
+    PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+)
+
+target_link_libraries(${TARGET}
     PRIVATE Jarvis::Intent Jarvis::Tests
 )
 

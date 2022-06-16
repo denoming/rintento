@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include "test/Matchers.hpp"
 #include "intent/WitIntentRecognizer.hpp"
 
 using namespace testing;
@@ -20,10 +21,8 @@ public:
 
 TEST_F(WitIntentRecognizerTest, Recognize)
 {
-    MockFunction<void(std::string)> callback;
-    EXPECT_CALL(callback, Call(Not(IsEmpty())));
-
-    recognizer.recognize("turn of the light", callback.AsStdFunction());
-
+    MockFunction<void(Intents)> callback;
+    EXPECT_CALL(callback, Call(Contains(isConfidentIntent("light_off"))));
+    recognizer.recognize("turn off the light", callback.AsStdFunction());
     context.run();
 }

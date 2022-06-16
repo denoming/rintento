@@ -9,14 +9,15 @@ target_include_directories(${TARGET}
 
 target_link_libraries(${TARGET}
     PUBLIC Jarvis::Common
-    PUBLIC Boost::headers
-    PRIVATE fmt::fmt OpenSSL::SSL OpenSSL::Crypto
+    PRIVATE fmt::fmt OpenSSL::SSL OpenSSL::Crypto Boost::json
 )
 
 target_sources(${TARGET}
-    PRIVATE src/WitIntentSession.cpp
+    PRIVATE src/Types.cpp
+            src/WitIntentSession.cpp
             src/WitIntentRecognizer.cpp
             src/WitPendingRecognition.cpp
+            src/WitIntentParser.cpp
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_20)

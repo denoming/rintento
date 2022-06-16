@@ -1,6 +1,7 @@
 #include "intent/WitIntentSession.hpp"
 
 #include "intent/Uri.hpp"
+#include "intent/WitIntentParser.hpp"
 #include "common/Logger.hpp"
 
 #include <fmt/format.h>
@@ -155,8 +156,10 @@ WitIntentSession::onShutdownDone(sys::error_code ec)
         LOGD("Shutdown was successful");
     }
 
+    WitIntentParser parser;
+    auto intents = parser.parse(_response.body(), ec);
     assert(_callback);
-    _callback(_response.body());
+    _callback(std::move(intents));
 }
 
 } // namespace jar
