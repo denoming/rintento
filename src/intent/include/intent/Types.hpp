@@ -1,12 +1,12 @@
 #pragma once
 
+#include "intent/Constants.hpp"
+
 #include <string>
 #include <vector>
 #include <functional>
 
 namespace jar {
-
-static constexpr double kConfidentThreshold{0.92f};
 
 /**
  * The intent class representation

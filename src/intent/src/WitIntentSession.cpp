@@ -26,7 +26,7 @@ WitIntentSession::run(std::string_view host,
 {
     using namespace std::chrono;
 
-    static constexpr std::string_view kRequestFormat{"/message?v={:%Y%m%d}&q={}"};
+    static constexpr std::string_view kTargetFormat{"/message?v={:%Y%m%d}&q={}"};
 
     assert(!host.empty());
     assert(!port.empty());
@@ -43,9 +43,9 @@ WitIntentSession::run(std::string_view host,
         return;
     }
 
-    _request.version(HttpVersion11);
+    _request.version(kHttpVersion11);
     _request.method(http::verb::get);
-    _request.target(fmt::format(kRequestFormat, system_clock::now(), uri::encode(message)));
+    _request.target(fmt::format(kTargetFormat, system_clock::now(), uri::encode(message)));
     _request.set(http::field::host, host);
     _request.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     _request.set(http::field::authorization, auth);
@@ -77,6 +77,8 @@ WitIntentSession::onResolveDone(sys::error_code ec, const tcp::resolver::results
 
     LOGD("Resolve address was successful: <{}>", result.size());
 
+    beast::get_lowest_layer(_stream).expires_after(kHttpTimeout);
+
     beast::get_lowest_layer(_stream).async_connect(
         result, beast::bind_front_handler(&WitIntentSession::onConnectDone, shared_from_this()));
 }
@@ -106,6 +108,8 @@ WitIntentSession::onHandshakeDone(sys::error_code ec)
     }
 
     LOGD("Handshaking was successful");
+
+    beast::get_lowest_layer(_stream).expires_after(kHttpTimeout);
 
     http::async_write(
         _stream,
@@ -138,6 +142,8 @@ WitIntentSession::onReadDone(sys::error_code ec, std::size_t bytesTransferred)
     }
 
     LOGD("Reading was successful: <{}> bytes", bytesTransferred);
+
+    beast::get_lowest_layer(_stream).expires_after(kHttpTimeout);
 
     _stream.async_shutdown(
         beast::bind_front_handler(&WitIntentSession::onShutdownDone, shared_from_this()));

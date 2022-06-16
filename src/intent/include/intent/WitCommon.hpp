@@ -4,8 +4,9 @@
 #include <boost/beast/http.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/version.hpp>
-
 #include <boost/asio.hpp>
+
+#include <chrono>
 
 namespace net = boost::asio;
 namespace sys = boost::system;
@@ -17,7 +18,9 @@ using tcp = net::ip::tcp;
 
 namespace jar {
 
-static const unsigned int HttpVersion10 = 10;
-static const unsigned int HttpVersion11 = 11;
+static constexpr auto kHttpTimeout{std::chrono::seconds{15}};
+
+static constexpr std::uint32_t kHttpVersion10 = 10;
+static constexpr std::uint32_t kHttpVersion11 = 11;
 
 } // namespace jar
