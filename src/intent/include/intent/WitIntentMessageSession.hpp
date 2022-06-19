@@ -8,9 +8,9 @@
 
 namespace jar {
 
-class WitIntentSession : public std::enable_shared_from_this<WitIntentSession> {
+class WitIntentMessageSession : public std::enable_shared_from_this<WitIntentMessageSession> {
 public:
-    using Ptr = std::shared_ptr<WitIntentSession>;
+    using Ptr = std::shared_ptr<WitIntentMessageSession>;
 
     void
     run(std::string_view host,
@@ -24,7 +24,7 @@ public:
 
 private:
     friend class WitIntentRecognizer;
-    explicit WitIntentSession(ssl::context& context, net::any_io_executor& executor);
+    explicit WitIntentMessageSession(ssl::context& context, net::any_io_executor& executor);
 
     static Ptr
     create(ssl::context& context, net::any_io_executor& executor);

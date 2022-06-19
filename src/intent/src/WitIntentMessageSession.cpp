@@ -1,7 +1,6 @@
-#include "intent/WitIntentSession.hpp"
+#include "intent/WitIntentMessageSession.hpp"
 
 #include "intent/Uri.hpp"
-#include "intent/WitIntentParser.hpp"
 #include "common/Logger.hpp"
 
 #include <fmt/format.h>
@@ -11,14 +10,14 @@
 
 namespace jar {
 
-WitIntentSession::WitIntentSession(ssl::context& context, net::any_io_executor& executor)
+WitIntentMessageSession::WitIntentMessageSession(ssl::context& context, net::any_io_executor& executor)
     : _resolver{executor}
     , _stream{executor, context}
 {
 }
 
 void
-WitIntentSession::run(std::string_view host,
+WitIntentMessageSession::run(std::string_view host,
                       std::string_view port,
                       std::string_view auth,
                       std::string_view message,
@@ -53,22 +52,22 @@ WitIntentSession::run(std::string_view host,
     _resolver.async_resolve(
         host,
         port,
-        beast::bind_front_handler(&WitIntentSession::onResolveDone, shared_from_this()));
+        beast::bind_front_handler(&WitIntentMessageSession::onResolveDone, shared_from_this()));
 }
 
 void
-WitIntentSession::cancel()
+WitIntentMessageSession::cancel()
 {
 }
 
-WitIntentSession::Ptr
-WitIntentSession::create(ssl::context& context, net::any_io_executor& executor)
+WitIntentMessageSession::Ptr
+WitIntentMessageSession::create(ssl::context& context, net::any_io_executor& executor)
 {
-    return std::shared_ptr<WitIntentSession>(new WitIntentSession(context, executor));
+    return std::shared_ptr<WitIntentMessageSession>(new WitIntentMessageSession(context, executor));
 }
 
 void
-WitIntentSession::onResolveDone(sys::error_code ec, const tcp::resolver::results_type& result)
+WitIntentMessageSession::onResolveDone(sys::error_code ec, const tcp::resolver::results_type& result)
 {
     if (ec) {
         LOGE("Failed to resolve: <{}>", ec.what());
@@ -80,11 +79,11 @@ WitIntentSession::onResolveDone(sys::error_code ec, const tcp::resolver::results
     beast::get_lowest_layer(_stream).expires_after(kHttpTimeout);
 
     beast::get_lowest_layer(_stream).async_connect(
-        result, beast::bind_front_handler(&WitIntentSession::onConnectDone, shared_from_this()));
+        result, beast::bind_front_handler(&WitIntentMessageSession::onConnectDone, shared_from_this()));
 }
 
 void
-WitIntentSession::onConnectDone(beast::error_code ec,
+WitIntentMessageSession::onConnectDone(beast::error_code ec,
                                 const tcp::resolver::results_type::endpoint_type& endpoint)
 {
     if (ec) {
@@ -96,11 +95,11 @@ WitIntentSession::onConnectDone(beast::error_code ec,
 
     _stream.async_handshake(
         ssl::stream_base::client,
-        beast::bind_front_handler(&WitIntentSession::onHandshakeDone, shared_from_this()));
+        beast::bind_front_handler(&WitIntentMessageSession::onHandshakeDone, shared_from_this()));
 }
 
 void
-WitIntentSession::onHandshakeDone(sys::error_code ec)
+WitIntentMessageSession::onHandshakeDone(sys::error_code ec)
 {
     if (ec) {
         LOGE("Failed to handshake: <{}>", ec.what());
@@ -114,11 +113,11 @@ WitIntentSession::onHandshakeDone(sys::error_code ec)
     http::async_write(
         _stream,
         _request,
-        beast::bind_front_handler(&WitIntentSession::onWriteDone, shared_from_this()));
+        beast::bind_front_handler(&WitIntentMessageSession::onWriteDone, shared_from_this()));
 }
 
 void
-WitIntentSession::onWriteDone(sys::error_code ec, std::size_t bytesTransferred)
+WitIntentMessageSession::onWriteDone(sys::error_code ec, std::size_t bytesTransferred)
 {
     if (ec) {
         LOGE("Failed to write: <{}>", ec.what());
@@ -130,11 +129,11 @@ WitIntentSession::onWriteDone(sys::error_code ec, std::size_t bytesTransferred)
     http::async_read(_stream,
                      _buffer,
                      _response,
-                     beast::bind_front_handler(&WitIntentSession::onReadDone, shared_from_this()));
+                     beast::bind_front_handler(&WitIntentMessageSession::onReadDone, shared_from_this()));
 }
 
 void
-WitIntentSession::onReadDone(sys::error_code ec, std::size_t bytesTransferred)
+WitIntentMessageSession::onReadDone(sys::error_code ec, std::size_t bytesTransferred)
 {
     if (ec) {
         LOGE("Failed to read: <{}>", ec.what());
@@ -146,11 +145,11 @@ WitIntentSession::onReadDone(sys::error_code ec, std::size_t bytesTransferred)
     beast::get_lowest_layer(_stream).expires_after(kHttpTimeout);
 
     _stream.async_shutdown(
-        beast::bind_front_handler(&WitIntentSession::onShutdownDone, shared_from_this()));
+        beast::bind_front_handler(&WitIntentMessageSession::onShutdownDone, shared_from_this()));
 }
 
 void
-WitIntentSession::onShutdownDone(sys::error_code ec)
+WitIntentMessageSession::onShutdownDone(sys::error_code ec)
 {
     if (ec == net::error::eof) {
         ec = {};
@@ -162,10 +161,8 @@ WitIntentSession::onShutdownDone(sys::error_code ec)
         LOGD("Shutdown was successful");
     }
 
-    WitIntentParser parser;
-    auto intents = parser.parse(_response.body(), ec);
     assert(_callback);
-    _callback(std::move(intents));
+    _callback(_response.body());
 }
 
 } // namespace jar

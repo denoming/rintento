@@ -42,7 +42,7 @@ using Intents = std::vector<Intent>;
 /**
  * Recognition outcome callback
  */
-using RecognitionCalback = std::function<void(Intents)>;
+using RecognitionCalback = std::function<void(std::string intents)>;
 
 bool
 operator==(const Intent& lhs, const Intent& rhs);

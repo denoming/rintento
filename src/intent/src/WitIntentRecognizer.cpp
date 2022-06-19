@@ -2,7 +2,8 @@
 
 #include "intent/Config.hpp"
 #include "intent/WitPendingRecognition.hpp"
-#include "intent/WitIntentSession.hpp"
+#include "intent/WitIntentMessageSession.hpp"
+#include "intent/WitIntentSpeechSession.hpp"
 
 namespace jar {
 
@@ -17,8 +18,17 @@ WitIntentRecognizer::WitIntentRecognizer(net::any_io_executor executor)
 PendingRecognition::Ptr
 WitIntentRecognizer::recognize(std::string_view message, RecognitionCalback callback)
 {
-    auto session = WitIntentSession::create(_context, _executor);
+    auto session = WitIntentMessageSession::create(_context, _executor);
     session->run(WitBackendHost, WitBackendPort, WitBackendAuth, message, std::move(callback));
+    return WitPendingRecognition::create(session);
+}
+
+PendingRecognition::Ptr
+WitIntentRecognizer::recognize(fs::path filePath, RecognitionCalback callback)
+{
+    auto session = WitIntentSpeechSession::create(_context, _executor);
+    session->run(
+        WitBackendHost, WitBackendPort, WitBackendAuth, std::move(filePath), std::move(callback));
     return WitPendingRecognition::create(session);
 }
 

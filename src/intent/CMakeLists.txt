@@ -14,7 +14,8 @@ target_link_libraries(${TARGET}
 
 target_sources(${TARGET}
     PRIVATE src/Types.cpp
-            src/WitIntentSession.cpp
+            src/WitIntentMessageSession.cpp
+            src/WitIntentSpeechSession.cpp
             src/WitIntentRecognizer.cpp
             src/WitPendingRecognition.cpp
             src/WitIntentParser.cpp

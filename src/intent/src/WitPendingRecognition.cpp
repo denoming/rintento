@@ -1,6 +1,6 @@
 #include "intent/WitPendingRecognition.hpp"
 
-#include "intent/WitIntentSession.hpp"
+#include "intent/WitIntentMessageSession.hpp"
 
 namespace jar {
 
@@ -13,7 +13,7 @@ void
 WitPendingRecognition::cancel()
 {
     if (auto ptr = _ptr.lock()) {
-        auto session = std::static_pointer_cast<WitIntentSession>(ptr);
+        auto session = std::static_pointer_cast<WitIntentMessageSession>(ptr);
         assert(session);
         session->cancel();
     }
