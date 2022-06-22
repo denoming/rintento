@@ -10,7 +10,8 @@
 
 namespace jar {
 
-WitIntentMessageSession::WitIntentMessageSession(ssl::context& context, net::any_io_executor& executor)
+WitIntentMessageSession::WitIntentMessageSession(ssl::context& context,
+                                                 net::any_io_executor& executor)
     : _resolver{executor}
     , _stream{executor, context}
 {
@@ -18,10 +19,9 @@ WitIntentMessageSession::WitIntentMessageSession(ssl::context& context, net::any
 
 void
 WitIntentMessageSession::run(std::string_view host,
-                      std::string_view port,
-                      std::string_view auth,
-                      std::string_view message,
-                      RecognitionCalback callback)
+                             std::string_view port,
+                             std::string_view auth,
+                             std::string_view message)
 {
     using namespace std::chrono;
 
@@ -32,13 +32,10 @@ WitIntentMessageSession::run(std::string_view host,
     assert(!auth.empty());
     assert(!message.empty());
 
-    assert(callback);
-    _callback = std::move(callback);
-
-    // Set SNI Hostname (many hosts need this to handshake successfully)
-    if (!SSL_set_tlsext_host_name(_stream.native_handle(), host.data())) {
-        sys::error_code ec{static_cast<int>(::ERR_get_error()), net::error::get_ssl_category()};
+    std::error_code ec;
+    if (!setTlsHostName(_stream, host, ec)) {
         LOGE("Failed to set TLS hostname: ", ec.message());
+        complete(ec);
         return;
     }
 
@@ -67,27 +64,30 @@ WitIntentMessageSession::create(ssl::context& context, net::any_io_executor& exe
 }
 
 void
-WitIntentMessageSession::onResolveDone(sys::error_code ec, const tcp::resolver::results_type& result)
+WitIntentMessageSession::onResolveDone(sys::error_code ec,
+                                       const tcp::resolver::results_type& result)
 {
     if (ec) {
-        LOGE("Failed to resolve: <{}>", ec.what());
+        LOGE("Failed to resolve address: <{}>", ec.what());
+        complete(ec);
         return;
     }
 
     LOGD("Resolve address was successful: <{}>", result.size());
-
-    beast::get_lowest_layer(_stream).expires_after(kHttpTimeout);
+    resetTimeout(_stream);
 
     beast::get_lowest_layer(_stream).async_connect(
-        result, beast::bind_front_handler(&WitIntentMessageSession::onConnectDone, shared_from_this()));
+        result,
+        beast::bind_front_handler(&WitIntentMessageSession::onConnectDone, shared_from_this()));
 }
 
 void
 WitIntentMessageSession::onConnectDone(beast::error_code ec,
-                                const tcp::resolver::results_type::endpoint_type& endpoint)
+                                       const tcp::resolver::results_type::endpoint_type& endpoint)
 {
     if (ec) {
         LOGE("Failed to connect: <{}>", ec.what());
+        complete(ec);
         return;
     }
 
@@ -103,12 +103,13 @@ WitIntentMessageSession::onHandshakeDone(sys::error_code ec)
 {
     if (ec) {
         LOGE("Failed to handshake: <{}>", ec.what());
+        beast::get_lowest_layer(_stream).close();
+        complete(ec);
         return;
     }
 
     LOGD("Handshaking was successful");
-
-    beast::get_lowest_layer(_stream).expires_after(kHttpTimeout);
+    resetTimeout(_stream);
 
     http::async_write(
         _stream,
@@ -120,29 +121,33 @@ void
 WitIntentMessageSession::onWriteDone(sys::error_code ec, std::size_t bytesTransferred)
 {
     if (ec) {
-        LOGE("Failed to write: <{}>", ec.what());
+        LOGE("Failed to write request: <{}>", ec.what());
+        beast::get_lowest_layer(_stream).close();
+        complete(ec);
         return;
     }
 
-    LOGD("Writing was successful: <{}> bytes", bytesTransferred);
+    LOGD("Writing of request was successful: <{}> bytes", bytesTransferred);
 
-    http::async_read(_stream,
-                     _buffer,
-                     _response,
-                     beast::bind_front_handler(&WitIntentMessageSession::onReadDone, shared_from_this()));
+    http::async_read(
+        _stream,
+        _buffer,
+        _response,
+        beast::bind_front_handler(&WitIntentMessageSession::onReadDone, shared_from_this()));
 }
 
 void
 WitIntentMessageSession::onReadDone(sys::error_code ec, std::size_t bytesTransferred)
 {
     if (ec) {
-        LOGE("Failed to read: <{}>", ec.what());
+        LOGE("Failed to read response: <{}>", ec.what());
+        beast::get_lowest_layer(_stream).close();
+        complete(ec);
         return;
     }
 
-    LOGD("Reading was successful: <{}> bytes", bytesTransferred);
-
-    beast::get_lowest_layer(_stream).expires_after(kHttpTimeout);
+    LOGD("Reading of response was successful: <{}> bytes", bytesTransferred);
+    resetTimeout(_stream);
 
     _stream.async_shutdown(
         beast::bind_front_handler(&WitIntentMessageSession::onShutdownDone, shared_from_this()));
@@ -156,13 +161,14 @@ WitIntentMessageSession::onShutdownDone(sys::error_code ec)
     }
 
     if (ec) {
-        LOGE("Failed to shutdown: <{}>", ec.what());
+        LOGE("Failed to shutdown connection: <{}>", ec.what());
     } else {
-        LOGD("Shutdown was successful");
+        LOGD("Shutdown of connection was successful");
     }
 
-    assert(_callback);
-    _callback(_response.body());
+    complete(_response.body());
+
+    beast::get_lowest_layer(_stream).close();
 }
 
 } // namespace jar

@@ -18,33 +18,49 @@ public:
     {
     }
 
+    void
+    SetUp() override
+    {
+        thread = std::thread{[this]() {
+            auto guard = net::make_work_guard(context);
+            context.run();
+        }};
+    }
+
+    void
+    TearDown() override
+    {
+        context.stop();
+        if (thread.joinable()) {
+            thread.join();
+        }
+    }
+
 public:
+    std::thread thread;
     net::io_context context;
     WitIntentRecognizer recognizer;
 };
 
 TEST_F(WitIntentRecognizerTest, RecognizeMessage)
 {
-    MockFunction<void(std::string)> callback;
-    EXPECT_CALL(callback, Call(Not(IsEmpty()))).WillOnce([](const std::string& result) {
-        std::cout << "Result: \n" << result << std::endl;
-    });
-
     std::string_view message{"turn off the light"};
-    recognizer.recognize(message, callback.AsStdFunction());
+    auto pending = recognizer.recognize(message);
+    ASSERT_TRUE(pending);
 
-    context.run();
+    std::error_code error;
+    const auto outcome = pending->get(error);
+    EXPECT_FALSE(error);
+    EXPECT_THAT(outcome, Not(IsEmpty()));
 }
 
 TEST_F(WitIntentRecognizerTest, RecognizeSpeech)
 {
-    MockFunction<void(std::string)> callback;
-    EXPECT_CALL(callback, Call(Not(IsEmpty()))).WillOnce([](const std::string& result) {
-        std::cout << "Result: \n" << result << std::endl;
-    });
-
     fs::path filePath{"asset/audio/turn-on-the-light.raw"};
-    recognizer.recognize(filePath, callback.AsStdFunction());
+    auto pending = recognizer.recognize(filePath);
 
-    context.run();
+    std::error_code error;
+    const auto outcome = pending->get(error);
+    EXPECT_FALSE(error);
+    EXPECT_THAT(outcome, Not(IsEmpty()));
 }

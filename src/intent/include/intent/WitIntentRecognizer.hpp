@@ -1,6 +1,5 @@
 #pragma once
 
-#include "intent/Types.hpp"
 #include "intent/PendingRecognition.hpp"
 #include "intent/WitCommon.hpp"
 
@@ -15,10 +14,10 @@ public:
     explicit WitIntentRecognizer(net::any_io_executor executor);
 
     PendingRecognition::Ptr
-    recognize(std::string_view message, RecognitionCalback callback);
+    recognize(std::string_view message);
 
     PendingRecognition::Ptr
-    recognize(fs::path filePath, RecognitionCalback callback);
+    recognize(fs::path filePath);
 
 private:
     ssl::context _context;

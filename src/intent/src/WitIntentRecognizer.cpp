@@ -16,19 +16,18 @@ WitIntentRecognizer::WitIntentRecognizer(net::any_io_executor executor)
 }
 
 PendingRecognition::Ptr
-WitIntentRecognizer::recognize(std::string_view message, RecognitionCalback callback)
+WitIntentRecognizer::recognize(std::string_view message)
 {
     auto session = WitIntentMessageSession::create(_context, _executor);
-    session->run(WitBackendHost, WitBackendPort, WitBackendAuth, message, std::move(callback));
+    session->run(WitBackendHost, WitBackendPort, WitBackendAuth, message);
     return WitPendingRecognition::create(session);
 }
 
 PendingRecognition::Ptr
-WitIntentRecognizer::recognize(fs::path filePath, RecognitionCalback callback)
+WitIntentRecognizer::recognize(fs::path filePath)
 {
     auto session = WitIntentSpeechSession::create(_context, _executor);
-    session->run(
-        WitBackendHost, WitBackendPort, WitBackendAuth, std::move(filePath), std::move(callback));
+    session->run(WitBackendHost, WitBackendPort, WitBackendAuth, std::move(filePath));
     return WitPendingRecognition::create(session);
 }
 

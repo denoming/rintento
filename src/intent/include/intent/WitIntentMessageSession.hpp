@@ -1,14 +1,15 @@
 #pragma once
 
 #include "intent/WitCommon.hpp"
-#include "intent/Types.hpp"
+#include "intent/WitIntentSession.hpp"
 
 #include <string>
 #include <memory>
 
 namespace jar {
 
-class WitIntentMessageSession : public std::enable_shared_from_this<WitIntentMessageSession> {
+class WitIntentMessageSession : public WitIntentSession,
+                                public std::enable_shared_from_this<WitIntentMessageSession> {
 public:
     using Ptr = std::shared_ptr<WitIntentMessageSession>;
 
@@ -16,11 +17,10 @@ public:
     run(std::string_view host,
         std::string_view port,
         std::string_view auth,
-        std::string_view message,
-        RecognitionCalback callback);
+        std::string_view message);
 
     void
-    cancel();
+    cancel() override;
 
 private:
     friend class WitIntentRecognizer;
@@ -42,7 +42,7 @@ private:
     onWriteDone(sys::error_code ec, std::size_t bytesTransferred);
 
     void
-    onReadDone(sys::error_code ec,  std::size_t bytesTransferred);
+    onReadDone(sys::error_code ec, std::size_t bytesTransferred);
 
     void
     onShutdownDone(sys::error_code ec);
@@ -53,7 +53,6 @@ private:
     beast::flat_buffer _buffer;
     http::request<http::empty_body> _request;
     http::response<http::string_body> _response;
-    RecognitionCalback _callback;
 };
 
 } // namespace jar
