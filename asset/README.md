@@ -37,7 +37,7 @@ Record audio file:
 $ gst-launch-1.0 -e pulsesrc device=alsa_input.pci-0000_00_1f.3.analog-stereo \
 ! queue \
 ! audioresample ! audioconvert \
-! audio/x-raw,format=S16LE,rate=16000,channels=1 \
+! audio/x-raw,format=S16LE,rate=16000,channels=1,quality=10 \
 ! filesink location=audio.raw
 ```
     
