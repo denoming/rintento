@@ -56,7 +56,7 @@ TEST_F(WitIntentRecognizerTest, RecognizeMessage)
 
 TEST_F(WitIntentRecognizerTest, RecognizeSpeech)
 {
-    fs::path filePath{"asset/audio/turn-on-the-light.raw"};
+    fs::path filePath{"asset/audio/turn-off-the-light.raw"};
     auto pending = recognizer.recognize(filePath);
 
     std::error_code error;

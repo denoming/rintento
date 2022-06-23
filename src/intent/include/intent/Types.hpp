@@ -11,38 +11,29 @@ namespace jar {
 /**
  * The intent class representation
  */
-class Intent {
-public:
-    Intent() = default;
-
-    Intent(std::string name, float confidence);
-
-    [[nodiscard]] const std::string&
-    name() const;
-
-    [[nodiscard]] double
-    confidence() const;
-
-    [[nodiscard]] bool
-    valid() const;
-
-    [[nodiscard]] bool
-    confident() const;
-
-    explicit operator bool() const;
-
-private:
-    const std::string _name;
-    const double _confidence{0.0f};
+struct Intent {
+    std::string name;
+    float confidence{0.0f};
 };
 
-/** The bunch of recognized intents */
+/** The bunch of intents */
 using Intents = std::vector<Intent>;
+
+/**
+ * The utterance class representation
+ */
+struct Utterance {
+    std::string text;
+    Intents intents;
+};
+
+/** The bunch of utterances */
+using Utterances = std::vector<Utterance>;
 
 /**
  * Recognition outcome callback
  */
-using RecognitionCalback = std::function<void(std::string intents)>;
+using RecognitionCalback = std::function<void(Utterances)>;
 
 bool
 operator==(const Intent& lhs, const Intent& rhs);

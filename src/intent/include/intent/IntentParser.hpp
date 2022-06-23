@@ -11,8 +11,8 @@ class IntentParser {
 public:
     virtual ~IntentParser() = default;
 
-    [[nodiscard]] virtual Intents
-    parse(std::string_view input, std::error_code& ec) = 0;
+    [[nodiscard]] virtual Utterances
+    parse(std::string_view input, std::error_code& error) = 0;
 };
 
 } // namespace jar

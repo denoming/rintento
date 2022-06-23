@@ -39,6 +39,10 @@ WitIntentMessageSession::run(std::string_view host,
         return;
     }
 
+    //
+    // ToDo: Set HTTP Accept header to accept only response in JSON format
+    //
+
     _request.version(kHttpVersion11);
     _request.method(http::verb::get);
     _request.target(fmt::format(kTargetFormat, system_clock::now(), uri::encode(message)));
