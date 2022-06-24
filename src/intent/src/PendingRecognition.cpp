@@ -25,7 +25,7 @@ PendingRecognition::wait()
     _readyCv.wait(lock, [this]() { return _ready.load(); });
 }
 
-std::string
+Utterances
 PendingRecognition::get(std::error_code& error)
 {
     if (!attached()) {
@@ -38,8 +38,7 @@ PendingRecognition::get(std::error_code& error)
         wait();
     }
 
-    std::string output;
-    output.swap(_outcome);
+    Utterances output{std::move(_outcome)};
     error = _error;
     return output;
 }
@@ -51,10 +50,10 @@ PendingRecognition::target()
 }
 
 void
-PendingRecognition::setOutcome(const std::string& value)
+PendingRecognition::setOutcome(Utterances value)
 {
     std::unique_lock lock{_readyGuard};
-    _outcome = value;
+    _outcome = std::move(value);
     _ready = true;
     lock.unlock();
     _readyCv.notify_all();

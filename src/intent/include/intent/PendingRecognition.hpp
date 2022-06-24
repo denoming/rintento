@@ -1,5 +1,7 @@
 #pragma once
 
+#include "intent/Types.hpp"
+
 #include <string>
 #include <memory>
 #include <mutex>
@@ -20,7 +22,7 @@ public:
     void
     wait();
 
-    [[nodiscard]] std::string
+    [[nodiscard]] Utterances
     get(std::error_code& error);
 
     virtual void
@@ -34,7 +36,7 @@ protected:
     target();
 
     void
-    setOutcome(const std::string& value);
+    setOutcome(Utterances value);
 
     void
     setError(std::error_code value);
@@ -52,7 +54,7 @@ private:
 private:
     std::weak_ptr<void> _target;
     std::atomic<bool> _ready;
-    std::string _outcome;
+    Utterances _outcome;
     std::error_code _error;
     std::mutex _readyGuard;
     std::condition_variable _readyCv;

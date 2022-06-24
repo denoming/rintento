@@ -1,5 +1,6 @@
 #include "intent/WitPendingRecognition.hpp"
 
+#include "intent/WitIntentParser.hpp"
 #include "intent/WitIntentSession.hpp"
 #include "common/Logger.hpp"
 
@@ -7,6 +8,16 @@ namespace jar {
 
 WitPendingRecognition::WitPendingRecognition(std::weak_ptr<void> target)
     : PendingRecognition{std::move(target)}
+{
+    subscribe();
+}
+
+WitPendingRecognition::WitPendingRecognition(std::weak_ptr<void> target,
+                                             RecognitionCalback callback,
+                                             net::any_io_executor executor)
+    : PendingRecognition{std::move(target)}
+    , _callback{std::move(callback)}
+    , _executor{std::move(executor)}
 {
     subscribe();
 }
@@ -27,9 +38,18 @@ WitPendingRecognition::cancel()
 }
 
 WitPendingRecognition::Ptr
-WitPendingRecognition::create(std::weak_ptr<void> ptr)
+WitPendingRecognition::create(std::weak_ptr<void> target)
 {
-    return std::unique_ptr<WitPendingRecognition>(new WitPendingRecognition(std::move(ptr)));
+    return std::unique_ptr<WitPendingRecognition>(new WitPendingRecognition(std::move(target)));
+}
+
+WitPendingRecognition::Ptr
+WitPendingRecognition::create(std::weak_ptr<void> target,
+                              RecognitionCalback callback,
+                              net::any_io_executor executor)
+{
+    return std::unique_ptr<WitPendingRecognition>(
+        new WitPendingRecognition(std::move(target), std::move(callback), std::move(executor)));
 }
 
 void
@@ -59,14 +79,43 @@ WitPendingRecognition::unsubscribe()
 void
 WitPendingRecognition::onComplete(const std::string& result)
 {
-    LOGD("Recognition was completed: <{}> size", result.size());
-    setOutcome(result);
+    WitIntentParser parser;
+    std::error_code error;
+    auto utterances = parser.parse(result, error);
+    if (error) {
+        LOGE("Failed to parse given result: <{}>", error.message());
+        onError(error);
+        return;
+    }
+
+    if (_executor) {
+        assert(_callback);
+        net::post(_executor, [utterances, callback = std::move(_callback)](){
+            callback(utterances, {});
+        });
+    } else {
+        if (_callback) {
+            _callback(utterances, {});
+        }
+    }
+
+    setOutcome(std::move(utterances));
 }
 
 void
 WitPendingRecognition::onError(std::error_code error)
 {
-    LOGD("Recognition has failed: <{}> error", error.message());
+    if (_executor) {
+        assert(_callback);
+        net::post(_executor, [error, callback = std::move(_callback)](){
+            callback({}, error);
+        });
+    } else {
+        if (_callback) {
+            _callback({}, error);
+        }
+    }
+
     setError(error);
 }
 

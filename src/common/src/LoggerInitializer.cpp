@@ -16,7 +16,7 @@ public:
            const std::tm&,
            spdlog::memory_buf_t& buffer) override
     {
-        static constexpr const char* kFullFormat{"{:.<25}"};
+        static constexpr const char* kFullFormat{"{:.<35}"};
         static constexpr const char* kNullFormat{"{:^5}"};
 
         if (msg.source.empty()) {

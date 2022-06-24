@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <system_error>
 
 namespace jar {
 
@@ -33,7 +34,7 @@ using Utterances = std::vector<Utterance>;
 /**
  * Recognition outcome callback
  */
-using RecognitionCalback = std::function<void(Utterances)>;
+using RecognitionCalback = std::function<void(Utterances result, std::error_code error)>;
 
 bool
 operator==(const Intent& lhs, const Intent& rhs);

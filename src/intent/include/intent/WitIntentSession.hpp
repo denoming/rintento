@@ -1,6 +1,6 @@
 #pragma once
 
-#include <intent/WitCommon.hpp>
+#include "intent/WitCommon.hpp"
 
 #include <boost/signals2.hpp>
 
@@ -11,7 +11,7 @@ namespace jar {
 class WitIntentSession {
 public:
     using OnCompleteSignal = boost::signals2::signal<void(const std::string& result)>;
-    using OnErrorSignal = boost::signals2::signal<void(std::error_code)>;
+    using OnErrorSignal = boost::signals2::signal<void(std::error_code error)>;
 
     virtual ~WitIntentSession() = default;
 
@@ -30,7 +30,7 @@ protected:
     complete(const std::string& result);
 
     void
-    complete(std::error_code errorCode);
+    complete(std::error_code error);
 
     static bool
     setTlsHostName(beast::ssl_stream<beast::tcp_stream>& stream,

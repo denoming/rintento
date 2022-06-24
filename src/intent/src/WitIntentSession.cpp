@@ -1,5 +1,7 @@
 #include "intent/WitIntentSession.hpp"
 
+#include "common/Logger.hpp"
+
 namespace jar {
 
 boost::signals2::connection
@@ -29,13 +31,17 @@ WitIntentSession::notifyError(std::error_code error)
 void
 WitIntentSession::complete(const std::string& result)
 {
+    LOGD("Recognition was completed: <{}> size", result.size());
+
     notifyComplete(result);
 }
 
 void
-WitIntentSession::complete(std::error_code errorCode)
+WitIntentSession::complete(std::error_code error)
 {
-    notifyError(errorCode);
+    LOGD("Recognition has failed: <{}> error", error.message());
+
+    notifyError(error);
 }
 
 bool

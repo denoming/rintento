@@ -1,5 +1,7 @@
 #pragma once
 
+#include "intent/WitCommon.hpp"
+#include "intent/Types.hpp"
 #include "intent/PendingRecognition.hpp"
 
 #include <boost/signals2/connection.hpp>
@@ -17,8 +19,18 @@ private:
     friend class WitIntentRecognizer;
     explicit WitPendingRecognition(std::weak_ptr<void> target);
 
+    friend class WitIntentRecognizer;
+    explicit WitPendingRecognition(std::weak_ptr<void> target,
+                                   RecognitionCalback callback,
+                                   net::any_io_executor executor = {});
+
     static Ptr
-    create(std::weak_ptr<void> ptr);
+    create(std::weak_ptr<void> target);
+
+    static Ptr
+    create(std::weak_ptr<void> target,
+           RecognitionCalback callback,
+           net::any_io_executor executor = {});
 
     void
     subscribe();
@@ -35,6 +47,8 @@ private:
 private:
     boost::signals2::connection _onCompleteCon;
     boost::signals2::connection _onErrorCon;
+    RecognitionCalback _callback;
+    net::any_io_executor _executor;
 };
 
 } // namespace jar

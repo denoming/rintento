@@ -1,5 +1,6 @@
 #pragma once
 
+#include "intent/Types.hpp"
 #include "intent/PendingRecognition.hpp"
 #include "intent/WitCommon.hpp"
 
@@ -17,7 +18,15 @@ public:
     recognize(std::string_view message);
 
     PendingRecognition::Ptr
+    recognize(std::string_view message,
+              RecognitionCalback callback,
+              net::any_io_executor executor = {});
+
+    PendingRecognition::Ptr
     recognize(fs::path filePath);
+
+    PendingRecognition::Ptr
+    recognize(fs::path filePath, RecognitionCalback callback, net::any_io_executor executor = {});
 
 private:
     ssl::context _context;
