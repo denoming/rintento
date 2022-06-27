@@ -130,6 +130,7 @@ WitIntentSpeechSession::onHandshakeDone(sys::error_code ec)
     if (ec) {
         LOGE("Failed to write request header: <{}>", ec.what());
         complete(ec);
+        return;
     } else {
         LOGD("Writing of request header was successful: <{}> bytes", bytesTransferred);
     }
