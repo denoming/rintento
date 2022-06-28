@@ -9,8 +9,9 @@ set_target_properties(${TARGET}
 
 target_sources(${TARGET}
     PRIVATE src/UriTest.cpp
-            src/WitIntentRecognizerTest.cpp
             src/WitIntentParserTest.cpp
+            src/WitIntentMessageSessionTest.cpp
+            src/WitIntentSpeechSessionTest.cpp
 )
 
 target_include_directories(${TARGET}

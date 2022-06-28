@@ -15,15 +15,14 @@ class WitIntentSpeechSession : public WitIntentSession,
 public:
     using Ptr = std::shared_ptr<WitIntentSpeechSession>;
 
+    static Ptr
+    create(ssl::context& context, net::any_io_executor& executor);
+
     void
     run(std::string_view host, std::string_view port, std::string_view auth, fs::path data);
 
 private:
-    friend class WitIntentRecognizer;
     explicit WitIntentSpeechSession(ssl::context& context, net::any_io_executor& executor);
-
-    static Ptr
-    create(ssl::context& context, net::any_io_executor& executor);
 
     void
     onResolveDone(sys::error_code error, const tcp::resolver::results_type& result);

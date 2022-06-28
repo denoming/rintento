@@ -10,6 +10,14 @@ namespace jar {
 
 class WitPendingRecognition : public PendingRecognition {
 public:
+    static Ptr
+    create(std::weak_ptr<void> target);
+
+    static Ptr
+    create(std::weak_ptr<void> target,
+           RecognitionCalback callback,
+           net::any_io_executor executor = {});
+
     ~WitPendingRecognition() override;
 
     void
@@ -23,14 +31,6 @@ private:
     explicit WitPendingRecognition(std::weak_ptr<void> target,
                                    RecognitionCalback callback,
                                    net::any_io_executor executor = {});
-
-    static Ptr
-    create(std::weak_ptr<void> target);
-
-    static Ptr
-    create(std::weak_ptr<void> target,
-           RecognitionCalback callback,
-           net::any_io_executor executor = {});
 
     void
     subscribe();

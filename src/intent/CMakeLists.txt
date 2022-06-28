@@ -18,7 +18,6 @@ target_sources(${TARGET}
             src/WitIntentSession.cpp
             src/WitIntentMessageSession.cpp
             src/WitIntentSpeechSession.cpp
-            src/WitIntentRecognizer.cpp
             src/WitPendingRecognition.cpp
             src/WitIntentParser.cpp
 )
