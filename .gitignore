@@ -54,6 +54,7 @@ CMakeLists.txt.user*
 .idea/**/shelf
 .idea/**/.gitignore
 .idea/**/codeStyles/
+.idea/**/inspectionProfiles/
 .idea/**/*.iml
 .idea/**/misc.xml
 .idea/**/modules.xml
