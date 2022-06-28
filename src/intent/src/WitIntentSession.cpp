@@ -4,6 +4,18 @@
 
 namespace jar {
 
+WitIntentSession::WitIntentSession()
+    : _interrupted{false}
+{
+}
+
+void
+WitIntentSession::cancel()
+{
+    _interrupted = true;
+    _cancelSig.emit(net::cancellation_type::terminal);
+}
+
 boost::signals2::connection
 WitIntentSession::onComplete(const OnCompleteSignal::slot_type& slot)
 {
@@ -31,23 +43,31 @@ WitIntentSession::notifyError(std::error_code error)
 void
 WitIntentSession::complete(const std::string& result)
 {
-    LOGD("Recognition was completed: <{}> size", result.size());
-
     notifyComplete(result);
 }
 
 void
 WitIntentSession::complete(std::error_code error)
 {
-    LOGD("Recognition has failed: <{}> error", error.message());
-
     notifyError(error);
 }
 
 bool
+WitIntentSession::interrupted() const
+{
+    return _interrupted;
+}
+
+net::cancellation_slot
+WitIntentSession::onCancel()
+{
+    return _cancelSig.slot();
+}
+
+bool
 WitIntentSession::setTlsHostName(beast::ssl_stream<beast::tcp_stream>& stream,
-                              std::string_view hostname,
-                              std::error_code& ec)
+                                 std::string_view hostname,
+                                 std::error_code& ec)
 {
     // Set SNI Hostname (many hosts need this to handshake successfully)
     if (SSL_set_tlsext_host_name(stream.native_handle(), hostname.data())) {

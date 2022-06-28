@@ -60,6 +60,24 @@ TEST_F(WitIntentRecognizerTest, RecognizeMessage)
                                      Contains(isConfidentIntent("light_off", 0.9f)))));
 }
 
+TEST_F(WitIntentRecognizerTest, CancelRecognizeMessage)
+{
+    MockFunction<void(Utterances result, std::error_code error)> callback;
+    EXPECT_CALL(callback, Call(_, IsTrue()));
+
+    std::string_view message{"turn off the light"};
+    auto pending = recognizer.recognize(message, callback.AsStdFunction());
+    ASSERT_TRUE(pending);
+
+    // Cancel message recognizing
+    pending->cancel();
+
+    std::error_code error;
+    const auto outcome = pending->get(error);
+    EXPECT_THAT(outcome, IsEmpty());
+    EXPECT_EQ(error.value(), int(std::errc::operation_canceled));
+}
+
 TEST_F(WitIntentRecognizerTest, RecognizeSpeech1)
 {
     MockFunction<void(Utterances result, std::error_code error)> callback;
@@ -67,6 +85,7 @@ TEST_F(WitIntentRecognizerTest, RecognizeSpeech1)
 
     fs::path filePath{"asset/audio/turn-off-the-light.raw"};
     auto pending = recognizer.recognize(filePath, callback.AsStdFunction());
+    ASSERT_TRUE(pending);
 
     std::error_code error;
     const auto outcome = pending->get(error);
@@ -83,6 +102,7 @@ TEST_F(WitIntentRecognizerTest, RecognizeSpeech2)
 
     fs::path filePath{"asset/audio/turn-on-the-light.raw"};
     auto pending = recognizer.recognize(filePath, callback.AsStdFunction());
+    ASSERT_TRUE(pending);
 
     std::error_code error;
     const auto outcome = pending->get(error);
@@ -90,4 +110,22 @@ TEST_F(WitIntentRecognizerTest, RecognizeSpeech2)
     EXPECT_THAT(outcome,
                 Contains(isUtterance("turn on the light",
                                      Contains(isConfidentIntent("light_on", 0.9f)))));
+}
+
+TEST_F(WitIntentRecognizerTest, CancelRecognizeSpeech)
+{
+    MockFunction<void(Utterances result, std::error_code error)> callback;
+    EXPECT_CALL(callback, Call(_, IsTrue()));
+
+    fs::path filePath{"asset/audio/turn-on-the-light.raw"};
+    auto pending = recognizer.recognize(filePath, callback.AsStdFunction());
+    ASSERT_TRUE(pending);
+
+    // Cancel message recognizing
+    pending->cancel();
+
+    std::error_code error;
+    const auto outcome = pending->get(error);
+    EXPECT_THAT(outcome, IsEmpty());
+    EXPECT_EQ(error.value(), int(std::errc::operation_canceled));
 }

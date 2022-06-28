@@ -47,15 +47,12 @@ WitIntentMessageSession::run(std::string_view host,
     _request.set(http::field::authorization, auth);
     _request.set(http::field::content_type, "application/json");
 
-    _resolver.async_resolve(
-        host,
-        port,
-        beast::bind_front_handler(&WitIntentMessageSession::onResolveDone, shared_from_this()));
-}
-
-void
-WitIntentMessageSession::cancel()
-{
+    _resolver.async_resolve(host,
+                            port,
+                            net::bind_cancellation_slot(
+                                onCancel(),
+                                beast::bind_front_handler(&WitIntentMessageSession::onResolveDone,
+                                                          shared_from_this())));
 }
 
 WitIntentMessageSession::Ptr
@@ -65,12 +62,18 @@ WitIntentMessageSession::create(ssl::context& context, net::any_io_executor& exe
 }
 
 void
-WitIntentMessageSession::onResolveDone(sys::error_code ec,
+WitIntentMessageSession::onResolveDone(sys::error_code error,
                                        const tcp::resolver::results_type& result)
 {
-    if (ec) {
-        LOGE("Failed to resolve address: <{}>", ec.what());
-        complete(ec);
+    if (error) {
+        LOGE("Failed to resolve address: <{}>", error.what());
+        complete(error);
+        return;
+    }
+
+    if (interrupted()) {
+        LOGD("Operation was interrupted");
+        complete(sys::errc::make_error_code(sys::errc::operation_canceled));
         return;
     }
 
@@ -79,33 +82,51 @@ WitIntentMessageSession::onResolveDone(sys::error_code ec,
 
     beast::get_lowest_layer(_stream).async_connect(
         result,
-        beast::bind_front_handler(&WitIntentMessageSession::onConnectDone, shared_from_this()));
+        net::bind_cancellation_slot(
+            onCancel(),
+            beast::bind_front_handler(&WitIntentMessageSession::onConnectDone,
+                                      shared_from_this())));
 }
 
 void
-WitIntentMessageSession::onConnectDone(beast::error_code ec,
+WitIntentMessageSession::onConnectDone(sys::error_code error,
                                        const tcp::resolver::results_type::endpoint_type& endpoint)
 {
-    if (ec) {
-        LOGE("Failed to connect: <{}>", ec.what());
-        complete(ec);
+    if (error) {
+        LOGE("Failed to connect: <{}>", error.what());
+        complete(error);
+        return;
+    }
+
+    if (interrupted()) {
+        LOGD("Operation was interrupted");
+        complete(sys::errc::make_error_code(sys::errc::operation_canceled));
         return;
     }
 
     LOGD("Connection with <{}> was established", endpoint.address().to_string());
+    resetTimeout(_stream);
 
-    _stream.async_handshake(
-        ssl::stream_base::client,
-        beast::bind_front_handler(&WitIntentMessageSession::onHandshakeDone, shared_from_this()));
+    _stream.async_handshake(ssl::stream_base::client,
+                            net::bind_cancellation_slot(
+                                onCancel(),
+                                beast::bind_front_handler(&WitIntentMessageSession::onHandshakeDone,
+                                                          shared_from_this())));
 }
 
 void
-WitIntentMessageSession::onHandshakeDone(sys::error_code ec)
+WitIntentMessageSession::onHandshakeDone(sys::error_code error)
 {
-    if (ec) {
-        LOGE("Failed to handshake: <{}>", ec.what());
+    if (error) {
+        LOGE("Failed to handshake: <{}>", error.what());
         beast::get_lowest_layer(_stream).close();
-        complete(ec);
+        complete(error);
+        return;
+    }
+
+    if (interrupted()) {
+        LOGD("Operation was interrupted");
+        complete(sys::errc::make_error_code(sys::errc::operation_canceled));
         return;
     }
 
@@ -115,54 +136,72 @@ WitIntentMessageSession::onHandshakeDone(sys::error_code ec)
     http::async_write(
         _stream,
         _request,
-        beast::bind_front_handler(&WitIntentMessageSession::onWriteDone, shared_from_this()));
+        net::bind_cancellation_slot(
+            onCancel(),
+            beast::bind_front_handler(&WitIntentMessageSession::onWriteDone, shared_from_this())));
 }
 
 void
-WitIntentMessageSession::onWriteDone(sys::error_code ec, std::size_t bytesTransferred)
+WitIntentMessageSession::onWriteDone(sys::error_code error, std::size_t bytesTransferred)
 {
-    if (ec) {
-        LOGE("Failed to write request: <{}>", ec.what());
+    if (error) {
+        LOGE("Failed to write request: <{}>", error.what());
         beast::get_lowest_layer(_stream).close();
-        complete(ec);
+        complete(error);
+        return;
+    }
+
+    if (interrupted()) {
+        LOGD("Operation was interrupted");
+        complete(sys::errc::make_error_code(sys::errc::operation_canceled));
         return;
     }
 
     LOGD("Writing of request was successful: <{}> bytes", bytesTransferred);
+    resetTimeout(_stream);
 
     http::async_read(
         _stream,
         _buffer,
         _response,
-        beast::bind_front_handler(&WitIntentMessageSession::onReadDone, shared_from_this()));
+        net::bind_cancellation_slot(
+            onCancel(),
+            beast::bind_front_handler(&WitIntentMessageSession::onReadDone, shared_from_this())));
 }
 
 void
-WitIntentMessageSession::onReadDone(sys::error_code ec, std::size_t bytesTransferred)
+WitIntentMessageSession::onReadDone(sys::error_code error, std::size_t bytesTransferred)
 {
-    if (ec) {
-        LOGE("Failed to read response: <{}>", ec.what());
+    if (error) {
+        LOGE("Failed to read response: <{}>", error.what());
         beast::get_lowest_layer(_stream).close();
-        complete(ec);
+        complete(error);
+        return;
+    }
+
+    if (interrupted()) {
+        LOGD("Operation was interrupted");
+        complete(sys::errc::make_error_code(sys::errc::operation_canceled));
         return;
     }
 
     LOGD("Reading of response was successful: <{}> bytes", bytesTransferred);
     resetTimeout(_stream);
 
-    _stream.async_shutdown(
-        beast::bind_front_handler(&WitIntentMessageSession::onShutdownDone, shared_from_this()));
+    _stream.async_shutdown(net::bind_cancellation_slot(
+        onCancel(),
+        beast::bind_front_handler(&WitIntentMessageSession::onShutdownDone, shared_from_this())));
 }
 
 void
-WitIntentMessageSession::onShutdownDone(sys::error_code ec)
+WitIntentMessageSession::onShutdownDone(sys::error_code error)
 {
-    if (ec == net::error::eof) {
-        ec = {};
+    if (error == net::error::eof || error == sys::errc::operation_canceled) {
+        error = {};
     }
 
-    if (ec) {
-        LOGE("Failed to shutdown connection: <{}>", ec.what());
+    if (error) {
+        LOGE("Failed to shutdown connection: <{}>", error.what());
     } else {
         LOGD("Shutdown of connection was successful");
     }

@@ -18,9 +18,6 @@ public:
     void
     run(std::string_view host, std::string_view port, std::string_view auth, fs::path data);
 
-    void
-    cancel() override;
-
 private:
     friend class WitIntentRecognizer;
     explicit WitIntentSpeechSession(ssl::context& context, net::any_io_executor& executor);
@@ -29,28 +26,29 @@ private:
     create(ssl::context& context, net::any_io_executor& executor);
 
     void
-    onResolveDone(sys::error_code ec, const tcp::resolver::results_type& result);
+    onResolveDone(sys::error_code error, const tcp::resolver::results_type& result);
 
     void
-    onConnectDone(sys::error_code ec, const tcp::resolver::results_type::endpoint_type& endpoint);
+    onConnectDone(sys::error_code error,
+                  const tcp::resolver::results_type::endpoint_type& endpoint);
 
     void
-    onHandshakeDone(sys::error_code ec);
+    onHandshakeDone(sys::error_code error);
 
     void
-    onReadContinueDone(sys::error_code ec, std::size_t bytesTransferred);
+    onReadContinueDone(sys::error_code error, std::size_t bytesTransferred);
 
     void
-    onWriteDone(sys::error_code ec, std::size_t bytesTransferred);
+    onWriteDone(sys::error_code error, std::size_t bytesTransferred);
 
     void
-    onReadReady(sys::error_code ec, std::size_t bytesTransferred);
+    onReadReady(sys::error_code error, std::size_t bytesTransferred);
 
     void
-    onReadDone(sys::error_code ec, std::size_t bytesTransferred);
+    onReadDone(sys::error_code error, std::size_t bytesTransferred);
 
     void
-    onShutdownDone(sys::error_code ec);
+    onShutdownDone(sys::error_code error);
 
 private:
     tcp::resolver _resolver;

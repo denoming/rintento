@@ -5,6 +5,7 @@
 #include <boost/signals2.hpp>
 
 #include <string>
+#include <atomic>
 
 namespace jar {
 
@@ -13,11 +14,12 @@ public:
     using OnCompleteSignal = boost::signals2::signal<void(const std::string& result)>;
     using OnErrorSignal = boost::signals2::signal<void(std::error_code error)>;
 
+    WitIntentSession();
+
     virtual ~WitIntentSession() = default;
 
     virtual void
-    cancel()
-        = 0;
+    cancel();
 
     [[nodiscard]] boost::signals2::connection
     onComplete(const OnCompleteSignal::slot_type& slot);
@@ -31,6 +33,12 @@ protected:
 
     void
     complete(std::error_code error);
+
+    [[nodiscard]] bool
+    interrupted() const;
+
+    [[nodiscard]] net::cancellation_slot
+    onCancel();
 
     static bool
     setTlsHostName(beast::ssl_stream<beast::tcp_stream>& stream,
@@ -50,6 +58,8 @@ private:
 private:
     OnCompleteSignal _onCompleteSig;
     OnErrorSignal _onErrorSig;
+    net::cancellation_signal _cancelSig;
+    std::atomic<bool> _interrupted;
 };
 
 } // namespace jar
