@@ -1,4 +1,4 @@
-#include "intent/WitIntentSpeechSession.hpp"
+#include "intent/WitSpeechRecognition.hpp"
 
 #include "intent/Uri.hpp"
 #include "common/Logger.hpp"
@@ -11,7 +11,7 @@
 
 namespace jar {
 
-WitIntentSpeechSession::WitIntentSpeechSession(ssl::context& context,
+WitSpeechRecognition::WitSpeechRecognition(ssl::context& context,
                                                net::any_io_executor& executor)
     : _resolver{executor}
     , _stream{executor, context}
@@ -19,7 +19,7 @@ WitIntentSpeechSession::WitIntentSpeechSession(ssl::context& context,
 }
 
 void
-WitIntentSpeechSession::run(std::string_view host,
+WitSpeechRecognition::run(std::string_view host,
                             std::string_view port,
                             std::string_view auth,
                             fs::path data)
@@ -66,17 +66,17 @@ WitIntentSpeechSession::run(std::string_view host,
         port,
         net::bind_cancellation_slot(
             onCancel(),
-            beast::bind_front_handler(&WitIntentSpeechSession::onResolveDone, shared_from_this())));
+            beast::bind_front_handler(&WitSpeechRecognition::onResolveDone, shared_from_this())));
 }
 
-WitIntentSpeechSession::Ptr
-WitIntentSpeechSession::create(ssl::context& context, net::any_io_executor& executor)
+WitSpeechRecognition::Ptr
+WitSpeechRecognition::create(ssl::context& context, net::any_io_executor& executor)
 {
-    return std::shared_ptr<WitIntentSpeechSession>(new WitIntentSpeechSession(context, executor));
+    return std::shared_ptr<WitSpeechRecognition>(new WitSpeechRecognition(context, executor));
 }
 
 void
-WitIntentSpeechSession::onResolveDone(sys::error_code error,
+WitSpeechRecognition::onResolveDone(sys::error_code error,
                                       const tcp::resolver::results_type& result)
 {
     if (error) {
@@ -98,11 +98,11 @@ WitIntentSpeechSession::onResolveDone(sys::error_code error,
         result,
         net::bind_cancellation_slot(
             onCancel(),
-            beast::bind_front_handler(&WitIntentSpeechSession::onConnectDone, shared_from_this())));
+            beast::bind_front_handler(&WitSpeechRecognition::onConnectDone, shared_from_this())));
 }
 
 void
-WitIntentSpeechSession::onConnectDone(sys::error_code error,
+WitSpeechRecognition::onConnectDone(sys::error_code error,
                                       const tcp::resolver::results_type::endpoint_type& endpoint)
 {
     if (error) {
@@ -123,12 +123,12 @@ WitIntentSpeechSession::onConnectDone(sys::error_code error,
     _stream.async_handshake(ssl::stream_base::client,
                             net::bind_cancellation_slot(
                                 onCancel(),
-                                beast::bind_front_handler(&WitIntentSpeechSession::onHandshakeDone,
+                                beast::bind_front_handler(&WitSpeechRecognition::onHandshakeDone,
                                                           shared_from_this())));
 }
 
 void
-WitIntentSpeechSession::onHandshakeDone(sys::error_code error)
+WitSpeechRecognition::onHandshakeDone(sys::error_code error)
 {
     if (error) {
         LOGE("Failed to handshake: <{}>", error.what());
@@ -161,12 +161,12 @@ WitIntentSpeechSession::onHandshakeDone(sys::error_code error)
                      _response,
                      net::bind_cancellation_slot(
                          onCancel(),
-                         beast::bind_front_handler(&WitIntentSpeechSession::onReadContinueDone,
+                         beast::bind_front_handler(&WitSpeechRecognition::onReadContinueDone,
                                                    shared_from_this())));
 }
 
 void
-WitIntentSpeechSession::onReadContinueDone(sys::error_code error, std::size_t bytesTransferred)
+WitSpeechRecognition::onReadContinueDone(sys::error_code error, std::size_t bytesTransferred)
 {
     static const int ChunkSize{20000};
 
@@ -201,11 +201,11 @@ WitIntentSpeechSession::onReadContinueDone(sys::error_code error, std::size_t by
         chunk,
         net::bind_cancellation_slot(
             onCancel(),
-            beast::bind_front_handler(&WitIntentSpeechSession::onWriteDone, shared_from_this())));
+            beast::bind_front_handler(&WitSpeechRecognition::onWriteDone, shared_from_this())));
 }
 
 void
-WitIntentSpeechSession::onWriteDone(sys::error_code error, std::size_t bytesTransferred)
+WitSpeechRecognition::onWriteDone(sys::error_code error, std::size_t bytesTransferred)
 {
     static const int ChunkSize{20000};
 
@@ -233,20 +233,20 @@ WitIntentSpeechSession::onWriteDone(sys::error_code error, std::size_t bytesTran
                          chunk,
                          net::bind_cancellation_slot(
                              onCancel(),
-                             beast::bind_front_handler(&WitIntentSpeechSession::onWriteDone,
+                             beast::bind_front_handler(&WitSpeechRecognition::onWriteDone,
                                                        shared_from_this())));
     } else {
         net::async_write(_stream,
                          http::make_chunk_last(),
                          net::bind_cancellation_slot(
                              onCancel(),
-                             beast::bind_front_handler(&WitIntentSpeechSession::onReadReady,
+                             beast::bind_front_handler(&WitSpeechRecognition::onReadReady,
                                                        shared_from_this())));
     }
 }
 
 void
-WitIntentSpeechSession::onReadReady(sys::error_code error, std::size_t bytesTransferred)
+WitSpeechRecognition::onReadReady(sys::error_code error, std::size_t bytesTransferred)
 {
     if (error) {
         LOGE("Failed to write last chunk: <{}>", error.what());
@@ -270,11 +270,11 @@ WitIntentSpeechSession::onReadReady(sys::error_code error, std::size_t bytesTran
         _response,
         net::bind_cancellation_slot(
             onCancel(),
-            beast::bind_front_handler(&WitIntentSpeechSession::onReadDone, shared_from_this())));
+            beast::bind_front_handler(&WitSpeechRecognition::onReadDone, shared_from_this())));
 }
 
 void
-WitIntentSpeechSession::onReadDone(sys::error_code error, std::size_t bytesTransferred)
+WitSpeechRecognition::onReadDone(sys::error_code error, std::size_t bytesTransferred)
 {
     if (error) {
         LOGE("Failed to read: <{}>", error.what());
@@ -294,11 +294,11 @@ WitIntentSpeechSession::onReadDone(sys::error_code error, std::size_t bytesTrans
 
     _stream.async_shutdown(net::bind_cancellation_slot(
         onCancel(),
-        beast::bind_front_handler(&WitIntentSpeechSession::onShutdownDone, shared_from_this())));
+        beast::bind_front_handler(&WitSpeechRecognition::onShutdownDone, shared_from_this())));
 }
 
 void
-WitIntentSpeechSession::onShutdownDone(sys::error_code error)
+WitSpeechRecognition::onShutdownDone(sys::error_code error)
 {
     if (error == net::error::eof || error == sys::errc::operation_canceled) {
         error = {};

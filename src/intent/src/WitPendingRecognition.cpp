@@ -1,7 +1,7 @@
 #include "intent/WitPendingRecognition.hpp"
 
 #include "intent/WitIntentParser.hpp"
-#include "intent/WitIntentSession.hpp"
+#include "intent/WitRecognition.hpp"
 #include "common/Logger.hpp"
 
 namespace jar {
@@ -30,7 +30,7 @@ WitPendingRecognition::~WitPendingRecognition()
 void
 WitPendingRecognition::cancel()
 {
-    if (auto session = std::static_pointer_cast<WitIntentSession>(target()); session) {
+    if (auto session = std::static_pointer_cast<WitRecognition>(target()); session) {
         session->cancel();
     } else {
         LOGE("Failed to lock session");
@@ -55,7 +55,7 @@ WitPendingRecognition::create(std::weak_ptr<void> target,
 void
 WitPendingRecognition::subscribe()
 {
-    if (auto session = std::static_pointer_cast<WitIntentSession>(target()); session) {
+    if (auto session = std::static_pointer_cast<WitRecognition>(target()); session) {
         _onCompleteCon = session->onComplete(
             [this](auto&& result) { onComplete(std::forward<decltype(result)>(result)); });
         _onErrorCon = session->onError(

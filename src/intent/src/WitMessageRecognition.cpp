@@ -1,4 +1,4 @@
-#include "intent/WitIntentMessageSession.hpp"
+#include "intent/WitMessageRecognition.hpp"
 
 #include "intent/Uri.hpp"
 #include "common/Logger.hpp"
@@ -10,7 +10,7 @@
 
 namespace jar {
 
-WitIntentMessageSession::WitIntentMessageSession(ssl::context& context,
+WitMessageRecognition::WitMessageRecognition(ssl::context& context,
                                                  net::any_io_executor& executor)
     : _resolver{executor}
     , _stream{executor, context}
@@ -18,7 +18,7 @@ WitIntentMessageSession::WitIntentMessageSession(ssl::context& context,
 }
 
 void
-WitIntentMessageSession::run(std::string_view host,
+WitMessageRecognition::run(std::string_view host,
                              std::string_view port,
                              std::string_view auth,
                              std::string_view message)
@@ -51,18 +51,18 @@ WitIntentMessageSession::run(std::string_view host,
                             port,
                             net::bind_cancellation_slot(
                                 onCancel(),
-                                beast::bind_front_handler(&WitIntentMessageSession::onResolveDone,
+                                beast::bind_front_handler(&WitMessageRecognition::onResolveDone,
                                                           shared_from_this())));
 }
 
-WitIntentMessageSession::Ptr
-WitIntentMessageSession::create(ssl::context& context, net::any_io_executor& executor)
+WitMessageRecognition::Ptr
+WitMessageRecognition::create(ssl::context& context, net::any_io_executor& executor)
 {
-    return std::shared_ptr<WitIntentMessageSession>(new WitIntentMessageSession(context, executor));
+    return std::shared_ptr<WitMessageRecognition>(new WitMessageRecognition(context, executor));
 }
 
 void
-WitIntentMessageSession::onResolveDone(sys::error_code error,
+WitMessageRecognition::onResolveDone(sys::error_code error,
                                        const tcp::resolver::results_type& result)
 {
     if (error) {
@@ -84,12 +84,12 @@ WitIntentMessageSession::onResolveDone(sys::error_code error,
         result,
         net::bind_cancellation_slot(
             onCancel(),
-            beast::bind_front_handler(&WitIntentMessageSession::onConnectDone,
+            beast::bind_front_handler(&WitMessageRecognition::onConnectDone,
                                       shared_from_this())));
 }
 
 void
-WitIntentMessageSession::onConnectDone(sys::error_code error,
+WitMessageRecognition::onConnectDone(sys::error_code error,
                                        const tcp::resolver::results_type::endpoint_type& endpoint)
 {
     if (error) {
@@ -110,12 +110,12 @@ WitIntentMessageSession::onConnectDone(sys::error_code error,
     _stream.async_handshake(ssl::stream_base::client,
                             net::bind_cancellation_slot(
                                 onCancel(),
-                                beast::bind_front_handler(&WitIntentMessageSession::onHandshakeDone,
+                                beast::bind_front_handler(&WitMessageRecognition::onHandshakeDone,
                                                           shared_from_this())));
 }
 
 void
-WitIntentMessageSession::onHandshakeDone(sys::error_code error)
+WitMessageRecognition::onHandshakeDone(sys::error_code error)
 {
     if (error) {
         LOGE("Failed to handshake: <{}>", error.what());
@@ -138,11 +138,11 @@ WitIntentMessageSession::onHandshakeDone(sys::error_code error)
         _request,
         net::bind_cancellation_slot(
             onCancel(),
-            beast::bind_front_handler(&WitIntentMessageSession::onWriteDone, shared_from_this())));
+            beast::bind_front_handler(&WitMessageRecognition::onWriteDone, shared_from_this())));
 }
 
 void
-WitIntentMessageSession::onWriteDone(sys::error_code error, std::size_t bytesTransferred)
+WitMessageRecognition::onWriteDone(sys::error_code error, std::size_t bytesTransferred)
 {
     if (error) {
         LOGE("Failed to write request: <{}>", error.what());
@@ -166,11 +166,11 @@ WitIntentMessageSession::onWriteDone(sys::error_code error, std::size_t bytesTra
         _response,
         net::bind_cancellation_slot(
             onCancel(),
-            beast::bind_front_handler(&WitIntentMessageSession::onReadDone, shared_from_this())));
+            beast::bind_front_handler(&WitMessageRecognition::onReadDone, shared_from_this())));
 }
 
 void
-WitIntentMessageSession::onReadDone(sys::error_code error, std::size_t bytesTransferred)
+WitMessageRecognition::onReadDone(sys::error_code error, std::size_t bytesTransferred)
 {
     if (error) {
         LOGE("Failed to read response: <{}>", error.what());
@@ -190,11 +190,11 @@ WitIntentMessageSession::onReadDone(sys::error_code error, std::size_t bytesTran
 
     _stream.async_shutdown(net::bind_cancellation_slot(
         onCancel(),
-        beast::bind_front_handler(&WitIntentMessageSession::onShutdownDone, shared_from_this())));
+        beast::bind_front_handler(&WitMessageRecognition::onShutdownDone, shared_from_this())));
 }
 
 void
-WitIntentMessageSession::onShutdownDone(sys::error_code error)
+WitMessageRecognition::onShutdownDone(sys::error_code error)
 {
     if (error == net::error::eof || error == sys::errc::operation_canceled) {
         error = {};

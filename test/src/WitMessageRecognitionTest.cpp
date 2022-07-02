@@ -4,16 +4,16 @@
 #include "test/Matchers.hpp"
 #include "tests/TestWorker.hpp"
 #include "intent/Config.hpp"
-#include "intent/WitIntentMessageSession.hpp"
+#include "intent/WitMessageRecognition.hpp"
 #include "intent/WitPendingRecognition.hpp"
 
 using namespace testing;
 using namespace jar;
 
-class WitIntentMessageSessionTest : public Test {
+class WitMessageRecognitionTest : public Test {
 public:
-    WitIntentMessageSessionTest()
-        : session{WitIntentMessageSession::create(worker.sslContext(), worker.executor())}
+    WitMessageRecognitionTest()
+        : session{WitMessageRecognition::create(worker.sslContext(), worker.executor())}
     {
     }
 
@@ -31,10 +31,10 @@ public:
 
 public:
     TestWorker worker;
-    WitIntentMessageSession::Ptr session;
+    WitMessageRecognition::Ptr session;
 };
 
-TEST_F(WitIntentMessageSessionTest, RecognizeMessage)
+TEST_F(WitMessageRecognitionTest, RecognizeMessage)
 {
     MockFunction<void(Utterances result, std::error_code error)> callback;
     EXPECT_CALL(callback, Call(Contains(isUtterance("turn off the light")), IsFalse()));
@@ -51,7 +51,7 @@ TEST_F(WitIntentMessageSessionTest, RecognizeMessage)
                                      Contains(isConfidentIntent("light_off", 0.9f)))));
 }
 
-TEST_F(WitIntentMessageSessionTest, CancelRecognizeMessage)
+TEST_F(WitMessageRecognitionTest, CancelRecognizeMessage)
 {
     MockFunction<void(Utterances result, std::error_code error)> callback;
     EXPECT_CALL(callback, Call(_, IsTrue()));

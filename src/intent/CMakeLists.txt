@@ -16,8 +16,8 @@ target_sources(${TARGET}
     PRIVATE src/Types.cpp
             src/PendingRecognition.cpp
             src/WitIntentSession.cpp
-            src/WitIntentMessageSession.cpp
-            src/WitIntentSpeechSession.cpp
+            src/WitMessageRecognition.cpp
+            src/WitSpeechRecognition.cpp
             src/WitPendingRecognition.cpp
             src/WitIntentParser.cpp
 )

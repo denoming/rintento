@@ -9,14 +9,14 @@
 
 namespace jar {
 
-class WitIntentSession {
+class WitRecognition {
 public:
     using OnCompleteSignal = boost::signals2::signal<void(const std::string& result)>;
     using OnErrorSignal = boost::signals2::signal<void(std::error_code error)>;
 
-    WitIntentSession();
+    WitRecognition();
 
-    virtual ~WitIntentSession() = default;
+    virtual ~WitRecognition() = default;
 
     virtual void
     cancel();

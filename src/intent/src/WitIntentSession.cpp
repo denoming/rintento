@@ -1,71 +1,71 @@
-#include "intent/WitIntentSession.hpp"
+#include "intent/WitRecognition.hpp"
 
 #include "common/Logger.hpp"
 
 namespace jar {
 
-WitIntentSession::WitIntentSession()
+WitRecognition::WitRecognition()
     : _interrupted{false}
 {
 }
 
 void
-WitIntentSession::cancel()
+WitRecognition::cancel()
 {
     _interrupted = true;
     _cancelSig.emit(net::cancellation_type::terminal);
 }
 
 boost::signals2::connection
-WitIntentSession::onComplete(const OnCompleteSignal::slot_type& slot)
+WitRecognition::onComplete(const OnCompleteSignal::slot_type& slot)
 {
     return _onCompleteSig.connect(slot);
 }
 
 boost::signals2::connection
-WitIntentSession::onError(const OnErrorSignal::slot_type& slot)
+WitRecognition::onError(const OnErrorSignal::slot_type& slot)
 {
     return _onErrorSig.connect(slot);
 }
 
 void
-WitIntentSession::notifyComplete(const std::string& result)
+WitRecognition::notifyComplete(const std::string& result)
 {
     _onCompleteSig(result);
 }
 
 void
-WitIntentSession::notifyError(std::error_code error)
+WitRecognition::notifyError(std::error_code error)
 {
     _onErrorSig(error);
 }
 
 void
-WitIntentSession::complete(const std::string& result)
+WitRecognition::complete(const std::string& result)
 {
     notifyComplete(result);
 }
 
 void
-WitIntentSession::complete(std::error_code error)
+WitRecognition::complete(std::error_code error)
 {
     notifyError(error);
 }
 
 bool
-WitIntentSession::interrupted() const
+WitRecognition::interrupted() const
 {
     return _interrupted;
 }
 
 net::cancellation_slot
-WitIntentSession::onCancel()
+WitRecognition::onCancel()
 {
     return _cancelSig.slot();
 }
 
 bool
-WitIntentSession::setTlsHostName(beast::ssl_stream<beast::tcp_stream>& stream,
+WitRecognition::setTlsHostName(beast::ssl_stream<beast::tcp_stream>& stream,
                                  std::string_view hostname,
                                  std::error_code& ec)
 {
@@ -79,7 +79,7 @@ WitIntentSession::setTlsHostName(beast::ssl_stream<beast::tcp_stream>& stream,
 }
 
 void
-WitIntentSession::resetTimeout(beast::ssl_stream<beast::tcp_stream>& stream)
+WitRecognition::resetTimeout(beast::ssl_stream<beast::tcp_stream>& stream)
 {
     beast::get_lowest_layer(stream).expires_after(kHttpTimeout);
 }

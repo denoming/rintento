@@ -4,7 +4,7 @@
 #include "test/Matchers.hpp"
 #include "tests/TestWorker.hpp"
 #include "intent/Config.hpp"
-#include "intent/WitIntentSpeechSession.hpp"
+#include "intent/WitSpeechRecognition.hpp"
 #include "intent/WitPendingRecognition.hpp"
 
 using namespace testing;
@@ -12,10 +12,10 @@ using namespace jar;
 
 namespace fs = std::filesystem;
 
-class WitIntentSpeechSessionTest : public Test {
+class WitSpeechRecognitionTest : public Test {
 public:
-    WitIntentSpeechSessionTest()
-        : session{WitIntentSpeechSession::create(worker.sslContext(), worker.executor())}
+    WitSpeechRecognitionTest()
+        : session{WitSpeechRecognition::create(worker.sslContext(), worker.executor())}
     {
     }
 
@@ -33,10 +33,10 @@ public:
 
 public:
     TestWorker worker;
-    WitIntentSpeechSession::Ptr session;
+    WitSpeechRecognition::Ptr session;
 };
 
-TEST_F(WitIntentSpeechSessionTest, RecognizeSpeech1)
+TEST_F(WitSpeechRecognitionTest, RecognizeSpeech1)
 {
     MockFunction<void(Utterances result, std::error_code error)> callback;
     EXPECT_CALL(callback, Call(Contains(isUtterance("turn off the light")), IsFalse()));
@@ -53,7 +53,7 @@ TEST_F(WitIntentSpeechSessionTest, RecognizeSpeech1)
                                      Contains(isConfidentIntent("light_off", 0.9f)))));
 }
 
-TEST_F(WitIntentSpeechSessionTest, RecognizeSpeech2)
+TEST_F(WitSpeechRecognitionTest, RecognizeSpeech2)
 {
     MockFunction<void(Utterances result, std::error_code error)> callback;
     EXPECT_CALL(callback, Call(Contains(isUtterance("turn on the light")), IsFalse()));
@@ -65,12 +65,12 @@ TEST_F(WitIntentSpeechSessionTest, RecognizeSpeech2)
     std::error_code error;
     const auto outcome = pending->get(error);
     EXPECT_FALSE(error);
-    EXPECT_THAT(outcome,
-                Contains(isUtterance("turn on the light",
-                                     Contains(isConfidentIntent("light_on", 0.9f)))));
+    EXPECT_THAT(
+        outcome,
+        Contains(isUtterance("turn on the light", Contains(isConfidentIntent("light_on", 0.9f)))));
 }
 
-TEST_F(WitIntentSpeechSessionTest, CancelRecognizeSpeech)
+TEST_F(WitSpeechRecognitionTest, CancelRecognizeSpeech)
 {
     MockFunction<void(Utterances result, std::error_code error)> callback;
     EXPECT_CALL(callback, Call(_, IsTrue()));
