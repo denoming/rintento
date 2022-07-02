@@ -1,6 +1,6 @@
 #pragma once
 
-#include "intent/WitCommon.hpp"
+#include "intent/Http.hpp"
 #include "intent/WitRecognition.hpp"
 
 #include <string>
@@ -9,7 +9,7 @@
 namespace jar {
 
 class WitMessageRecognition : public WitRecognition,
-                                public std::enable_shared_from_this<WitMessageRecognition> {
+                              public std::enable_shared_from_this<WitMessageRecognition> {
 public:
     using Ptr = std::shared_ptr<WitMessageRecognition>;
 

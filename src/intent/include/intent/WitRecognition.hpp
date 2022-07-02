@@ -1,6 +1,6 @@
 #pragma once
 
-#include "intent/WitCommon.hpp"
+#include "intent/Http.hpp"
 
 #include <boost/signals2.hpp>
 
