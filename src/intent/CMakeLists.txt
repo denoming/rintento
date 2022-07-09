@@ -20,6 +20,12 @@ target_sources(${TARGET}
             src/WitSpeechRecognition.cpp
             src/WitPendingRecognition.cpp
             src/WitIntentParser.cpp
+            src/WitRecognitionFactory.cpp
+            src/IntentRecognizeServer.cpp
+            src/IntentRecognizeProcessor.cpp
+            src/IntentRecognizeMessage.cpp
+            src/IntentRecognizeSpeech.cpp
+            src/IntentPerformer.cpp
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_20)
