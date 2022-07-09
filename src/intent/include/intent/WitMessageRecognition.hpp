@@ -17,6 +17,9 @@ public:
     create(ssl::context& context, net::any_io_executor& executor);
 
     void
+    run(std::string_view message);
+
+    void
     run(std::string_view host,
         std::string_view port,
         std::string_view auth,

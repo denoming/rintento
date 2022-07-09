@@ -2,6 +2,7 @@
 
 #include "intent/Uri.hpp"
 #include "common/Logger.hpp"
+#include "intent/Config.hpp"
 
 #include <fmt/format.h>
 #include <fmt/chrono.h>
@@ -10,18 +11,23 @@
 
 namespace jar {
 
-WitMessageRecognition::WitMessageRecognition(ssl::context& context,
-                                                 net::any_io_executor& executor)
+WitMessageRecognition::WitMessageRecognition(ssl::context& context, net::any_io_executor& executor)
     : _resolver{executor}
     , _stream{executor, context}
 {
 }
 
 void
+WitMessageRecognition::run(std::string_view message)
+{
+    run(WitBackendHost, WitBackendPort, WitBackendAuth, message);
+}
+
+void
 WitMessageRecognition::run(std::string_view host,
-                             std::string_view port,
-                             std::string_view auth,
-                             std::string_view message)
+                           std::string_view port,
+                           std::string_view auth,
+                           std::string_view message)
 {
     using namespace std::chrono;
 
@@ -41,18 +47,18 @@ WitMessageRecognition::run(std::string_view host,
 
     _request.version(kHttpVersion11);
     _request.method(http::verb::get);
-    _request.target(fmt::format(kTargetFormat, system_clock::now(), uri::encode(message)));
+    _request.target(fmt::format(kTargetFormat, system_clock::now(), uri::encode2(message)));
     _request.set(http::field::host, host);
     _request.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     _request.set(http::field::authorization, auth);
     _request.set(http::field::content_type, "application/json");
 
-    _resolver.async_resolve(host,
-                            port,
-                            net::bind_cancellation_slot(
-                                onCancel(),
-                                beast::bind_front_handler(&WitMessageRecognition::onResolveDone,
-                                                          shared_from_this())));
+    _resolver.async_resolve(
+        host,
+        port,
+        net::bind_cancellation_slot(
+            onCancel(),
+            beast::bind_front_handler(&WitMessageRecognition::onResolveDone, shared_from_this())));
 }
 
 WitMessageRecognition::Ptr
@@ -63,7 +69,7 @@ WitMessageRecognition::create(ssl::context& context, net::any_io_executor& execu
 
 void
 WitMessageRecognition::onResolveDone(sys::error_code error,
-                                       const tcp::resolver::results_type& result)
+                                     const tcp::resolver::results_type& result)
 {
     if (error) {
         LOGE("Failed to resolve address: <{}>", error.what());
@@ -84,13 +90,12 @@ WitMessageRecognition::onResolveDone(sys::error_code error,
         result,
         net::bind_cancellation_slot(
             onCancel(),
-            beast::bind_front_handler(&WitMessageRecognition::onConnectDone,
-                                      shared_from_this())));
+            beast::bind_front_handler(&WitMessageRecognition::onConnectDone, shared_from_this())));
 }
 
 void
 WitMessageRecognition::onConnectDone(sys::error_code error,
-                                       const tcp::resolver::results_type::endpoint_type& endpoint)
+                                     const tcp::resolver::results_type::endpoint_type& endpoint)
 {
     if (error) {
         LOGE("Failed to connect: <{}>", error.what());
