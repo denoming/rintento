@@ -10,7 +10,7 @@ target_link_libraries(${TARGET}
 
 target_sources(${TARGET}
     PRIVATE src/TestMain.cpp
-        src/TestWorker.cpp
+            src/TestWorker.cpp
 )
 
 target_include_directories(${TARGET}

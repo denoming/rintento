@@ -90,9 +90,8 @@ WitPendingRecognition::onComplete(const std::string& result)
 
     if (_executor) {
         assert(_callback);
-        net::post(_executor, [utterances, callback = std::move(_callback)](){
-            callback(utterances, {});
-        });
+        net::post(_executor,
+                  [utterances, callback = std::move(_callback)]() { callback(utterances, {}); });
     } else {
         if (_callback) {
             _callback(utterances, {});
@@ -107,9 +106,7 @@ WitPendingRecognition::onError(std::error_code error)
 {
     if (_executor) {
         assert(_callback);
-        net::post(_executor, [error, callback = std::move(_callback)](){
-            callback({}, error);
-        });
+        net::post(_executor, [error, callback = std::move(_callback)]() { callback({}, error); });
     } else {
         if (_callback) {
             _callback({}, error);
