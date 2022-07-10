@@ -8,9 +8,9 @@ target_include_directories(${TARGET}
 )
 
 target_link_libraries(${TARGET}
-    PUBLIC Jarvis::Common
-    PRIVATE fmt::fmt OpenSSL::SSL OpenSSL::Crypto Boost::json
-)
+        PUBLIC Jarvis::Common
+        PRIVATE fmt::fmt OpenSSL::SSL OpenSSL::Crypto Boost::json Boost::url
+        )
 
 target_sources(${TARGET}
     PRIVATE src/Types.cpp
@@ -25,7 +25,8 @@ target_sources(${TARGET}
             src/IntentRecognizeProcessor.cpp
             src/IntentRecognizeMessage.cpp
             src/IntentRecognizeSpeech.cpp
-            src/IntentPerformer.cpp
+        src/IntentPerformer.cpp
+        src/Utils.cpp
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_20)

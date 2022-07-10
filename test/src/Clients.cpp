@@ -1,8 +1,8 @@
 #include "test/Clients.hpp"
 
-#include "intent/Uri.hpp"
+#include "intent/Constants.hpp"
+#include "intent/Utils.hpp"
 
-#include <fmt/format.h>
 #include <boost/json.hpp>
 
 namespace json = boost::json;
@@ -40,8 +40,6 @@ getResult(const std::string& input)
 Result
 recognizeMessage(std::string_view host, std::string_view port, std::string_view message)
 {
-    static constexpr std::string_view kTargetFormat{"/message?q={}"};
-
     net::io_context context;
     tcp::resolver resolver{context};
     auto const results = resolver.resolve(host, port);
@@ -52,7 +50,7 @@ recognizeMessage(std::string_view host, std::string_view port, std::string_view 
     beast::tcp_stream stream{context};
     stream.connect(results);
 
-    const auto target = fmt::format(kTargetFormat, uri::encode2(message));
+    const auto target = format::messageTarget(message);
     http::request<http::string_body> req{http::verb::get, target, kHttpVersion11};
     req.set(http::field::host, host);
     req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);

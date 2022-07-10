@@ -9,7 +9,6 @@ set_target_properties(${TARGET}
 
 target_sources(${TARGET}
     PRIVATE src/Clients.cpp
-            src/UriTest.cpp
             src/WitIntentParserTest.cpp
             src/WitMessageRecognitionTest.cpp
             src/WitSpeechRecognitionTest.cpp

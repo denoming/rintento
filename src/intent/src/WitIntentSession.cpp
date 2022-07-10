@@ -1,5 +1,6 @@
 #include "intent/WitRecognition.hpp"
 
+#include "intent/Constants.hpp"
 #include "common/Logger.hpp"
 
 namespace jar {

@@ -1,13 +1,9 @@
 #include "intent/WitMessageRecognition.hpp"
 
-#include "intent/Uri.hpp"
 #include "common/Logger.hpp"
+#include "intent/Constants.hpp"
+#include "intent/Utils.hpp"
 #include "intent/Config.hpp"
-
-#include <fmt/format.h>
-#include <fmt/chrono.h>
-
-#include <chrono>
 
 namespace jar {
 
@@ -29,10 +25,6 @@ WitMessageRecognition::run(std::string_view host,
                            std::string_view auth,
                            std::string_view message)
 {
-    using namespace std::chrono;
-
-    static constexpr std::string_view kTargetFormat{"/message?v={:%Y%m%d}&q={}"};
-
     assert(!host.empty());
     assert(!port.empty());
     assert(!auth.empty());
@@ -47,7 +39,7 @@ WitMessageRecognition::run(std::string_view host,
 
     _request.version(kHttpVersion11);
     _request.method(http::verb::get);
-    _request.target(fmt::format(kTargetFormat, system_clock::now(), uri::encode2(message)));
+    _request.target(format::messageTargetWithDate(message));
     _request.set(http::field::host, host);
     _request.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     _request.set(http::field::authorization, auth);

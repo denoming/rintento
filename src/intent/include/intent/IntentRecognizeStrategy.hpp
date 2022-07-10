@@ -1,5 +1,6 @@
 #pragma once
 
+#include "intent/Http.hpp"
 #include "intent/Types.hpp"
 
 #include <memory>

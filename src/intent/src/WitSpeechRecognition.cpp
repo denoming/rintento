@@ -1,18 +1,14 @@
 #include "intent/WitSpeechRecognition.hpp"
 
-#include "intent/Uri.hpp"
+#include "intent/Constants.hpp"
+#include "intent/Utils.hpp"
 #include "common/Logger.hpp"
 
-#include <fmt/format.h>
-#include <fmt/chrono.h>
-
-#include <chrono>
 #include <fstream>
 
 namespace jar {
 
-WitSpeechRecognition::WitSpeechRecognition(ssl::context& context,
-                                               net::any_io_executor& executor)
+WitSpeechRecognition::WitSpeechRecognition(ssl::context& context, net::any_io_executor& executor)
     : _resolver{executor}
     , _stream{executor, context}
 {
@@ -20,14 +16,10 @@ WitSpeechRecognition::WitSpeechRecognition(ssl::context& context,
 
 void
 WitSpeechRecognition::run(std::string_view host,
-                            std::string_view port,
-                            std::string_view auth,
-                            fs::path data)
+                          std::string_view port,
+                          std::string_view auth,
+                          fs::path data)
 {
-    using namespace std::chrono;
-
-    static constexpr std::string_view kTargetFormat{"/speech?v={:%Y%m%d}"};
-
     assert(!host.empty());
     assert(!port.empty());
     assert(!auth.empty());
@@ -51,7 +43,7 @@ WitSpeechRecognition::run(std::string_view host,
     fs.read(reinterpret_cast<char*>(_fileData.get()), _fileSize);
 
     _request.version(kHttpVersion11);
-    _request.target(fmt::format(kTargetFormat, system_clock::now()));
+    _request.target();
     _request.method(http::verb::post);
     _request.set(http::field::host, host);
     _request.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
@@ -77,7 +69,7 @@ WitSpeechRecognition::create(ssl::context& context, net::any_io_executor& execut
 
 void
 WitSpeechRecognition::onResolveDone(sys::error_code error,
-                                      const tcp::resolver::results_type& result)
+                                    const tcp::resolver::results_type& result)
 {
     if (error) {
         LOGE("Failed to resolve: <{}>", error.what());
@@ -103,7 +95,7 @@ WitSpeechRecognition::onResolveDone(sys::error_code error,
 
 void
 WitSpeechRecognition::onConnectDone(sys::error_code error,
-                                      const tcp::resolver::results_type::endpoint_type& endpoint)
+                                    const tcp::resolver::results_type::endpoint_type& endpoint)
 {
     if (error) {
         LOGE("Failed to connect: <{}>", error.what());
@@ -120,11 +112,11 @@ WitSpeechRecognition::onConnectDone(sys::error_code error,
     LOGD("Connection with <{}> was established", endpoint.address().to_string());
     resetTimeout(_stream);
 
-    _stream.async_handshake(ssl::stream_base::client,
-                            net::bind_cancellation_slot(
-                                onCancel(),
-                                beast::bind_front_handler(&WitSpeechRecognition::onHandshakeDone,
-                                                          shared_from_this())));
+    _stream.async_handshake(
+        ssl::stream_base::client,
+        net::bind_cancellation_slot(
+            onCancel(),
+            beast::bind_front_handler(&WitSpeechRecognition::onHandshakeDone, shared_from_this())));
 }
 
 void
@@ -229,19 +221,19 @@ WitSpeechRecognition::onWriteDone(sys::error_code error, std::size_t bytesTransf
         const auto size = std::min<long>(ChunkSize, _fileSize);
         auto chunk = http::make_chunk(net::const_buffer(_fileData.get() + _fileOffset, size));
         _fileSize -= size, _fileOffset += size;
-        net::async_write(_stream,
-                         chunk,
-                         net::bind_cancellation_slot(
-                             onCancel(),
-                             beast::bind_front_handler(&WitSpeechRecognition::onWriteDone,
-                                                       shared_from_this())));
+        net::async_write(
+            _stream,
+            chunk,
+            net::bind_cancellation_slot(
+                onCancel(),
+                beast::bind_front_handler(&WitSpeechRecognition::onWriteDone, shared_from_this())));
     } else {
-        net::async_write(_stream,
-                         http::make_chunk_last(),
-                         net::bind_cancellation_slot(
-                             onCancel(),
-                             beast::bind_front_handler(&WitSpeechRecognition::onReadReady,
-                                                       shared_from_this())));
+        net::async_write(
+            _stream,
+            http::make_chunk_last(),
+            net::bind_cancellation_slot(
+                onCancel(),
+                beast::bind_front_handler(&WitSpeechRecognition::onReadReady, shared_from_this())));
     }
 }
 

@@ -3,7 +3,7 @@
 #include "common/Logger.hpp"
 #include "intent/IntentRecognizeMessage.hpp"
 #include "intent/IntentRecognizeSpeech.hpp"
-#include "intent/Uri.hpp"
+#include "intent/Utils.hpp"
 
 namespace jar {
 
@@ -65,11 +65,9 @@ struct Parser {
             dispatcher(tags::NotFound{}, std::move(response));
         };
 
-        if (request.target().starts_with("/message")) {
-            if (auto p = request.target().find("?q="); p != std::string_view::npos) {
-                dispatcher(tags::RecognizeMessage{}, uri::decode2(request.target().substr(p + 3)));
-                return;
-            }
+        if (auto messageOpt = parse::messageTarget(request.target()); messageOpt) {
+            dispatcher(tags::RecognizeMessage{}, *messageOpt);
+            return;
         }
 
         notFound(request.target());
