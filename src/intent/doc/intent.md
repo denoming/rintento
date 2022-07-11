@@ -5,14 +5,14 @@
 @startuml
 !theme vibrant
 
-class PendingRecognition {
+class RecognitionObserver {
     +ready(): bool
     +wait()
     +get(error&): Utterances
     +cancel()
 }
 
-WitPendingRecognition <|-- PendingRecognition
+WitRecognitionObserver <|-- RecognitionObserver
 
 class WitMessageRecognition {
     {static} create(context, executor)

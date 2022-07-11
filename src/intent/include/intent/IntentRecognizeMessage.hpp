@@ -3,7 +3,7 @@
 #include "intent/IntentRecognizeConnection.hpp"
 #include "intent/IntentRecognizeStrategy.hpp"
 #include "intent/WitMessageRecognition.hpp"
-#include "intent/PendingRecognition.hpp"
+#include "intent/RecognitionObserver.hpp"
 
 namespace jar {
 
@@ -24,7 +24,7 @@ private:
     IntentRecognizeConnection::Ptr _connection;
     std::string _message;
     Callback _callback;
-    PendingRecognition::Ptr _pending;
+    RecognitionObserver::Ptr _observer;
 };
 
 } // namespace jar

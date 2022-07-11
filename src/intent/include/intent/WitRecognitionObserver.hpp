@@ -2,13 +2,13 @@
 
 #include "intent/Http.hpp"
 #include "intent/Types.hpp"
-#include "intent/PendingRecognition.hpp"
+#include "intent/RecognitionObserver.hpp"
 
 #include <boost/signals2/connection.hpp>
 
 namespace jar {
 
-class WitPendingRecognition : public PendingRecognition {
+class WitRecognitionObserver : public RecognitionObserver {
 public:
     static Ptr
     create(std::weak_ptr<void> target);
@@ -18,19 +18,19 @@ public:
            RecognitionCalback callback,
            net::any_io_executor executor = {});
 
-    ~WitPendingRecognition() override;
+    ~WitRecognitionObserver() override;
 
     void
     cancel() override;
 
 private:
     friend class WitIntentRecognizer;
-    explicit WitPendingRecognition(std::weak_ptr<void> target);
+    explicit WitRecognitionObserver(std::weak_ptr<void> target);
 
     friend class WitIntentRecognizer;
-    explicit WitPendingRecognition(std::weak_ptr<void> target,
-                                   RecognitionCalback callback,
-                                   net::any_io_executor executor = {});
+    explicit WitRecognitionObserver(std::weak_ptr<void> target,
+                                    RecognitionCalback callback,
+                                    net::any_io_executor executor = {});
 
     void
     subscribe();

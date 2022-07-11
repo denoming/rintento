@@ -14,20 +14,20 @@ target_link_libraries(${TARGET}
 
 target_sources(${TARGET}
     PRIVATE src/Types.cpp
-            src/PendingRecognition.cpp
-            src/WitIntentSession.cpp
-            src/WitMessageRecognition.cpp
-            src/WitSpeechRecognition.cpp
-            src/WitPendingRecognition.cpp
-            src/WitIntentParser.cpp
-            src/WitRecognitionFactory.cpp
-            src/IntentRecognizeServer.cpp
-            src/IntentRecognizeProcessor.cpp
-            src/IntentRecognizeMessage.cpp
-            src/IntentRecognizeSpeech.cpp
+        src/RecognitionObserver.cpp
+        src/WitIntentSession.cpp
+        src/WitMessageRecognition.cpp
+        src/WitSpeechRecognition.cpp
+        src/WitRecognitionObserver.cpp
+        src/WitIntentParser.cpp
+        src/WitRecognitionFactory.cpp
+        src/IntentRecognizeServer.cpp
+        src/IntentRecognizeProcessor.cpp
+        src/IntentRecognizeMessage.cpp
+        src/IntentRecognizeSpeech.cpp
         src/IntentPerformer.cpp
         src/Utils.cpp
-)
+        )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_20)
 

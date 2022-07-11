@@ -1,7 +1,7 @@
 #include "intent/IntentRecognizeMessage.hpp"
 
 #include "intent/WitMessageRecognition.hpp"
-#include "intent/WitPendingRecognition.hpp"
+#include "intent/WitRecognitionObserver.hpp"
 #include "common/Logger.hpp"
 #include "intent/Http.hpp"
 
@@ -60,7 +60,7 @@ IntentRecognizeMessage::execute(Callback callback)
     assert(callback);
     _callback = std::move(callback);
 
-    _pending = WitPendingRecognition::create(
+    _observer = WitRecognitionObserver::create(
         _recognition,
         [this](auto result, auto error) { onComplete(std::move(result), error); },
         _connection->executor());

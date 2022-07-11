@@ -5,7 +5,7 @@
 #include "tests/TestWorker.hpp"
 #include "intent/Config.hpp"
 #include "intent/WitSpeechRecognition.hpp"
-#include "intent/WitPendingRecognition.hpp"
+#include "intent/WitRecognitionObserver.hpp"
 
 using namespace testing;
 using namespace jar;
@@ -42,7 +42,7 @@ TEST_F(WitSpeechRecognitionTest, RecognizeSpeech1)
 {
     MockFunction<void(Utterances result, std::error_code error)> callback;
     EXPECT_CALL(callback, Call(Contains(isUtterance("turn off the light")), IsFalse()));
-    auto pending = WitPendingRecognition::create(session, callback.AsStdFunction());
+    auto pending = WitRecognitionObserver::create(session, callback.AsStdFunction());
 
     const fs::path audioFilePath{AssetAudioPath / "turn-off-the-light.raw"};
     session->run(WitBackendHost, WitBackendPort, WitBackendAuth, audioFilePath);
@@ -59,7 +59,7 @@ TEST_F(WitSpeechRecognitionTest, RecognizeSpeech2)
 {
     MockFunction<void(Utterances result, std::error_code error)> callback;
     EXPECT_CALL(callback, Call(Contains(isUtterance("turn on the light")), IsFalse()));
-    auto pending = WitPendingRecognition::create(session, callback.AsStdFunction());
+    auto pending = WitRecognitionObserver::create(session, callback.AsStdFunction());
 
     const fs::path audioFilePath{AssetAudioPath / "turn-on-the-light.raw"};
     session->run(WitBackendHost, WitBackendPort, WitBackendAuth, audioFilePath);
@@ -76,7 +76,7 @@ TEST_F(WitSpeechRecognitionTest, CancelRecognizeSpeech)
 {
     MockFunction<void(Utterances result, std::error_code error)> callback;
     EXPECT_CALL(callback, Call(_, IsTrue()));
-    auto pending = WitPendingRecognition::create(session, callback.AsStdFunction());
+    auto pending = WitRecognitionObserver::create(session, callback.AsStdFunction());
 
     const fs::path audioFilePath{AssetAudioPath / "turn-on-the-light.raw"};
     session->run(WitBackendHost, WitBackendPort, WitBackendAuth, audioFilePath);

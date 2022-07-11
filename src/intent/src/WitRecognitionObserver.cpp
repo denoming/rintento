@@ -1,4 +1,4 @@
-#include "intent/WitPendingRecognition.hpp"
+#include "intent/WitRecognitionObserver.hpp"
 
 #include "intent/WitIntentParser.hpp"
 #include "intent/WitRecognition.hpp"
@@ -6,29 +6,29 @@
 
 namespace jar {
 
-WitPendingRecognition::WitPendingRecognition(std::weak_ptr<void> target)
-    : PendingRecognition{std::move(target)}
+WitRecognitionObserver::WitRecognitionObserver(std::weak_ptr<void> target)
+    : RecognitionObserver{std::move(target)}
 {
     subscribe();
 }
 
-WitPendingRecognition::WitPendingRecognition(std::weak_ptr<void> target,
-                                             RecognitionCalback callback,
-                                             net::any_io_executor executor)
-    : PendingRecognition{std::move(target)}
+WitRecognitionObserver::WitRecognitionObserver(std::weak_ptr<void> target,
+                                               RecognitionCalback callback,
+                                               net::any_io_executor executor)
+    : RecognitionObserver{std::move(target)}
     , _callback{std::move(callback)}
     , _executor{std::move(executor)}
 {
     subscribe();
 }
 
-WitPendingRecognition::~WitPendingRecognition()
+WitRecognitionObserver::~WitRecognitionObserver()
 {
     unsubscribe();
 }
 
 void
-WitPendingRecognition::cancel()
+WitRecognitionObserver::cancel()
 {
     if (auto session = std::static_pointer_cast<WitRecognition>(target()); session) {
         session->cancel();
@@ -37,23 +37,23 @@ WitPendingRecognition::cancel()
     }
 }
 
-WitPendingRecognition::Ptr
-WitPendingRecognition::create(std::weak_ptr<void> target)
+WitRecognitionObserver::Ptr
+WitRecognitionObserver::create(std::weak_ptr<void> target)
 {
-    return std::unique_ptr<WitPendingRecognition>(new WitPendingRecognition(std::move(target)));
+    return std::unique_ptr<WitRecognitionObserver>(new WitRecognitionObserver(std::move(target)));
 }
 
-WitPendingRecognition::Ptr
-WitPendingRecognition::create(std::weak_ptr<void> target,
-                              RecognitionCalback callback,
-                              net::any_io_executor executor)
+WitRecognitionObserver::Ptr
+WitRecognitionObserver::create(std::weak_ptr<void> target,
+                               RecognitionCalback callback,
+                               net::any_io_executor executor)
 {
-    return std::unique_ptr<WitPendingRecognition>(
-        new WitPendingRecognition(std::move(target), std::move(callback), std::move(executor)));
+    return std::unique_ptr<WitRecognitionObserver>(
+        new WitRecognitionObserver(std::move(target), std::move(callback), std::move(executor)));
 }
 
 void
-WitPendingRecognition::subscribe()
+WitRecognitionObserver::subscribe()
 {
     if (auto session = std::static_pointer_cast<WitRecognition>(target()); session) {
         _onCompleteCon = session->onComplete(
@@ -66,7 +66,7 @@ WitPendingRecognition::subscribe()
 }
 
 void
-WitPendingRecognition::unsubscribe()
+WitRecognitionObserver::unsubscribe()
 {
     try {
         _onCompleteCon.disconnect();
@@ -77,7 +77,7 @@ WitPendingRecognition::unsubscribe()
 }
 
 void
-WitPendingRecognition::onComplete(const std::string& result)
+WitRecognitionObserver::onComplete(const std::string& result)
 {
     WitIntentParser parser;
     std::error_code error;
@@ -102,7 +102,7 @@ WitPendingRecognition::onComplete(const std::string& result)
 }
 
 void
-WitPendingRecognition::onError(std::error_code error)
+WitRecognitionObserver::onError(std::error_code error)
 {
     if (_executor) {
         assert(_callback);

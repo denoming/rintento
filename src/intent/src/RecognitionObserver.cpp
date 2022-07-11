@@ -1,32 +1,32 @@
-#include "intent/PendingRecognition.hpp"
+#include "intent/RecognitionObserver.hpp"
 
 namespace jar {
 
-PendingRecognition::PendingRecognition(std::weak_ptr<void> target)
+RecognitionObserver::RecognitionObserver(std::weak_ptr<void> target)
 {
     attach(std::move(target));
 }
 
-PendingRecognition::~PendingRecognition()
+RecognitionObserver::~RecognitionObserver()
 {
     detach();
 }
 
 bool
-PendingRecognition::ready() const
+RecognitionObserver::ready() const
 {
     return _ready;
 }
 
 void
-PendingRecognition::wait()
+RecognitionObserver::wait()
 {
     std::unique_lock lock{_readyGuard};
     _readyCv.wait(lock, [this]() { return _ready.load(); });
 }
 
 Utterances
-PendingRecognition::get(std::error_code& error)
+RecognitionObserver::get(std::error_code& error)
 {
     if (!attached()) {
         throw std::runtime_error{"Not attached"};
@@ -44,13 +44,13 @@ PendingRecognition::get(std::error_code& error)
 }
 
 std::shared_ptr<void>
-PendingRecognition::target()
+RecognitionObserver::target()
 {
     return _target.lock();
 }
 
 void
-PendingRecognition::setOutcome(Utterances value)
+RecognitionObserver::setOutcome(Utterances value)
 {
     std::unique_lock lock{_readyGuard};
     _outcome = std::move(value);
@@ -60,7 +60,7 @@ PendingRecognition::setOutcome(Utterances value)
 }
 
 void
-PendingRecognition::setError(std::error_code value)
+RecognitionObserver::setError(std::error_code value)
 {
     std::unique_lock lock{_readyGuard};
     _error = value;
@@ -70,19 +70,19 @@ PendingRecognition::setError(std::error_code value)
 }
 
 bool
-PendingRecognition::attached() const
+RecognitionObserver::attached() const
 {
     return !_target.expired();
 }
 
 void
-PendingRecognition::attach(std::weak_ptr<void> target)
+RecognitionObserver::attach(std::weak_ptr<void> target)
 {
     _target = std::move(target);
 }
 
 void
-PendingRecognition::detach()
+RecognitionObserver::detach()
 {
     _target.reset();
 }

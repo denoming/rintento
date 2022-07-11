@@ -5,7 +5,7 @@
 #include "tests/TestWorker.hpp"
 #include "intent/Config.hpp"
 #include "intent/WitMessageRecognition.hpp"
-#include "intent/WitPendingRecognition.hpp"
+#include "intent/WitRecognitionObserver.hpp"
 
 using namespace testing;
 using namespace jar;
@@ -38,7 +38,7 @@ TEST_F(WitMessageRecognitionTest, RecognizeMessage)
 {
     MockFunction<void(Utterances result, std::error_code error)> callback;
     EXPECT_CALL(callback, Call(Contains(isUtterance("turn off the light")), IsFalse()));
-    auto pending = WitPendingRecognition::create(session, callback.AsStdFunction());
+    auto pending = WitRecognitionObserver::create(session, callback.AsStdFunction());
 
     std::string_view message{"turn off the light"};
     session->run(WitBackendHost, WitBackendPort, WitBackendAuth, message);
@@ -55,7 +55,7 @@ TEST_F(WitMessageRecognitionTest, CancelRecognizeMessage)
 {
     MockFunction<void(Utterances result, std::error_code error)> callback;
     EXPECT_CALL(callback, Call(_, IsTrue()));
-    auto pending = WitPendingRecognition::create(session, callback.AsStdFunction());
+    auto pending = WitRecognitionObserver::create(session, callback.AsStdFunction());
 
     std::string_view message{"turn off the light"};
     session->run(WitBackendHost, WitBackendPort, WitBackendAuth, message);

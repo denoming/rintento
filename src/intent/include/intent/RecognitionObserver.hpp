@@ -10,11 +10,11 @@
 
 namespace jar {
 
-class PendingRecognition {
+class RecognitionObserver {
 public:
-    using Ptr = std::unique_ptr<PendingRecognition>;
+    using Ptr = std::unique_ptr<RecognitionObserver>;
 
-    virtual ~PendingRecognition();
+    virtual ~RecognitionObserver();
 
     [[nodiscard]] bool
     ready() const;
@@ -30,7 +30,7 @@ public:
         = 0;
 
 protected:
-    explicit PendingRecognition(std::weak_ptr<void> target);
+    explicit RecognitionObserver(std::weak_ptr<void> target);
 
     std::shared_ptr<void>
     target();
