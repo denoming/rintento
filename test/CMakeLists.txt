@@ -29,5 +29,5 @@ target_compile_definitions(${TARGET}
 )
 
 if (NOT CMAKE_CROSSCOMPILING)
-    gtest_discover_tests(${TARGET})
+    gtest_discover_tests(${TARGET} WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 endif()

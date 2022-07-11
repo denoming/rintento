@@ -14,6 +14,8 @@ namespace fs = std::filesystem;
 
 class WitSpeechRecognitionTest : public Test {
 public:
+    const fs::path AssetAudioPath{fs::current_path() / "asset" / "audio"};
+
     WitSpeechRecognitionTest()
         : session{WitSpeechRecognition::create(worker.sslContext(), worker.executor())}
     {
@@ -42,7 +44,7 @@ TEST_F(WitSpeechRecognitionTest, RecognizeSpeech1)
     EXPECT_CALL(callback, Call(Contains(isUtterance("turn off the light")), IsFalse()));
     auto pending = WitPendingRecognition::create(session, callback.AsStdFunction());
 
-    const fs::path audioFilePath{"asset/audio/turn-off-the-light.raw"};
+    const fs::path audioFilePath{AssetAudioPath / "turn-off-the-light.raw"};
     session->run(WitBackendHost, WitBackendPort, WitBackendAuth, audioFilePath);
 
     std::error_code error;
@@ -59,7 +61,7 @@ TEST_F(WitSpeechRecognitionTest, RecognizeSpeech2)
     EXPECT_CALL(callback, Call(Contains(isUtterance("turn on the light")), IsFalse()));
     auto pending = WitPendingRecognition::create(session, callback.AsStdFunction());
 
-    const fs::path audioFilePath{"asset/audio/turn-on-the-light.raw"};
+    const fs::path audioFilePath{AssetAudioPath / "turn-on-the-light.raw"};
     session->run(WitBackendHost, WitBackendPort, WitBackendAuth, audioFilePath);
 
     std::error_code error;
@@ -76,7 +78,7 @@ TEST_F(WitSpeechRecognitionTest, CancelRecognizeSpeech)
     EXPECT_CALL(callback, Call(_, IsTrue()));
     auto pending = WitPendingRecognition::create(session, callback.AsStdFunction());
 
-    const fs::path audioFilePath{"asset/audio/turn-on-the-light.raw"};
+    const fs::path audioFilePath{AssetAudioPath / "turn-on-the-light.raw"};
     session->run(WitBackendHost, WitBackendPort, WitBackendAuth, audioFilePath);
 
     // Cancel message recognizing
