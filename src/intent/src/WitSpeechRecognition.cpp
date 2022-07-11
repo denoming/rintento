@@ -43,7 +43,7 @@ WitSpeechRecognition::run(std::string_view host,
     fs.read(reinterpret_cast<char*>(_fileData.get()), _fileSize);
 
     _request.version(kHttpVersion11);
-    _request.target();
+    _request.target(format::speechTargetWithDate());
     _request.method(http::verb::post);
     _request.set(http::field::host, host);
     _request.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
