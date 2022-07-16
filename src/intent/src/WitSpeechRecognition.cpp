@@ -28,7 +28,7 @@ WitSpeechRecognition::run(std::string_view host,
     std::error_code error;
     if (!setTlsHostName(_stream, host, error)) {
         LOGE("Failed to set TLS hostname: ", error.message());
-        complete(error);
+        notifyError(error);
         return;
     }
 
@@ -73,13 +73,13 @@ WitSpeechRecognition::onResolveDone(sys::error_code error,
 {
     if (error) {
         LOGE("Failed to resolve: <{}>", error.what());
-        complete(error);
+        notifyError(error);
         return;
     }
 
     if (interrupted()) {
         LOGD("Operation was interrupted");
-        complete(sys::errc::make_error_code(sys::errc::operation_canceled));
+        notifyError(sys::errc::make_error_code(sys::errc::operation_canceled));
         return;
     }
 
@@ -99,13 +99,13 @@ WitSpeechRecognition::onConnectDone(sys::error_code error,
 {
     if (error) {
         LOGE("Failed to connect: <{}>", error.what());
-        complete(error);
+        notifyError(error);
         return;
     }
 
     if (interrupted()) {
         LOGD("Operation was interrupted");
-        complete(sys::errc::make_error_code(sys::errc::operation_canceled));
+        notifyError(sys::errc::make_error_code(sys::errc::operation_canceled));
         return;
     }
 
@@ -125,13 +125,13 @@ WitSpeechRecognition::onHandshakeDone(sys::error_code error)
     if (error) {
         LOGE("Failed to handshake: <{}>", error.what());
         beast::get_lowest_layer(_stream).close();
-        complete(error);
+        notifyError(error);
         return;
     }
 
     if (interrupted()) {
         LOGD("Operation was interrupted");
-        complete(sys::errc::make_error_code(sys::errc::operation_canceled));
+        notifyError(sys::errc::make_error_code(sys::errc::operation_canceled));
         return;
     }
 
@@ -142,7 +142,7 @@ WitSpeechRecognition::onHandshakeDone(sys::error_code error)
     const auto bytesTransferred = http::write_header(_stream, hs, error);
     if (error) {
         LOGE("Failed to write request header: <{}>", error.what());
-        complete(error);
+        notifyError(error);
         return;
     } else {
         LOGD("Writing of request header was successful: <{}> bytes", bytesTransferred);
@@ -165,20 +165,20 @@ WitSpeechRecognition::onReadContinueDone(sys::error_code error, std::size_t byte
     if (error) {
         LOGE("Failed to read continue: <{}>", error.what());
         beast::get_lowest_layer(_stream).close();
-        complete(error);
+        notifyError(error);
         return;
     }
 
     if (_response.result() != http::status::continue_) {
         LOGE("Continue reading is not available");
         beast::get_lowest_layer(_stream).close();
-        complete(std::make_error_code(std::errc::illegal_byte_sequence));
+        notifyError(std::make_error_code(std::errc::illegal_byte_sequence));
         return;
     }
 
     if (interrupted()) {
         LOGD("Operation was interrupted");
-        complete(sys::errc::make_error_code(sys::errc::operation_canceled));
+        notifyError(sys::errc::make_error_code(sys::errc::operation_canceled));
         return;
     }
 
@@ -204,13 +204,13 @@ WitSpeechRecognition::onWriteDone(sys::error_code error, std::size_t bytesTransf
     if (error) {
         LOGE("Failed to write chunk: <{}>", error.what());
         beast::get_lowest_layer(_stream).close();
-        complete(error);
+        notifyError(error);
         return;
     }
 
     if (interrupted()) {
         LOGD("Operation was interrupted");
-        complete(sys::errc::make_error_code(sys::errc::operation_canceled));
+        notifyError(sys::errc::make_error_code(sys::errc::operation_canceled));
         return;
     }
 
@@ -243,13 +243,13 @@ WitSpeechRecognition::onReadReady(sys::error_code error, std::size_t bytesTransf
     if (error) {
         LOGE("Failed to write last chunk: <{}>", error.what());
         beast::get_lowest_layer(_stream).close();
-        complete(error);
+        notifyError(error);
         return;
     }
 
     if (interrupted()) {
         LOGD("Operation was interrupted");
-        complete(sys::errc::make_error_code(sys::errc::operation_canceled));
+        notifyError(sys::errc::make_error_code(sys::errc::operation_canceled));
         return;
     }
 
@@ -271,13 +271,13 @@ WitSpeechRecognition::onReadDone(sys::error_code error, std::size_t bytesTransfe
     if (error) {
         LOGE("Failed to read: <{}>", error.what());
         beast::get_lowest_layer(_stream).close();
-        complete(error);
+        notifyError(error);
         return;
     }
 
     if (interrupted()) {
         LOGD("Operation was interrupted");
-        complete(sys::errc::make_error_code(sys::errc::operation_canceled));
+        notifyError(sys::errc::make_error_code(sys::errc::operation_canceled));
         return;
     }
 
@@ -302,7 +302,7 @@ WitSpeechRecognition::onShutdownDone(sys::error_code error)
         LOGD("Shutdown of connection was successful");
     }
 
-    complete(_response.body());
+    notifyComplete(_response.body());
 
     beast::get_lowest_layer(_stream).close();
 }

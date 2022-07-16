@@ -14,6 +14,11 @@ void
 WitRecognition::cancel()
 {
     _interrupted = true;
+
+    if (starving()) {
+        notifyError(sys::errc::make_error_code(sys::errc::operation_canceled));
+    }
+
     _cancelSig.emit(net::cancellation_type::terminal);
 }
 
@@ -29,6 +34,24 @@ WitRecognition::onError(const OnErrorSignal::slot_type& slot)
     return _onErrorSig.connect(slot);
 }
 
+signals::connection
+WitRecognition::onData(const OnDataSignal::slot_type& slot)
+{
+    return _onDataSig.connect(slot);
+}
+
+void
+WitRecognition::starving(bool value)
+{
+    _starving = value;
+}
+
+bool
+WitRecognition::starving() const
+{
+    return _starving;
+}
+
 void
 WitRecognition::notifyComplete(const std::string& result)
 {
@@ -42,15 +65,9 @@ WitRecognition::notifyError(std::error_code error)
 }
 
 void
-WitRecognition::complete(const std::string& result)
+WitRecognition::notifyData()
 {
-    notifyComplete(result);
-}
-
-void
-WitRecognition::complete(std::error_code error)
-{
-    notifyError(error);
+    _onDataSig();
 }
 
 bool
@@ -67,8 +84,8 @@ WitRecognition::onCancel()
 
 bool
 WitRecognition::setTlsHostName(beast::ssl_stream<beast::tcp_stream>& stream,
-                                 std::string_view hostname,
-                                 std::error_code& ec)
+                               std::string_view hostname,
+                               std::error_code& ec)
 {
     // Set SNI Hostname (many hosts need this to handshake successfully)
     if (SSL_set_tlsext_host_name(stream.native_handle(), hostname.data())) {

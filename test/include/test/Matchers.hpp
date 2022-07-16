@@ -7,34 +7,34 @@
 namespace testing {
 
 inline Matcher<jar::Intent>
-isIntent(const std::string& name)
+isIntent(std::string_view name)
 {
     return Field(&jar::Intent::name, StrCaseEq(name));
 }
 
 inline Matcher<jar::Intent>
-isIntent(const std::string& name, float confidence)
+isIntent(std::string_view name, float confidence)
 {
     return AllOf(Field(&jar::Intent::name, StrCaseEq(name)),
                  Field(&jar::Intent::confidence, FloatEq(confidence)));
 }
 
 inline Matcher<jar::Intent>
-isConfidentIntent(const std::string& name, float threshold)
+isConfidentIntent(std::string_view name, float threshold)
 {
     return AllOf(Field(&jar::Intent::name, StrCaseEq(name)),
                  Field(&jar::Intent::confidence, Gt(threshold)));
 }
 
 inline Matcher<jar::Utterance>
-isUtterance(const std::string& text, const Matcher<jar::Intents>& intent)
+isUtterance(std::string_view text, const Matcher<jar::Intents>& intent)
 {
     return AllOf(Field(&jar::Utterance::text, StrCaseEq(text)),
                  Field(&jar::Utterance::intents, intent));
 }
 
 inline Matcher<jar::Utterance>
-isUtterance(const std::string& text)
+isUtterance(std::string_view text)
 {
     return Field(&jar::Utterance::text, StrCaseEq(text));
 }

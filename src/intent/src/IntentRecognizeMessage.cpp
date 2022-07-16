@@ -52,6 +52,13 @@ IntentRecognizeMessage::IntentRecognizeMessage(WitMessageRecognition::Ptr recogn
 {
     assert(recognition);
     assert(connection);
+
+    _onDataCon = _recognition->onData([this]() { onData(); });
+}
+
+IntentRecognizeMessage::~IntentRecognizeMessage()
+{
+    _onDataCon.disconnect();
 }
 
 void
@@ -65,7 +72,7 @@ IntentRecognizeMessage::execute(Callback callback)
         [this](auto result, auto error) { onComplete(std::move(result), error); },
         _connection->executor());
 
-    _recognition->run(_message);
+    _recognition->run();
 }
 
 void
@@ -80,6 +87,14 @@ IntentRecognizeMessage::onComplete(Utterances result, sys::error_code error)
                        [callback = std::move(_callback), result = std::move(result), error](auto) {
                            callback(std::move(result), error);
                        });
+}
+
+void
+IntentRecognizeMessage::onData()
+{
+    LOGD("Provide data for recognition");
+
+    _recognition->feed(_message);
 }
 
 } // namespace jar

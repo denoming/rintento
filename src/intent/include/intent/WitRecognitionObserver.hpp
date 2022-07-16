@@ -10,12 +10,14 @@ namespace jar {
 
 class WitRecognitionObserver : public RecognitionObserver {
 public:
+    using CallbackSignature = void(Utterances result, std::error_code error);
+
     static Ptr
     create(std::weak_ptr<void> target);
 
     static Ptr
     create(std::weak_ptr<void> target,
-           RecognitionCalback callback,
+           std::function<CallbackSignature> callback,
            net::any_io_executor executor = {});
 
     ~WitRecognitionObserver() override;
@@ -29,7 +31,7 @@ private:
 
     friend class WitIntentRecognizer;
     explicit WitRecognitionObserver(std::weak_ptr<void> target,
-                                    RecognitionCalback callback,
+                                    std::function<CallbackSignature> callback,
                                     net::any_io_executor executor = {});
 
     void
@@ -47,7 +49,7 @@ private:
 private:
     boost::signals2::connection _onCompleteCon;
     boost::signals2::connection _onErrorCon;
-    RecognitionCalback _callback;
+    std::function<CallbackSignature> _callback;
     net::any_io_executor _executor;
 };
 

@@ -3,6 +3,7 @@
 
 #include "test/Matchers.hpp"
 #include "tests/TestWorker.hpp"
+#include "tests/TestWaiter.hpp"
 #include "intent/Config.hpp"
 #include "intent/WitMessageRecognition.hpp"
 #include "intent/WitRecognitionObserver.hpp"
@@ -13,7 +14,7 @@ using namespace jar;
 class WitMessageRecognitionTest : public Test {
 public:
     WitMessageRecognitionTest()
-        : session{WitMessageRecognition::create(worker.sslContext(), worker.executor())}
+        : recognition{WitMessageRecognition::create(worker.sslContext(), worker.executor())}
     {
     }
 
@@ -31,40 +32,49 @@ public:
 
 public:
     TestWorker worker;
-    WitMessageRecognition::Ptr session;
+    TestWaiter waiter;
+    WitMessageRecognition::Ptr recognition;
 };
 
 TEST_F(WitMessageRecognitionTest, RecognizeMessage)
 {
-    MockFunction<void(Utterances result, std::error_code error)> callback;
-    EXPECT_CALL(callback, Call(Contains(isUtterance("turn off the light")), IsFalse()));
-    auto pending = WitRecognitionObserver::create(session, callback.AsStdFunction());
+    const std::string_view Message{"turn off the light"};
 
-    std::string_view message{"turn off the light"};
-    session->run(WitBackendHost, WitBackendPort, WitBackendAuth, message);
+    MockFunction<WitRecognitionObserver::CallbackSignature> callback;
+    EXPECT_CALL(callback, Call(Contains(isUtterance(Message)), IsFalse()));
+    auto pending = WitRecognitionObserver::create(recognition, callback.AsStdFunction());
+
+    bool guard{false};
+    auto c = recognition->onData([this, &guard]() {
+        guard = true;
+        waiter.notify();
+    });
+
+    recognition->run();
+    waiter.wait([&guard]() { return guard; });
+    recognition->feed(Message);
 
     std::error_code error;
     const auto outcome = pending->get(error);
     EXPECT_FALSE(error);
     EXPECT_THAT(outcome,
-                Contains(isUtterance("turn off the light",
-                                     Contains(isConfidentIntent("light_off", 0.9f)))));
+                Contains(isUtterance(Message, Contains(isConfidentIntent("light_off", 0.9f)))));
+
+    c.disconnect();
 }
 
 TEST_F(WitMessageRecognitionTest, CancelRecognizeMessage)
 {
-    MockFunction<void(Utterances result, std::error_code error)> callback;
+    MockFunction<WitRecognitionObserver::CallbackSignature> callback;
     EXPECT_CALL(callback, Call(_, IsTrue()));
-    auto pending = WitRecognitionObserver::create(session, callback.AsStdFunction());
+    auto pending = WitRecognitionObserver::create(recognition, callback.AsStdFunction());
 
-    std::string_view message{"turn off the light"};
-    session->run(WitBackendHost, WitBackendPort, WitBackendAuth, message);
+    recognition->run();
 
-    // Cancel message recognizing
     pending->cancel();
 
     std::error_code error;
     const auto outcome = pending->get(error);
-    EXPECT_THAT(outcome, IsEmpty());
     EXPECT_EQ(error.value(), int(std::errc::operation_canceled));
+    EXPECT_THAT(outcome, IsEmpty());
 }

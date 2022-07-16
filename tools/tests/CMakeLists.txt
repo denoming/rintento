@@ -11,6 +11,7 @@ target_link_libraries(${TARGET}
 target_sources(${TARGET}
     PRIVATE src/TestMain.cpp
             src/TestWorker.cpp
+        src/TestWaiter.cpp
 )
 
 target_include_directories(${TARGET}

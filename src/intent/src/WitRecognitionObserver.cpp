@@ -13,7 +13,7 @@ WitRecognitionObserver::WitRecognitionObserver(std::weak_ptr<void> target)
 }
 
 WitRecognitionObserver::WitRecognitionObserver(std::weak_ptr<void> target,
-                                               RecognitionCalback callback,
+                                               std::function<CallbackSignature> callback,
                                                net::any_io_executor executor)
     : RecognitionObserver{std::move(target)}
     , _callback{std::move(callback)}
@@ -45,7 +45,7 @@ WitRecognitionObserver::create(std::weak_ptr<void> target)
 
 WitRecognitionObserver::Ptr
 WitRecognitionObserver::create(std::weak_ptr<void> target,
-                               RecognitionCalback callback,
+                               std::function<CallbackSignature> callback,
                                net::any_io_executor executor)
 {
     return std::unique_ptr<WitRecognitionObserver>(

@@ -5,6 +5,10 @@
 #include "intent/WitMessageRecognition.hpp"
 #include "intent/RecognitionObserver.hpp"
 
+#include <boost/signals2/connection.hpp>
+
+namespace signals = boost::signals2;
+
 namespace jar {
 
 class IntentRecognizeMessage : public IntentRecognizeStrategy {
@@ -13,11 +17,17 @@ public:
                            IntentRecognizeConnection::Ptr connection,
                            std::string_view message);
 
+    ~IntentRecognizeMessage();
+
     void
     execute(Callback callback) override;
 
 private:
-    void onComplete(Utterances result, sys::error_code error);
+    void
+    onComplete(Utterances result, sys::error_code error);
+
+    void
+    onData();
 
 private:
     WitMessageRecognition::Ptr _recognition;
@@ -25,6 +35,7 @@ private:
     std::string _message;
     Callback _callback;
     RecognitionObserver::Ptr _observer;
+    signals::connection _onDataCon;
 };
 
 } // namespace jar
