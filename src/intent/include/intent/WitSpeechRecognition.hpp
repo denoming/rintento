@@ -19,32 +19,56 @@ public:
     create(ssl::context& context, net::any_io_executor& executor);
 
     void
+    run(fs::path data);
+
+    void
     run(std::string_view host, std::string_view port, std::string_view auth, fs::path data);
 
 private:
     explicit WitSpeechRecognition(ssl::context& context, net::any_io_executor& executor);
 
     void
+    resolve(std::string_view host, std::string_view port);
+
+    void
     onResolveDone(sys::error_code error, const tcp::resolver::results_type& result);
+
+    void
+    connect(const tcp::resolver::results_type& addresses);
 
     void
     onConnectDone(sys::error_code error,
                   const tcp::resolver::results_type::endpoint_type& endpoint);
 
     void
+    handshake();
+
+    void
     onHandshakeDone(sys::error_code error);
+
+    void
+    readContinue();
 
     void
     onReadContinueDone(sys::error_code error, std::size_t bytesTransferred);
 
     void
-    onWriteDone(sys::error_code error, std::size_t bytesTransferred);
+    writeNextChunk();
 
     void
-    onReadReady(sys::error_code error, std::size_t bytesTransferred);
+    onWriteNextChunkDone(sys::error_code error, std::size_t bytesTransferred);
+
+    void
+    onWriteLastChunkDone(sys::error_code error, std::size_t bytesTransferred);
+
+    void
+    read();
 
     void
     onReadDone(sys::error_code error, std::size_t bytesTransferred);
+
+    void
+    shutdown();
 
     void
     onShutdownDone(sys::error_code error);
