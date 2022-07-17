@@ -33,9 +33,12 @@ speechTargetWithDate();
 
 namespace parse {
 
-std::optional<std::string>
+std::tuple<bool, std::string>
 messageTarget(std::string_view target);
 
-}
+bool
+speechTarget(std::string_view target);
+
+} // namespace parse
 
 } // namespace jar

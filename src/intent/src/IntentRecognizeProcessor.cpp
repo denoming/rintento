@@ -29,20 +29,18 @@ struct Dispatcher {
     }
 
     void
-    operator()(tags::RecognizeMessage, std::string_view message)
+    operator()(tags::RecognizeMessage, std::string message)
     {
-        auto recognition = factory.message();
-        auto conn = processor.connection();
-        processor.setStrategy(std::make_unique<IntentRecognizeMessage>(recognition, conn, message));
+        processor.setStrategy(std::make_unique<IntentRecognizeMessage>(
+            factory.message(), processor.connection(), std::move(message)));
         processor.process();
     }
 
     void
     operator()(tags::RecognizeSpeech)
     {
-        auto recognition = factory.speech();
-        auto conn = processor.connection();
-        processor.setStrategy(std::make_unique<IntentRecognizeSpeech>(recognition, conn));
+        processor.setStrategy(
+            std::make_unique<IntentRecognizeSpeech>(factory.speech(), processor.connection()));
         processor.process();
     }
 
@@ -65,8 +63,13 @@ struct Parser {
             dispatcher(tags::NotFound{}, std::move(response));
         };
 
-        if (auto messageOpt = parse::messageTarget(request.target()); messageOpt) {
-            dispatcher(tags::RecognizeMessage{}, *messageOpt);
+        if (auto [isMessage, query] = parse::messageTarget(request.target()); isMessage) {
+            dispatcher(tags::RecognizeMessage{}, query);
+            return;
+        }
+
+        if (auto isSpeech = parse::speechTarget(request.target()); isSpeech) {
+            dispatcher(tags::RecognizeSpeech{});
             return;
         }
 

@@ -15,7 +15,7 @@ class IntentRecognizeMessage : public IntentRecognizeStrategy {
 public:
     IntentRecognizeMessage(WitMessageRecognition::Ptr recognition,
                            IntentRecognizeConnection::Ptr connection,
-                           std::string_view message);
+                           std::string message);
 
     ~IntentRecognizeMessage();
 

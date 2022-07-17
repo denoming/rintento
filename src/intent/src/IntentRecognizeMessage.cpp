@@ -45,13 +45,13 @@ getResponse(const std::string& payload)
 
 IntentRecognizeMessage::IntentRecognizeMessage(WitMessageRecognition::Ptr recognition,
                                                IntentRecognizeConnection::Ptr connection,
-                                               std::string_view message)
-    : _recognition{recognition}
-    , _connection{connection}
-    , _message{message}
+                                               std::string message)
+    : _recognition{std::move(recognition)}
+    , _connection{std::move(connection)}
+    , _message{std::move(message)}
 {
-    assert(recognition);
-    assert(connection);
+    assert(_recognition);
+    assert(_connection);
 
     _onDataCon = _recognition->onData([this]() { onData(); });
 }
@@ -94,6 +94,7 @@ IntentRecognizeMessage::onData()
 {
     LOGD("Provide data for recognition");
 
+    assert(!_message.empty());
     _recognition->feed(_message);
 }
 
