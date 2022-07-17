@@ -35,7 +35,7 @@ private:
     onResolveDone(sys::error_code error, const tcp::resolver::results_type& result);
 
     void
-    connect(const tcp::resolver::results_type& result);
+    connect(const tcp::resolver::results_type& addresses);
 
     void
     onConnectDone(sys::error_code error,

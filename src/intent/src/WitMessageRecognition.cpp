@@ -104,14 +104,14 @@ WitMessageRecognition::onResolveDone(sys::error_code error,
 }
 
 void
-WitMessageRecognition::connect(const tcp::resolver::results_type& result)
+WitMessageRecognition::connect(const tcp::resolver::results_type& addresses)
 {
     LOGD("Connect to host addresses");
 
     resetTimeout(_stream);
 
     beast::get_lowest_layer(_stream).async_connect(
-        result,
+        addresses,
         net::bind_cancellation_slot(
             onCancel(),
             beast::bind_front_handler(&WitMessageRecognition::onConnectDone, shared_from_this())));
@@ -166,7 +166,7 @@ WitMessageRecognition::onHandshakeDone(sys::error_code error)
         LOGD("Operation was interrupted");
         notifyError(sys::errc::make_error_code(sys::errc::operation_canceled));
     } else {
-        LOGD("Handshaking was successful");
+        LOGD("Ready to provide message data");
         starving(true);
         notifyData();
     }
