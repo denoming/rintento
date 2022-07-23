@@ -38,7 +38,7 @@ public:
 
     template<typename Body>
     void
-    read(ReadingCallback<Body> callback)
+    read(ReadingCallback<Body> callback = nullptr)
     {
         using Action = TypedReadingAction<Body>;
         net::dispatch(executor(), [self = shared_from_this(), c = std::move(callback)]() {
@@ -48,7 +48,7 @@ public:
 
     template<typename Body>
     void
-    write(http::response<Body> response, WritingCallback callback)
+    write(http::response<Body> response, WritingCallback callback = nullptr)
     {
         using Action = TypedWritingAction<Body>;
         net::dispatch(
