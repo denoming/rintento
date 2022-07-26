@@ -3,8 +3,11 @@
 
 #include "test/Matchers.hpp"
 #include "tests/TestWorker.hpp"
+#include "tests/TestWaiter.hpp"
 #include "intent/WitSpeechRecognition.hpp"
 #include "intent/WitRecognitionObserver.hpp"
+
+#include <fstream>
 
 using namespace testing;
 using namespace jar;
@@ -16,7 +19,7 @@ public:
     const fs::path AssetAudioPath{fs::current_path() / "asset" / "audio"};
 
     WitSpeechRecognitionTest()
-        : session{WitSpeechRecognition::create(worker.sslContext(), worker.executor())}
+        : recognition{WitSpeechRecognition::create(worker.sslContext(), worker.executor())}
     {
     }
 
@@ -34,16 +37,42 @@ public:
 
 public:
     TestWorker worker;
-    WitSpeechRecognition::Ptr session;
+    TestWaiter waiter;
+    WitSpeechRecognition::Ptr recognition;
 };
 
 TEST_F(WitSpeechRecognitionTest, RecognizeSpeech1)
 {
-    MockFunction<void(Utterances result, std::error_code error)> callback;
-    EXPECT_CALL(callback, Call(Contains(isUtterance("turn off the light")), IsFalse()));
-    auto pending = WitRecognitionObserver::create(session, callback.AsStdFunction());
+    const std::string_view Message{"turn off the light"};
 
-    session->run(AssetAudioPath / "turn-off-the-light.raw");
+    MockFunction<WitRecognitionObserver::CallbackSignature> callback;
+    EXPECT_CALL(callback, Call(Contains(isUtterance(Message)), IsFalse()));
+    auto pending = WitRecognitionObserver::create(recognition, callback.AsStdFunction());
+
+    bool guard{false};
+    signals::scoped_connection c = recognition->onData([this, &guard]() {
+        guard = true;
+        waiter.notify();
+    });
+
+    std::fstream fs{AssetAudioPath / "turn-off-the-light.raw", std::ios::in | std::ios::binary};
+    ASSERT_TRUE(fs.is_open());
+    auto fileSize = static_cast<long>(fs::file_size(AssetAudioPath / "turn-off-the-light.raw"));
+    ASSERT_TRUE(fileSize > 0);
+    auto fileData = std::make_unique<char[]>(fileSize);
+    fs.read(reinterpret_cast<char*>(fileData.get()), fileSize);
+
+    recognition->run();
+
+    waiter.wait([&guard]() { return guard; });
+    guard = false;
+
+    recognition->feed(net::buffer(fileData.get(), fileSize));
+
+    waiter.wait([&guard]() { return guard; });
+    guard = false;
+
+    recognition->finalize();
 
     std::error_code error;
     const auto outcome = pending->get(error);
@@ -57,9 +86,9 @@ TEST_F(WitSpeechRecognitionTest, RecognizeSpeech2)
 {
     MockFunction<void(Utterances result, std::error_code error)> callback;
     EXPECT_CALL(callback, Call(Contains(isUtterance("turn on the light")), IsFalse()));
-    auto pending = WitRecognitionObserver::create(session, callback.AsStdFunction());
+    auto pending = WitRecognitionObserver::create(recognition, callback.AsStdFunction());
 
-    session->run(AssetAudioPath / "turn-on-the-light.raw");
+    // session->run(AssetAudioPath / "turn-on-the-light.raw");
 
     std::error_code error;
     const auto outcome = pending->get(error);
@@ -73,9 +102,9 @@ TEST_F(WitSpeechRecognitionTest, CancelRecognizeSpeech)
 {
     MockFunction<void(Utterances result, std::error_code error)> callback;
     EXPECT_CALL(callback, Call(_, IsTrue()));
-    auto pending = WitRecognitionObserver::create(session, callback.AsStdFunction());
+    auto pending = WitRecognitionObserver::create(recognition, callback.AsStdFunction());
 
-    session->run(AssetAudioPath / "turn-on-the-light.raw");
+    // session->run(AssetAudioPath / "turn-on-the-light.raw");
 
     pending->cancel();
 

@@ -65,45 +65,4 @@ speechTargetWithDate()
 
 } // namespace format
 
-namespace parse {
-
-std::tuple<bool, std::string>
-messageTarget(std::string_view target)
-{
-    static constexpr std::string_view kPrefix{"/message"};
-
-    if (!target.starts_with(kPrefix)) {
-        return std::make_tuple(false, "");
-    }
-
-    auto params = urls::parse_query_params(target.substr(kPrefix.size() + 1));
-    if (!params) {
-        return std::make_tuple(false, "");
-    }
-
-    const auto decodedParams = params->decoded();
-    if (auto queryItemIt = decodedParams.find("q"); queryItemIt != decodedParams.end()) {
-        const auto& queryItem = *queryItemIt;
-        if (queryItem.has_value) {
-            return std::make_tuple(true, queryItem.value);
-        }
-    }
-
-    return std::make_tuple(false, "");
-}
-
-bool
-speechTarget(std::string_view target)
-{
-    static constexpr std::string_view kPrefix{"/speech"};
-
-    if (!target.starts_with(kPrefix)) {
-        return false;
-    }
-
-    return true;
-}
-
-} // namespace parse
-
 } // namespace jar

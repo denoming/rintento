@@ -3,138 +3,57 @@
 #include "common/Logger.hpp"
 #include "intent/IntentRecognizeMessage.hpp"
 #include "intent/IntentRecognizeSpeech.hpp"
+#include "intent/IntentRecognizeMessageHandler.hpp"
+#include "intent/IntentRecognizeSpeechHandler.hpp"
+#include "intent/IntentRecognizeTerminalHandler.hpp"
 #include "intent/Utils.hpp"
 
 namespace jar {
 
-namespace tags {
-struct NotFound { };
-struct RecognizeMessage { };
-struct RecognizeSpeech { };
-} // namespace tags
-
-struct Dispatcher {
-    void
-    operator()(tags::NotFound, http::response<http::string_body> response)
-    {
-        auto connection = processor.connection();
-        assert(connection);
-        connection->write(std::move(response),
-                          [processor = processor.shared_from_this()](auto error) {
-                              if (error) {
-                                  LOGE("Failed to write not found response: <{}>", error.what());
-                              }
-                              processor->onComplete();
-                          });
-    }
-
-    void
-    operator()(tags::RecognizeMessage, std::string message)
-    {
-        processor.setStrategy(std::make_unique<IntentRecognizeMessage>(
-            factory.message(), processor.connection(), std::move(message)));
-        processor.process();
-    }
-
-    void
-    operator()(tags::RecognizeSpeech)
-    {
-        processor.setStrategy(
-            std::make_unique<IntentRecognizeSpeech>(factory.speech(), processor.connection()));
-        processor.process();
-    }
-
-    IntentRecognizeProcessor& processor;
-    WitRecognitionFactory& factory;
-};
-
-struct Parser {
-    template<typename Body, typename Dispatcher>
-    void
-    operator()(http::request<Body>&& request, Dispatcher&& dispatcher)
-    {
-        const auto notFound = [&request, &dispatcher](beast::string_view target) {
-            http::response<http::string_body> response{http::status::not_found, request.version()};
-            response.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-            response.set(http::field::content_type, "text/html");
-            response.keep_alive(request.keep_alive());
-            response.body() = "The resource '" + std::string(target) + "' was not found.";
-            response.prepare_payload();
-            dispatcher(tags::NotFound{}, std::move(response));
-        };
-
-        if (auto [isMessage, query] = parse::messageTarget(request.target()); isMessage) {
-            dispatcher(tags::RecognizeMessage{}, query);
-            return;
-        }
-
-        if (auto isSpeech = parse::speechTarget(request.target()); isSpeech) {
-            dispatcher(tags::RecognizeSpeech{});
-            return;
-        }
-
-        notFound(request.target());
-    }
-};
-
 IntentRecognizeProcessor::IntentRecognizeProcessor(IntentRecognizeConnection::Ptr connection,
                                                    IntentPerformer::Ptr performer,
-                                                   WitRecognitionFactory& factory)
+                                                   WitRecognitionFactory::Ptr factory)
     : _connection{std::move(connection)}
     , _performer{std::move(performer)}
-    , _factory{factory}
+    , _factory{std::move(factory)}
 {
 }
 
 IntentRecognizeProcessor::Ptr
 IntentRecognizeProcessor::create(IntentRecognizeConnection::Ptr connection,
                                  IntentPerformer::Ptr performer,
-                                 WitRecognitionFactory& factory)
+                                 WitRecognitionFactory::Ptr factory)
 {
     assert(connection);
     assert(performer);
+    assert(factory);
 
     // clang-format off
     return std::shared_ptr<IntentRecognizeProcessor>(
-        new IntentRecognizeProcessor{std::move(connection), std::move(performer), factory}
+        new IntentRecognizeProcessor{std::move(connection), std::move(performer), std::move(factory)}
     );
     // clang-format on
 }
 
 void
-IntentRecognizeProcessor::setStrategy(IntentRecognizeStrategy::Ptr strategy)
-{
-    _strategy = std::move(strategy);
-}
-
-void
 IntentRecognizeProcessor::process()
 {
-    if (_strategy) {
-        _strategy->execute([this](Utterances utterances, sys::error_code error) {
-            onComplete(std::move(utterances), error);
+    readHeader();
+}
+
+void
+IntentRecognizeProcessor::readHeader()
+{
+    _connection->readHeader<http::empty_body>(
+        [self = shared_from_this()](auto& buffer, auto& parser, auto error) {
+            self->onReadHeaderDone(buffer, parser, error);
         });
-    } else {
-        read();
-    }
-}
-
-IntentRecognizeConnection::Ptr
-IntentRecognizeProcessor::connection()
-{
-    return _connection->shared_from_this();
 }
 
 void
-IntentRecognizeProcessor::read()
-{
-    _connection->read<http::empty_body>([self = shared_from_this()](auto error, auto request) {
-        self->onReadDone(error, std::move(request));
-    });
-}
-
-void
-IntentRecognizeProcessor::onReadDone(sys::error_code error, http::request<http::empty_body> request)
+IntentRecognizeProcessor::onReadHeaderDone(beast::flat_buffer& buffer,
+                                           http::request_parser<http::empty_body>& parser,
+                                           sys::error_code error)
 {
     if (error == http::error::end_of_stream) {
         LOGI("Connection was closed");
@@ -145,7 +64,9 @@ IntentRecognizeProcessor::onReadDone(sys::error_code error, http::request<http::
         return;
     }
 
-    Parser{}(std::move(request), Dispatcher{*this, _factory});
+    _handler = getHandler();
+    assert(_handler);
+    _handler->handle(buffer, parser);
 }
 
 void
@@ -158,13 +79,30 @@ IntentRecognizeProcessor::onComplete(Utterances utterances, sys::error_code erro
         _performer->perform(std::move(utterances));
     }
 
-    read();
+    readHeader();
 }
 
-void
-IntentRecognizeProcessor::onComplete()
+IntentRecognizeHandler::Ptr
+IntentRecognizeProcessor::getHandler()
 {
-    read();
+    auto handler1 = std::make_unique<IntentRecognizeMessageHandler>(
+        _connection, _factory, [this](auto result, sys::error_code error) {
+            LOGD("Recognize message handler was done: failed<{}>", error.failed());
+            onComplete(std::move(result), error);
+        });
+    auto handler2 = std::make_unique<IntentRecognizeSpeechHandler>(
+        _connection, _factory, [this](auto result, auto error) {
+            LOGD("Recognize speech handler was done: failed<{}>", error.failed());
+            onComplete(std::move(result), error);
+        });
+    auto handler3 = std::make_unique<IntentRecognizeTerminalHandler>(
+        _connection, [this](auto result, auto error) {
+            LOGD("Terminal handler was done");
+            onComplete(std::move(result), error);
+        });
+    handler2->setNext(std::move(handler3));
+    handler1->setNext(std::move(handler2));
+    return handler1;
 }
 
 } // namespace jar

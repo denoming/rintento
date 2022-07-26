@@ -48,8 +48,11 @@ WitRecognitionObserver::create(std::weak_ptr<void> target,
                                std::function<CallbackSignature> callback,
                                net::any_io_executor executor)
 {
+    // clang-format off
     return std::unique_ptr<WitRecognitionObserver>(
-        new WitRecognitionObserver(std::move(target), std::move(callback), std::move(executor)));
+        new WitRecognitionObserver(std::move(target), std::move(callback), std::move(executor))
+    );
+    // clang-format on
 }
 
 void

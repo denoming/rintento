@@ -19,10 +19,16 @@ public:
     create(ssl::context& context, net::any_io_executor& executor);
 
     void
-    run(fs::path data);
+    run();
 
     void
-    run(std::string_view host, std::string_view port, std::string_view auth, fs::path data);
+    run(std::string_view host, std::string_view port, std::string_view auth);
+
+    void
+    feed(net::const_buffer buffer);
+
+    void
+    finalize();
 
 private:
     explicit WitSpeechRecognition(ssl::context& context, net::any_io_executor& executor);
@@ -53,10 +59,13 @@ private:
     onReadContinueDone(sys::error_code error, std::size_t bytesTransferred);
 
     void
-    writeNextChunk();
+    writeNextChunk(net::const_buffer buffer);
 
     void
     onWriteNextChunkDone(sys::error_code error, std::size_t bytesTransferred);
+
+    void
+    writeLastChunk();
 
     void
     onWriteLastChunkDone(sys::error_code error, std::size_t bytesTransferred);
@@ -79,9 +88,6 @@ private:
     http::request<http::empty_body> _request;
     http::response<http::string_body> _response;
     beast::flat_buffer _buffer;
-    long _fileSize{0};
-    long _fileOffset{0};
-    std::unique_ptr<int8_t[]> _fileData;
 };
 
 } // namespace jar

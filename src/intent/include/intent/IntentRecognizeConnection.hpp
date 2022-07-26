@@ -12,8 +12,14 @@ public:
     using Ptr = std::shared_ptr<IntentRecognizeConnection>;
 
     template<typename Body>
-    using ReadingCallback = std::function<void(sys::error_code, http::request<Body>)>;
+    using ReadingCallback = std::function<void(http::request<Body> request, sys::error_code error)>;
+    template<typename Body>
+    using ReadingHeaderCallback = std::function<void(beast::flat_buffer& buffer,
+                                                     http::request_parser<Body>& requestParser,
+                                                     sys::error_code error)>;
+
     using WritingCallback = std::function<void(sys::error_code)>;
+    using WritingHeaderCallback = std::function<void(sys::error_code)>;
 
     static Ptr
     create(tcp::socket&& socket)
@@ -30,6 +36,18 @@ public:
         _stream.close();
     }
 
+    beast::tcp_stream&
+    stream()
+    {
+        return _stream;
+    }
+
+    const beast::tcp_stream&
+    stream() const
+    {
+        return _stream;
+    }
+
     net::any_io_executor
     executor()
     {
@@ -38,9 +56,19 @@ public:
 
     template<typename Body>
     void
-    read(ReadingCallback<Body> callback = nullptr)
+    read(ReadingCallback<Body> callback)
     {
         using Action = TypedReadingAction<Body>;
+        net::dispatch(executor(), [self = shared_from_this(), c = std::move(callback)]() {
+            self->pushAction(std::make_unique<Action>(*self, std::move(c)));
+        });
+    }
+
+    template<typename Body>
+    void
+    readHeader(ReadingHeaderCallback<Body> callback)
+    {
+        using Action = TypedReadingHeaderAction<Body>;
         net::dispatch(executor(), [self = shared_from_this(), c = std::move(callback)]() {
             self->pushAction(std::make_unique<Action>(*self, std::move(c)));
         });
@@ -56,6 +84,16 @@ public:
             [self = shared_from_this(), r = std::move(response), c = std::move(callback)]() {
                 self->pushAction(std::make_unique<Action>(*self, std::move(r), std::move(c)));
             });
+    }
+
+    template<typename Body, typename Fields = http::fields>
+    void
+    writeHeader(http::response_header<Fields>, WritingHeaderCallback callback = nullptr)
+    {
+        using Action = TypedWritingHeaderAction<Body, Fields>;
+        net::dispatch(executor(), [self = shared_from_this(), c = std::move(callback)]() {
+            self->pushAction(std::make_unique<Action>(*self, std::move(c)));
+        });
     }
 
 private:
@@ -78,34 +116,30 @@ private:
     template<typename Body>
     class TypedReadingAction final : public Action {
     public:
-        using Request = http::request<Body>;
-        using Callback = std::function<void(sys::error_code error, Request request)>;
-
-        TypedReadingAction(IntentRecognizeConnection& connection, Callback callback)
+        TypedReadingAction(IntentRecognizeConnection& connection, ReadingCallback<Body> callback)
             : _connection{connection}
             , _callback{std::move(callback)}
         {
+            assert(_callback);
         }
 
         void
         operator()() override
         {
-            http::async_read(_connection._stream,
+            http::async_read(_connection.stream(),
                              _buffer,
-                             _parser,
+                             _request,
                              [this, c = _connection.shared_from_this()](auto error, auto) {
-                                 if (_callback) {
-                                     _callback(error, _parser.release());
-                                 }
+                                 _callback(std::move(_request), error);
                                  c->onActionDone();
                              });
         }
 
     private:
         IntentRecognizeConnection& _connection;
-        Callback _callback;
+        ReadingCallback<Body> _callback;
         beast::flat_buffer _buffer;
-        http::request_parser<Body> _parser;
+        http::request<Body> _request;
     };
 
     template<typename Body>
@@ -126,7 +160,7 @@ private:
         void
         operator()() override
         {
-            http::async_write(_connection._stream,
+            http::async_write(_connection.stream(),
                               _response,
                               [this, c = _connection.shared_from_this()](auto error, auto) {
                                   if (_callback) {
@@ -140,6 +174,69 @@ private:
         IntentRecognizeConnection& _connection;
         http::response<Body> _response;
         Callback _callback;
+    };
+
+    template<typename Body>
+    class TypedReadingHeaderAction : public Action {
+    public:
+        TypedReadingHeaderAction(IntentRecognizeConnection& connection,
+                                 ReadingHeaderCallback<Body> callback)
+            : _connection{connection}
+            , _callback{std::move(callback)}
+        {
+            assert(_callback);
+        }
+
+        void
+        operator()() override
+        {
+            http::async_read_header(_connection.stream(),
+                                    _buffer,
+                                    _parser,
+                                    [this, c = _connection.shared_from_this()](auto error, auto) {
+                                        _callback(_buffer, _parser, error);
+                                        c->onActionDone();
+                                    });
+        }
+
+    private:
+        IntentRecognizeConnection& _connection;
+        ReadingHeaderCallback<Body> _callback;
+        beast::flat_buffer _buffer;
+        http::request_parser<Body> _parser;
+    };
+
+    template<typename Body, typename Fields = http::fields>
+    class TypedWritingHeaderAction : public Action {
+    public:
+        TypedWritingHeaderAction(IntentRecognizeConnection& connection,
+                                 http::response_header<Fields> header,
+                                 WritingHeaderCallback callback)
+            : _connection{connection}
+            , _header{std::move(header)}
+            , _callback{std::move(callback)}
+            , _serializer{_header}
+        {
+        }
+
+        void
+        operator()() override
+        {
+            http::async_write_header(_connection.stream(),
+                                     _serializer,
+                                     [this, c = _connection.shared_from_this()](auto error, auto) {
+                                         if (_callback) {
+                                             _callback(error);
+                                         }
+                                         c->onActionDone();
+                                     });
+        }
+
+    private:
+        IntentRecognizeConnection& _connection;
+        WritingHeaderCallback _callback;
+        http::response_header<Fields> _header;
+        http::response_serializer<Body, Fields> _serializer;
     };
 
     class ActionQueue {

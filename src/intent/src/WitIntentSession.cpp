@@ -23,12 +23,6 @@ WitRecognition::cancel()
 }
 
 boost::signals2::connection
-WitRecognition::onComplete(const OnCompleteSignal::slot_type& slot)
-{
-    return _onCompleteSig.connect(slot);
-}
-
-boost::signals2::connection
 WitRecognition::onError(const OnErrorSignal::slot_type& slot)
 {
     return _onErrorSig.connect(slot);
@@ -38,6 +32,12 @@ signals::connection
 WitRecognition::onData(const OnDataSignal::slot_type& slot)
 {
     return _onDataSig.connect(slot);
+}
+
+boost::signals2::connection
+WitRecognition::onComplete(const OnCompleteSignal::slot_type& slot)
+{
+    return _onCompleteSig.connect(slot);
 }
 
 void

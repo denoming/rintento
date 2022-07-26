@@ -4,10 +4,14 @@
 #include "intent/WitMessageRecognition.hpp"
 #include "intent/WitSpeechRecognition.hpp"
 
+#include <memory>
+
 namespace jar {
 
 class WitRecognitionFactory {
 public:
+    using Ptr = std::shared_ptr<WitRecognitionFactory>;
+
     WitRecognitionFactory(ssl::context& context, net::any_io_executor& executor);
 
     WitMessageRecognition::Ptr

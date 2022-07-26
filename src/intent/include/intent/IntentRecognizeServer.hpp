@@ -14,7 +14,7 @@ public:
 
     IntentRecognizeServer(net::any_io_executor& executor,
                           IntentPerformer::Ptr performer,
-                          WitRecognitionFactory& factory);
+                          WitRecognitionFactory::Ptr factory);
 
     bool
     listen(tcp::endpoint endpoint);
@@ -33,14 +33,9 @@ private:
     close();
 
 private:
-    struct ProcessorHandle {
-
-    };
-
-private:
     net::any_io_executor& _executor;
     IntentPerformer::Ptr _performer;
-    WitRecognitionFactory& _factory;
+    WitRecognitionFactory::Ptr _factory;
     tcp::acceptor _acceptor;
     IntentRecognizeProcessor::Ptr _processor;
 };

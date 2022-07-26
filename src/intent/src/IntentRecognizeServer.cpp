@@ -3,13 +3,11 @@
 #include "common/Logger.hpp"
 #include "intent/IntentRecognizeConnection.hpp"
 
-#include <iostream>
-
 namespace jar {
 
 IntentRecognizeServer::IntentRecognizeServer(net::any_io_executor& executor,
                                              IntentPerformer::Ptr performer,
-                                             WitRecognitionFactory& factory)
+                                             WitRecognitionFactory::Ptr factory)
     : _executor{executor}
     , _performer{std::move(performer)}
     , _acceptor{net::make_strand(executor)}
@@ -72,11 +70,6 @@ IntentRecognizeServer::onAcceptDone(sys::error_code error, tcp::socket socket)
     if (error) {
         LOGE("Failed to accept: <{}>", error.what());
     } else {
-        std::cout << "Local address: " << socket.local_endpoint().address() << std::endl;
-        std::cout << "Local address: " << socket.local_endpoint().port() << std::endl;
-        std::cout << "Remote address: " << socket.remote_endpoint().address() << std::endl;
-        std::cout << "Remote port: " << socket.remote_endpoint().port() << std::endl;
-
         LOGD("Connection was established");
         auto connection = IntentRecognizeConnection::create(std::move(socket));
         _processor = IntentRecognizeProcessor::create(connection, _performer, _factory);

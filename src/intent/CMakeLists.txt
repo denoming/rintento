@@ -27,6 +27,11 @@ target_sources(${TARGET}
         src/IntentRecognizeSpeech.cpp
         src/IntentPerformer.cpp
         src/Utils.cpp
+        src/IntentRecognizeHandler.cpp
+        src/IntentRecognizeMessageHandler.cpp
+        src/IntentRecognizeSpeechHandler.cpp
+        src/IntentRecognizeTerminalHandler.cpp
+        src/IntentSpeechBuffer.cpp
         )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_20)
