@@ -23,7 +23,7 @@ public:
     wait();
 
     [[nodiscard]] Utterances
-    get(std::error_code& error);
+    get(sys::error_code& error);
 
     virtual void
     cancel()
@@ -36,10 +36,10 @@ protected:
     target();
 
     void
-    setOutcome(Utterances value);
+    setResult(Utterances value);
 
     void
-    setError(std::error_code value);
+    setError(sys::error_code value);
 
 private:
     [[nodiscard]] bool
@@ -54,8 +54,8 @@ private:
 private:
     std::weak_ptr<void> _target;
     std::atomic<bool> _ready;
-    Utterances _outcome;
-    std::error_code _error;
+    Utterances _result;
+    sys::error_code _error;
     std::mutex _readyGuard;
     std::condition_variable _readyCv;
 };

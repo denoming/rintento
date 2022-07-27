@@ -26,7 +26,7 @@ RecognitionObserver::wait()
 }
 
 Utterances
-RecognitionObserver::get(std::error_code& error)
+RecognitionObserver::get(sys::error_code& error)
 {
     if (!attached()) {
         throw std::runtime_error{"Not attached"};
@@ -38,7 +38,7 @@ RecognitionObserver::get(std::error_code& error)
         wait();
     }
 
-    Utterances output{std::move(_outcome)};
+    Utterances output{std::move(_result)};
     error = _error;
     return output;
 }
@@ -50,17 +50,17 @@ RecognitionObserver::target()
 }
 
 void
-RecognitionObserver::setOutcome(Utterances value)
+RecognitionObserver::setResult(Utterances value)
 {
     std::unique_lock lock{_readyGuard};
-    _outcome = std::move(value);
+    _result = std::move(value);
     _ready = true;
     lock.unlock();
     _readyCv.notify_all();
 }
 
 void
-RecognitionObserver::setError(std::error_code value)
+RecognitionObserver::setError(sys::error_code value)
 {
     std::unique_lock lock{_readyGuard};
     _error = value;

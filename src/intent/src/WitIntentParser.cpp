@@ -59,7 +59,7 @@ toUtterance(const json::object& object)
 } // namespace
 
 Utterances
-WitIntentParser::parse(std::string_view input, std::error_code& error)
+WitIntentParser::parse(std::string_view input, sys::error_code& error)
 {
     _parser.reset();
 

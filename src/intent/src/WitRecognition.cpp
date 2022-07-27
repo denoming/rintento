@@ -1,7 +1,6 @@
 #include "intent/WitRecognition.hpp"
 
 #include "intent/Constants.hpp"
-#include "common/Logger.hpp"
 
 namespace jar {
 
@@ -22,22 +21,22 @@ WitRecognition::cancel()
     _cancelSig.emit(net::cancellation_type::terminal);
 }
 
-boost::signals2::connection
-WitRecognition::onError(const OnErrorSignal::slot_type& slot)
-{
-    return _onErrorSig.connect(slot);
-}
-
 signals::connection
 WitRecognition::onData(const OnDataSignal::slot_type& slot)
 {
     return _onDataSig.connect(slot);
 }
 
-boost::signals2::connection
-WitRecognition::onComplete(const OnCompleteSignal::slot_type& slot)
+signals::connection
+WitRecognition::onError(const OnErrorSignal::slot_type& slot)
 {
-    return _onCompleteSig.connect(slot);
+    return _onErrorSig.connect(slot);
+}
+
+signals::connection
+WitRecognition::onSuccess(const OnSuccessSignal::slot_type& slot)
+{
+    return _onSuccessSig.connect(slot);
 }
 
 void
@@ -53,21 +52,21 @@ WitRecognition::starving() const
 }
 
 void
-WitRecognition::notifyComplete(const std::string& result)
+WitRecognition::notifyData()
 {
-    _onCompleteSig(result);
+    _onDataSig();
 }
 
 void
-WitRecognition::notifyError(std::error_code error)
+WitRecognition::notifyError(sys::error_code error)
 {
     _onErrorSig(error);
 }
 
 void
-WitRecognition::notifyData()
+WitRecognition::notifySuccess(const std::string& result)
 {
-    _onDataSig();
+    _onSuccessSig(result);
 }
 
 bool
@@ -85,7 +84,7 @@ WitRecognition::onCancel()
 bool
 WitRecognition::setTlsHostName(beast::ssl_stream<beast::tcp_stream>& stream,
                                std::string_view hostname,
-                               std::error_code& ec)
+                               sys::error_code& ec)
 {
     // Set SNI Hostname (many hosts need this to handshake successfully)
     if (SSL_set_tlsext_host_name(stream.native_handle(), hostname.data())) {

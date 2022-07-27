@@ -1,6 +1,7 @@
 #pragma once
 
-#include <intent/Types.hpp>
+#include "intent/Http.hpp"
+#include "intent/Types.hpp"
 
 #include <string>
 #include <system_error>
@@ -12,7 +13,8 @@ public:
     virtual ~IntentParser() = default;
 
     [[nodiscard]] virtual Utterances
-    parse(std::string_view input, std::error_code& error) = 0;
+    parse(std::string_view input, sys::error_code& error)
+        = 0;
 };
 
 } // namespace jar

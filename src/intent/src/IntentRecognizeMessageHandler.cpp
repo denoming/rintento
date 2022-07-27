@@ -45,13 +45,6 @@ IntentRecognizeMessageHandler::IntentRecognizeMessageHandler(
     assert(_factory);
 }
 
-IntentRecognizeMessageHandler::~IntentRecognizeMessageHandler()
-{
-    if (_onDataCon.connected()) {
-        _onDataCon.disconnect();
-    }
-}
-
 void
 IntentRecognizeMessageHandler::handle(Buffer& buffer, Parser& parser)
 {
@@ -60,24 +53,26 @@ IntentRecognizeMessageHandler::handle(Buffer& buffer, Parser& parser)
         return;
     }
 
-    auto request = parser.release();
+    const auto request = parser.release();
     if (auto messageOpt = peekMessage(request.target()); messageOpt) {
-        _recognition = _factory->message();
-        assert(_recognition);
-        _onDataCon = _recognition->onData(
-            [this, message = std::move(*messageOpt)]() { onRecognitionData(std::move(message)); });
-
-        _observer = WitRecognitionObserver::create(
-            _recognition,
-            [this](auto result, auto error) { onRecognitionComplete(std::move(result), error); },
-            connection().executor());
-        assert(_observer);
-
-        _recognition->run();
+        _message = std::move(*messageOpt);
     } else {
         LOGE("Missing message in request target");
-        onRecognitionComplete({}, sys::errc::make_error_code(sys::errc::bad_message));
+        onRecognitionError(sys::errc::make_error_code(sys::errc::bad_message));
+        return;
     }
+
+    _recognition = _factory->message();
+    assert(_recognition);
+
+    _observer = WitRecognitionObserver::create(_recognition);
+    assert(_observer);
+    _observer->whenData([this]() { onRecognitionData(); });
+    _observer->whenError([this](auto error) { onRecognitionError(error); });
+    _observer->whenSuccess([this](auto result) { onRecognitionSuccess(std::move(result)); });
+
+    LOGD("Run message recognition");
+    _recognition->run();
 }
 
 bool
@@ -87,23 +82,25 @@ IntentRecognizeMessageHandler::canHandle(const Parser::value_type& request) cons
 }
 
 void
-IntentRecognizeMessageHandler::onRecognitionData(std::string message)
+IntentRecognizeMessageHandler::onRecognitionData()
 {
     LOGD("Feed up the recognition using given message");
     assert(_recognition);
-    _recognition->feed(message);
+    _recognition->feed(std::move(_message));
 }
 
 void
-IntentRecognizeMessageHandler::onRecognitionComplete(Utterances result, sys::error_code error)
+IntentRecognizeMessageHandler::onRecognitionError(sys::error_code error)
 {
-    if (error) {
-        sendResponse(error);
-        submit(error);
-    } else {
-        sendResponse(result);
-        submit(std::move(result));
-    }
+    sendResponse(error);
+    submit(error);
+}
+
+void
+IntentRecognizeMessageHandler::onRecognitionSuccess(Utterances result)
+{
+    sendResponse(result);
+    submit(std::move(result));
 }
 
 } // namespace jar

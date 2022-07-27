@@ -1,8 +1,6 @@
 #include "intent/IntentRecognizeProcessor.hpp"
 
 #include "common/Logger.hpp"
-#include "intent/IntentRecognizeMessage.hpp"
-#include "intent/IntentRecognizeSpeech.hpp"
 #include "intent/IntentRecognizeMessageHandler.hpp"
 #include "intent/IntentRecognizeSpeechHandler.hpp"
 #include "intent/IntentRecognizeTerminalHandler.hpp"

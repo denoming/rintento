@@ -69,7 +69,7 @@ IntentRecognizeSpeechHandler::handle(Buffer& buffer, Parser& parser)
 
     if (auto& request = parser.get(); request[http::field::expect] != "100-continue") {
         LOGD("100-continue expected");
-        onRecognitionComplete({}, sys::errc::make_error_code(sys::errc::operation_not_supported));
+        onRecognitionError(sys::errc::make_error_code(sys::errc::operation_not_supported));
         return;
     }
 
@@ -79,12 +79,14 @@ IntentRecognizeSpeechHandler::handle(Buffer& buffer, Parser& parser)
 
     _recognition = _factory->speech();
     assert(_recognition);
-    _onDataCon = _recognition->onData([this]() { onRecognitionData(); });
 
-    _observer = WitRecognitionObserver::create(_recognition, [this](auto result, auto error) {
-        onRecognitionComplete(std::move(result), error);
-    });
+    _observer = WitRecognitionObserver::create(_recognition);
+    assert(_observer);
+    _observer->whenData([this]() { onRecognitionData(); });
+    _observer->whenError([this](auto error) { onRecognitionError(error); });
+    _observer->whenSuccess([this](auto result) { onRecognitionSuccess(std::move(result)); });
 
+    LOGD("Run message recognition");
     _recognition->run();
 
     auto onHeader = [](std::uint64_t size, std::string_view extensions, sys::error_code& error) {
@@ -149,15 +151,17 @@ IntentRecognizeSpeechHandler::onRecognitionData()
 }
 
 void
-IntentRecognizeSpeechHandler::onRecognitionComplete(Utterances result, sys::error_code error)
+IntentRecognizeSpeechHandler::onRecognitionError(sys::error_code error)
 {
-    if (error) {
-        sendResponse(error);
-        submit(error);
-    } else {
-        sendResponse(result);
-        submit(std::move(result));
-    }
+    sendResponse(error);
+    submit(error);
+}
+
+void
+IntentRecognizeSpeechHandler::onRecognitionSuccess(Utterances result)
+{
+    sendResponse(result);
+    submit(std::move(result));
 }
 
 } // namespace jar

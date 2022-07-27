@@ -13,9 +13,9 @@ target_link_libraries(${TARGET}
         )
 
 target_sources(${TARGET}
-    PRIVATE src/Types.cpp
+        PRIVATE src/Types.cpp
         src/RecognitionObserver.cpp
-        src/WitIntentSession.cpp
+        src/WitRecognition.cpp
         src/WitMessageRecognition.cpp
         src/WitSpeechRecognition.cpp
         src/WitRecognitionObserver.cpp
@@ -23,15 +23,13 @@ target_sources(${TARGET}
         src/WitRecognitionFactory.cpp
         src/IntentRecognizeServer.cpp
         src/IntentRecognizeProcessor.cpp
-        src/IntentRecognizeMessage.cpp
-        src/IntentRecognizeSpeech.cpp
         src/IntentPerformer.cpp
-        src/Utils.cpp
         src/IntentRecognizeHandler.cpp
         src/IntentRecognizeMessageHandler.cpp
         src/IntentRecognizeSpeechHandler.cpp
         src/IntentRecognizeTerminalHandler.cpp
         src/IntentSpeechBuffer.cpp
+        src/Utils.cpp
         )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_20)

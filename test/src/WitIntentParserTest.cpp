@@ -25,7 +25,7 @@ TEST(WitIntentParserTest, Parse1)
     )"};
 
     WitIntentParser parser;
-    std::error_code error;
+    sys::error_code error;
     const auto outcome = parser.parse(kInput, error);
     ASSERT_THAT(error, IsFalse());
     ASSERT_THAT(outcome, SizeIs(1));
@@ -65,7 +65,7 @@ TEST(WitIntentParserTest, Parse2)
     )"};
 
     WitIntentParser parser;
-    std::error_code error;
+    sys::error_code error;
     const auto outcome = parser.parse(kInput, error);
     ASSERT_THAT(error, IsFalse());
     ASSERT_THAT(outcome, SizeIs(1));

@@ -14,8 +14,6 @@ public:
                                   WitRecognitionFactory::Ptr factory,
                                   Callback callback);
 
-    ~IntentRecognizeMessageHandler() override;
-
     void
     handle(Buffer& buffer, Parser& parser) override;
 
@@ -24,16 +22,19 @@ private:
     canHandle(const Parser::value_type& request) const;
 
     void
-    onRecognitionData(std::string message);
+    onRecognitionData();
 
     void
-    onRecognitionComplete(Utterances result, sys::error_code error);
+    onRecognitionError(sys::error_code error);
+
+    void
+    onRecognitionSuccess(Utterances result);
 
 private:
     WitRecognitionFactory::Ptr _factory;
     WitMessageRecognition::Ptr _recognition;
     WitRecognitionObserver::Ptr _observer;
-    signals::connection _onDataCon;
+    std::string _message;
 };
 
 } // namespace jar

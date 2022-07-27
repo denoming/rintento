@@ -32,7 +32,10 @@ private:
     onRecognitionData();
 
     void
-    onRecognitionComplete(Utterances result, sys::error_code error);
+    onRecognitionError(sys::error_code error);
+
+    void
+    onRecognitionSuccess(Utterances result);
 
 private:
     WitRecognitionFactory::Ptr _factory;

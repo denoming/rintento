@@ -6,33 +6,38 @@
 
 #include <boost/signals2/connection.hpp>
 
+namespace signals = boost::signals2;
+
 namespace jar {
 
 class WitRecognitionObserver : public RecognitionObserver {
 public:
-    using CallbackSignature = void(Utterances result, std::error_code error);
+    using Ptr = std::unique_ptr<WitRecognitionObserver>;
+
+    using DataSignature = void();
+    using ErrorSignature = void(sys::error_code error);
+    using SuccessSignature = void(Utterances result);
 
     static Ptr
-    create(std::weak_ptr<void> target);
-
-    static Ptr
-    create(std::weak_ptr<void> target,
-           std::function<CallbackSignature> callback,
-           net::any_io_executor executor = {});
+    create(std::weak_ptr<void> target, net::any_io_executor executor = {});
 
     ~WitRecognitionObserver() override;
+
+    void
+    whenData(std::function<DataSignature> callback);
+
+    void
+    whenError(std::function<ErrorSignature> callback);
+
+    void
+    whenSuccess(std::function<SuccessSignature> callback);
 
     void
     cancel() override;
 
 private:
     friend class WitIntentRecognizer;
-    explicit WitRecognitionObserver(std::weak_ptr<void> target);
-
-    friend class WitIntentRecognizer;
-    explicit WitRecognitionObserver(std::weak_ptr<void> target,
-                                    std::function<CallbackSignature> callback,
-                                    net::any_io_executor executor = {});
+    explicit WitRecognitionObserver(std::weak_ptr<void> target, net::any_io_executor executor = {});
 
     void
     subscribe();
@@ -41,15 +46,21 @@ private:
     unsubscribe();
 
     void
-    onComplete(const std::string& outcome);
+    onData();
 
     void
-    onError(std::error_code error);
+    onError(sys::error_code error);
+
+    void
+    onSuccess(const std::string& result);
 
 private:
-    boost::signals2::connection _onCompleteCon;
-    boost::signals2::connection _onErrorCon;
-    std::function<CallbackSignature> _callback;
+    signals::connection _onDataCon;
+    signals::connection _onErrorCon;
+    signals::connection _onSuccessCon;
+    std::function<DataSignature> _dataCallback;
+    std::function<ErrorSignature> _errorCallback;
+    std::function<SuccessSignature> _successCallback;
     net::any_io_executor _executor;
 };
 

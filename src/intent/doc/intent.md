@@ -26,8 +26,9 @@ class WitSpeechRecognition {
 
 class WitRecognition {
     +cancel()
-    +onComplete(slot): connection <signal>
-    +onError(slot): connection
+    +onData(slot): connection <signal>
+    +onError(slot): connection <signal>
+    +onSuccess(slot): connection <signal>
 }
 
 WitMessageRecognition <|-- WitRecognition

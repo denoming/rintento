@@ -4,6 +4,7 @@
 #include "intent/WitRecognition.hpp"
 
 #include <memory>
+#include <string_view>
 #include <filesystem>
 
 namespace fs = std::filesystem;

@@ -26,7 +26,7 @@ WitMessageRecognition::run(std::string_view host, std::string_view port, std::st
     assert(!port.empty());
     assert(!auth.empty());
 
-    std::error_code error;
+    sys::error_code error;
     if (!setTlsHostName(_stream, host, error)) {
         LOGE("Failed to set TLS hostname: ", error.message());
         notifyError(error);
@@ -270,7 +270,7 @@ WitMessageRecognition::onShutdownDone(sys::error_code error)
         LOGD("Shutdown of connection was successful");
     }
 
-    notifyComplete(_response.body());
+    notifySuccess(_response.body());
 
     beast::get_lowest_layer(_stream).close();
 }
