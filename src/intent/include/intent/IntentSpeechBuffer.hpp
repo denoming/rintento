@@ -25,6 +25,9 @@ public:
     [[nodiscard]] std::size_t
     available() const;
 
+    [[nodiscard]] std::size_t
+    capacity() const;
+
     void
     write(std::string_view data);
 

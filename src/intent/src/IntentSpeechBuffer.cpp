@@ -35,6 +35,12 @@ IntentSpeechBuffer::available() const
     return (_buffer.size() - _offset > 0);
 }
 
+std::size_t
+IntentSpeechBuffer::capacity() const
+{
+    return _buffer.capacity();
+}
+
 void
 IntentSpeechBuffer::write(std::string_view data)
 {

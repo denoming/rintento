@@ -13,7 +13,7 @@
 namespace urls = boost::urls;
 namespace json = boost::json;
 
-static const int MaxSpeechBufferSize = 1024 * 1024;
+static const int SpeechBufferCapacity = 1024 * 1024;
 
 namespace {
 
@@ -47,7 +47,7 @@ IntentRecognizeSpeechHandler::IntentRecognizeSpeechHandler(
     Callback callback)
     : IntentRecognizeHandler{std::move(connection), std::move(callback)}
     , _factory{std::move(factory)}
-    , _speechData{MaxSpeechBufferSize}
+    , _speechData{SpeechBufferCapacity}
 {
     assert(_factory);
 }
@@ -89,11 +89,12 @@ IntentRecognizeSpeechHandler::handle(Buffer& buffer, Parser& parser)
     LOGD("Run message recognition");
     _recognition->run();
 
-    auto onHeader = [](std::uint64_t size, std::string_view extensions, sys::error_code& error) {
-        LOGI("Header chunk: <{}> size", size);
+    auto onHeader = [this](std::uint64_t size, auto extensions, sys::error_code& error) {
+        if (size > _speechData.capacity()) {
+            error = http::error::body_limit;
+        }
     };
     auto onBody = [this](std::uint64_t remain, std::string_view body, sys::error_code& error) {
-        LOGI("Body chunk: <{}> size", body.size());
         _speechData.write(body);
         return body.size();
     };
@@ -102,10 +103,9 @@ IntentRecognizeSpeechHandler::handle(Buffer& buffer, Parser& parser)
 
     sys::error_code error;
     while (!parser.is_done()) {
-        LOGI("Server: Read chunk");
         http::read(connection().stream(), buffer, parser, error);
         if (error) {
-            LOGI("Server: Reading chunk error: <{}>", error.what());
+            LOGE("Reading chunk error: <{}>", error.what());
             break;
         }
         if (_recognition->starving()) {
@@ -114,7 +114,7 @@ IntentRecognizeSpeechHandler::handle(Buffer& buffer, Parser& parser)
     }
 
     if (!error) {
-        LOGD("Receiving has been done");
+        LOGD("Receiving of chunks has been done");
         _speechData.complete();
         if (_recognition->starving()) {
             onRecognitionData();
@@ -131,7 +131,7 @@ IntentRecognizeSpeechHandler::canHandle(const Parser::value_type& request) const
 void
 IntentRecognizeSpeechHandler::onRecognitionData()
 {
-    static int MinDataSize = 512;
+    static const int MinDataSize = 512;
 
     if (_speechData.available() > MinDataSize) {
         LOGD("Feed up the recognition using available speech data");
