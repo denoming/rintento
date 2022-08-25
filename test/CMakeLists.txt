@@ -8,13 +8,13 @@ set_target_properties(${TARGET}
 )
 
 target_sources(${TARGET}
-    PRIVATE src/Clients.cpp
+        PRIVATE src/Clients.cpp
         src/Utils.cpp
         src/WitIntentParserTest.cpp
-            src/WitMessageRecognitionTest.cpp
-            src/WitSpeechRecognitionTest.cpp
-            src/IntentRecognizeServerTest.cpp
-)
+        src/WitMessageRecognitionTest.cpp
+        src/WitSpeechRecognitionTest.cpp
+        src/IntentRecognizeServerTest.cpp
+        )
 
 target_include_directories(${TARGET}
     PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
