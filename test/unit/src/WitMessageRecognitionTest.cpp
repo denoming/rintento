@@ -2,8 +2,8 @@
 #include <gmock/gmock.h>
 
 #include "test/Matchers.hpp"
-#include "tests/TestWorker.hpp"
-#include "tests/TestWaiter.hpp"
+#include "test/TestWorker.hpp"
+#include "test/TestWaiter.hpp"
 #include "intent/Config.hpp"
 #include "intent/WitMessageRecognition.hpp"
 #include "intent/WitRecognitionObserver.hpp"

@@ -11,8 +11,8 @@ set_target_properties(${TARGET}
 )
 
 target_sources(${TARGET}
-        PRIVATE main.cpp
-        )
+    PRIVATE main.cpp
+)
 
 target_link_libraries(${TARGET}
     PRIVATE Jarvis::Intent

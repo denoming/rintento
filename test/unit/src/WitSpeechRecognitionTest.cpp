@@ -3,8 +3,8 @@
 
 #include "test/Matchers.hpp"
 #include "test/Utils.hpp"
-#include "tests/TestWorker.hpp"
-#include "tests/TestWaiter.hpp"
+#include "test/TestWorker.hpp"
+#include "test/TestWaiter.hpp"
 #include "intent/WitSpeechRecognition.hpp"
 #include "intent/WitRecognitionObserver.hpp"
 

@@ -1,4 +1,4 @@
-#include "tests/TestWorker.hpp"
+#include "test/TestWorker.hpp"
 
 namespace jar {
 

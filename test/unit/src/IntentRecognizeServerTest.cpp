@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include "tests/TestWorker.hpp"
+#include "test/TestWorker.hpp"
 #include "test/Clients.hpp"
 #include "intent/IntentRecognizeServer.hpp"
 #include "intent/IntentPerformer.hpp"

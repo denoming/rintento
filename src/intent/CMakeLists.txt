@@ -8,29 +8,29 @@ target_include_directories(${TARGET}
 )
 
 target_link_libraries(${TARGET}
-        PUBLIC Jarvis::Common
-        PRIVATE fmt::fmt OpenSSL::SSL OpenSSL::Crypto Boost::json Boost::url
-        )
+    PUBLIC Jarvis::Common
+    PRIVATE fmt::fmt OpenSSL::SSL OpenSSL::Crypto Boost::json Boost::url
+)
 
 target_sources(${TARGET}
-        PRIVATE src/Types.cpp
-        src/RecognitionObserver.cpp
-        src/WitRecognition.cpp
-        src/WitMessageRecognition.cpp
-        src/WitSpeechRecognition.cpp
-        src/WitRecognitionObserver.cpp
-        src/WitIntentParser.cpp
-        src/WitRecognitionFactory.cpp
-        src/IntentRecognizeServer.cpp
-        src/IntentRecognizeProcessor.cpp
-        src/IntentPerformer.cpp
-        src/IntentRecognizeHandler.cpp
-        src/IntentRecognizeMessageHandler.cpp
-        src/IntentRecognizeSpeechHandler.cpp
-        src/IntentRecognizeTerminalHandler.cpp
-        src/IntentSpeechBuffer.cpp
-        src/Utils.cpp
-        )
+    PRIVATE src/Types.cpp
+            src/RecognitionObserver.cpp
+            src/WitRecognition.cpp
+            src/WitMessageRecognition.cpp
+            src/WitSpeechRecognition.cpp
+            src/WitRecognitionObserver.cpp
+            src/WitIntentParser.cpp
+            src/WitRecognitionFactory.cpp
+            src/IntentRecognizeServer.cpp
+            src/IntentRecognizeProcessor.cpp
+            src/IntentPerformer.cpp
+            src/IntentRecognizeHandler.cpp
+            src/IntentRecognizeMessageHandler.cpp
+            src/IntentRecognizeSpeechHandler.cpp
+            src/IntentRecognizeTerminalHandler.cpp
+            src/IntentSpeechBuffer.cpp
+            src/Utils.cpp
+)
 
 target_compile_features(${TARGET} PUBLIC cxx_std_20)
 

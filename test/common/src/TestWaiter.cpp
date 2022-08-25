@@ -1,4 +1,4 @@
-#include "tests/TestWaiter.hpp"
+#include "test/TestWaiter.hpp"
 
 namespace jar {
 
