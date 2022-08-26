@@ -21,14 +21,14 @@ target_sources(${TARGET}
             src/WitRecognitionObserver.cpp
             src/WitIntentParser.cpp
             src/WitRecognitionFactory.cpp
-            src/IntentRecognizeServer.cpp
-            src/IntentRecognizeDispatcher.cpp
+            src/RecognitionServer.cpp
+            src/RecognitionDispatcher.cpp
             src/IntentPerformer.cpp
-            src/IntentRecognizeHandler.cpp
-            src/IntentRecognizeMessageHandler.cpp
-            src/IntentRecognizeSpeechHandler.cpp
-            src/IntentRecognizeTerminalHandler.cpp
-            src/IntentSpeechBuffer.cpp
+            src/RecognitionHandler.cpp
+            src/RecognitionMessageHandler.cpp
+            src/RecognitionSpeechHandler.cpp
+            src/RecognitionTerminalHandler.cpp
+            src/SpeechDataBuffer.cpp
             src/Utils.cpp
 )
 

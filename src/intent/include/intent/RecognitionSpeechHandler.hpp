@@ -1,8 +1,8 @@
 #pragma once
 
-#include "intent/IntentRecognizeConnection.hpp"
-#include "intent/IntentRecognizeHandler.hpp"
-#include "intent/IntentSpeechBuffer.hpp"
+#include "intent/RecognitionConnection.hpp"
+#include "intent/RecognitionHandler.hpp"
+#include "intent/SpeechDataBuffer.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 #include "intent/WitSpeechRecognition.hpp"
 #include "intent/WitRecognitionObserver.hpp"
@@ -13,13 +13,13 @@
 
 namespace jar {
 
-class IntentRecognizeSpeechHandler final : public IntentRecognizeHandler {
+class RecognitionSpeechHandler final : public RecognitionHandler {
 public:
-    IntentRecognizeSpeechHandler(IntentRecognizeConnection::Ptr connection,
+    RecognitionSpeechHandler(RecognitionConnection::Ptr connection,
                                  WitRecognitionFactory::Ptr factory,
                                  Callback callback);
 
-    ~IntentRecognizeSpeechHandler() override;
+    ~RecognitionSpeechHandler() override;
 
     void
     handle(Buffer& buffer, Parser& parser) override;
@@ -42,7 +42,7 @@ private:
     WitSpeechRecognition::Ptr _recognition;
     WitRecognitionObserver::Ptr _observer;
     signals::connection _onDataCon;
-    IntentSpeechBuffer _speechData;
+    SpeechDataBuffer _speechData;
 };
 
 } // namespace jar

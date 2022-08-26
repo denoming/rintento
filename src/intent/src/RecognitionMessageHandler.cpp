@@ -1,4 +1,4 @@
-#include "intent/IntentRecognizeMessageHandler.hpp"
+#include "intent/RecognitionMessageHandler.hpp"
 
 #include "intent/Utils.hpp"
 #include "common/Logger.hpp"
@@ -35,21 +35,20 @@ isMessageTarget(std::string_view target)
 
 } // namespace
 
-IntentRecognizeMessageHandler::IntentRecognizeMessageHandler(
-    IntentRecognizeConnection::Ptr connection,
+RecognitionMessageHandler::RecognitionMessageHandler(RecognitionConnection::Ptr connection,
     WitRecognitionFactory::Ptr factory,
     Callback callback)
-    : IntentRecognizeHandler{std::move(connection), std::move(callback)}
+    : RecognitionHandler{std::move(connection), std::move(callback)}
     , _factory{std::move(factory)}
 {
     assert(_factory);
 }
 
 void
-IntentRecognizeMessageHandler::handle(Buffer& buffer, Parser& parser)
+RecognitionMessageHandler::handle(Buffer& buffer, Parser& parser)
 {
     if (!canHandle(parser.get())) {
-        IntentRecognizeHandler::handle(buffer, parser);
+        RecognitionHandler::handle(buffer, parser);
         return;
     }
 
@@ -76,13 +75,13 @@ IntentRecognizeMessageHandler::handle(Buffer& buffer, Parser& parser)
 }
 
 bool
-IntentRecognizeMessageHandler::canHandle(const Parser::value_type& request) const
+RecognitionMessageHandler::canHandle(const Parser::value_type& request) const
 {
     return isMessageTarget(request.target());
 }
 
 void
-IntentRecognizeMessageHandler::onRecognitionData()
+RecognitionMessageHandler::onRecognitionData()
 {
     LOGD("Feed up the recognition using given message");
     assert(_recognition);
@@ -90,14 +89,14 @@ IntentRecognizeMessageHandler::onRecognitionData()
 }
 
 void
-IntentRecognizeMessageHandler::onRecognitionError(sys::error_code error)
+RecognitionMessageHandler::onRecognitionError(sys::error_code error)
 {
     sendResponse(error);
     submit(error);
 }
 
 void
-IntentRecognizeMessageHandler::onRecognitionSuccess(Utterances result)
+RecognitionMessageHandler::onRecognitionSuccess(Utterances result)
 {
     sendResponse(result);
     submit(std::move(result));

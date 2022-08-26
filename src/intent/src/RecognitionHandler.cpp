@@ -1,4 +1,4 @@
-#include "intent/IntentRecognizeHandler.hpp"
+#include "intent/RecognitionHandler.hpp"
 
 #include "common/Logger.hpp"
 
@@ -43,7 +43,7 @@ getResponse(std::string payload)
 
 } // namespace
 
-IntentRecognizeHandler::IntentRecognizeHandler(IntentRecognizeConnection::Ptr connection,
+RecognitionHandler::RecognitionHandler(RecognitionConnection::Ptr connection,
                                                Callback callback)
     : _connection{std::move(connection)}
     , _callback{std::move(callback)}
@@ -53,52 +53,52 @@ IntentRecognizeHandler::IntentRecognizeHandler(IntentRecognizeConnection::Ptr co
 }
 
 void
-IntentRecognizeHandler::setNext(Ptr handler)
+RecognitionHandler::setNext(Ptr handler)
 {
     assert(!_next);
     _next = std::move(handler);
 }
 
 void
-IntentRecognizeHandler::handle(Buffer& buffer, Parser& parser)
+RecognitionHandler::handle(Buffer& buffer, Parser& parser)
 {
     if (_next) {
         _next->handle(buffer, parser);
     }
 }
 
-IntentRecognizeConnection&
-IntentRecognizeHandler::connection()
+RecognitionConnection&
+RecognitionHandler::connection()
 {
     return *_connection;
 }
 
-const IntentRecognizeConnection&
-IntentRecognizeHandler::connection() const
+const RecognitionConnection&
+RecognitionHandler::connection() const
 {
     return *_connection;
 }
 
 void
-IntentRecognizeHandler::submit(Utterances result)
+RecognitionHandler::submit(Utterances result)
 {
     _callback(std::move(result), {});
 }
 
 void
-IntentRecognizeHandler::submit(sys::error_code error)
+RecognitionHandler::submit(sys::error_code error)
 {
     _callback({}, error);
 }
 
 void
-IntentRecognizeHandler::sendResponse(const Utterances& result)
+RecognitionHandler::sendResponse(const Utterances& result)
 {
     _connection->write(getResponse(getPayload(result)));
 }
 
 void
-IntentRecognizeHandler::sendResponse(sys::error_code error)
+RecognitionHandler::sendResponse(sys::error_code error)
 {
     _connection->write(getResponse(getPayload(error)));
 }

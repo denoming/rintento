@@ -11,7 +11,7 @@ target_sources(${TARGET}
     PRIVATE src/WitIntentParserTest.cpp
             src/WitMessageRecognitionTest.cpp
             src/WitSpeechRecognitionTest.cpp
-            src/IntentRecognizeServerTest.cpp
+            src/RecognitionServerTest.cpp
 )
 
 target_link_libraries(${TARGET}

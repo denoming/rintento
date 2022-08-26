@@ -34,13 +34,13 @@ class WitRecognition {
 WitMessageRecognition <|-- WitRecognition
 WitSpeechRecognition <|-- WitRecognition
 
-class IntentRecognizeConnection
+class RecognitionConnection
 class IntentRecognizeSession
 
 IntentRecognizeMessageSession <|-- IntentRecognizeSession
 IntentRecognizeSpeechSession <|-- IntentRecognizeSession
 
-class IntentRecognizeServer {
+class RecognitionServer {
     +start()
     +stop()
 }

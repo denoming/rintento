@@ -9,9 +9,9 @@
 
 namespace jar {
 
-class IntentSpeechBuffer {
+class SpeechDataBuffer {
 public:
-    explicit IntentSpeechBuffer(std::size_t capacity);
+    explicit SpeechDataBuffer(std::size_t capacity);
 
     [[nodiscard]] bool
     empty() const;

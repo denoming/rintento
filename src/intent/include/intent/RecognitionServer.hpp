@@ -1,7 +1,7 @@
 #pragma once
 
 #include "intent/Http.hpp"
-#include "intent/IntentRecognizeDispatcher.hpp"
+#include "intent/RecognitionDispatcher.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 
 #include <memory>
@@ -10,13 +10,13 @@
 
 namespace jar {
 
-class IntentRecognizeServer : public std::enable_shared_from_this<IntentRecognizeServer> {
+class RecognitionServer : public std::enable_shared_from_this<RecognitionServer> {
 public:
-    using Ptr = std::shared_ptr<IntentRecognizeServer>;
+    using Ptr = std::shared_ptr<RecognitionServer>;
 
-    IntentRecognizeServer(net::any_io_executor& executor,
-                          IntentPerformer::Ptr performer,
-                          WitRecognitionFactory::Ptr factory);
+    RecognitionServer(net::any_io_executor& executor,
+                      IntentPerformer::Ptr performer,
+                      WitRecognitionFactory::Ptr factory);
 
     bool
     listen(tcp::endpoint endpoint);
@@ -34,7 +34,8 @@ private:
     void
     close();
 
-    bool dispatch(IntentRecognizeConnection::Ptr connection);
+    bool
+    dispatch(RecognitionConnection::Ptr connection);
 
 private:
     net::any_io_executor& _executor;
@@ -42,7 +43,7 @@ private:
     WitRecognitionFactory::Ptr _factory;
     tcp::acceptor _acceptor;
     std::mutex _dispatchersGuard;
-    std::map<std::uint16_t, IntentRecognizeDispatcher::Ptr> _dispatchers;
+    std::map<std::uint16_t, RecognitionDispatcher::Ptr> _dispatchers;
 };
 
 } // namespace jar

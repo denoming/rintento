@@ -1,8 +1,8 @@
 #pragma once
 
 #include "intent/IntentPerformer.hpp"
-#include "intent/IntentRecognizeConnection.hpp"
-#include "intent/IntentRecognizeHandler.hpp"
+#include "intent/RecognitionConnection.hpp"
+#include "intent/RecognitionHandler.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 
 #include <memory>
@@ -10,15 +10,15 @@
 
 namespace jar {
 
-class IntentRecognizeDispatcher : public std::enable_shared_from_this<IntentRecognizeDispatcher> {
+class RecognitionDispatcher : public std::enable_shared_from_this<RecognitionDispatcher> {
 public:
-    using Ptr = std::shared_ptr<IntentRecognizeDispatcher>;
+    using Ptr = std::shared_ptr<RecognitionDispatcher>;
 
     using DoneSignature = void(std::uint16_t identity);
 
     static Ptr
     create(uint16_t identity,
-           IntentRecognizeConnection::Ptr connection,
+           RecognitionConnection::Ptr connection,
            IntentPerformer::Ptr executor,
            WitRecognitionFactory::Ptr factory);
 
@@ -32,8 +32,8 @@ public:
     dispatch();
 
 private:
-    IntentRecognizeDispatcher(uint16_t identity,
-                              IntentRecognizeConnection::Ptr connection,
+    RecognitionDispatcher(uint16_t identity,
+                          RecognitionConnection::Ptr connection,
                               IntentPerformer::Ptr performer,
                               WitRecognitionFactory::Ptr factory);
 
@@ -48,7 +48,7 @@ private:
     void
     onComplete(Utterances utterances, sys::error_code error);
 
-    IntentRecognizeHandler::Ptr
+    RecognitionHandler::Ptr
     getHandler();
 
     void
@@ -56,10 +56,10 @@ private:
 
 private:
     uint16_t _identity;
-    IntentRecognizeConnection::Ptr _connection;
+    RecognitionConnection::Ptr _connection;
     IntentPerformer::Ptr _performer;
     WitRecognitionFactory::Ptr _factory;
-    IntentRecognizeHandler::Ptr _handler;
+    RecognitionHandler::Ptr _handler;
     std::function<DoneSignature> _doneCallback;
 };
 

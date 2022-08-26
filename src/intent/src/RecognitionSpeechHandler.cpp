@@ -1,4 +1,4 @@
-#include "intent/IntentRecognizeSpeechHandler.hpp"
+#include "intent/RecognitionSpeechHandler.hpp"
 
 #include "intent/Types.hpp"
 #include "common/Logger.hpp"
@@ -41,18 +41,17 @@ saveToFile(const char* data, std::size_t size)
 
 namespace jar {
 
-IntentRecognizeSpeechHandler::IntentRecognizeSpeechHandler(
-    IntentRecognizeConnection::Ptr connection,
+RecognitionSpeechHandler::RecognitionSpeechHandler(RecognitionConnection::Ptr connection,
     WitRecognitionFactory::Ptr factory,
     Callback callback)
-    : IntentRecognizeHandler{std::move(connection), std::move(callback)}
+    : RecognitionHandler{std::move(connection), std::move(callback)}
     , _factory{std::move(factory)}
     , _speechData{SpeechBufferCapacity}
 {
     assert(_factory);
 }
 
-IntentRecognizeSpeechHandler::~IntentRecognizeSpeechHandler()
+RecognitionSpeechHandler::~RecognitionSpeechHandler()
 {
     if (_onDataCon.connected()) {
         _onDataCon.disconnect();
@@ -60,10 +59,10 @@ IntentRecognizeSpeechHandler::~IntentRecognizeSpeechHandler()
 }
 
 void
-IntentRecognizeSpeechHandler::handle(Buffer& buffer, Parser& parser)
+RecognitionSpeechHandler::handle(Buffer& buffer, Parser& parser)
 {
     if (!canHandle(parser.get())) {
-        IntentRecognizeHandler::handle(buffer, parser);
+        RecognitionHandler::handle(buffer, parser);
         return;
     }
 
@@ -123,13 +122,13 @@ IntentRecognizeSpeechHandler::handle(Buffer& buffer, Parser& parser)
 }
 
 bool
-IntentRecognizeSpeechHandler::canHandle(const Parser::value_type& request) const
+RecognitionSpeechHandler::canHandle(const Parser::value_type& request) const
 {
     return isSpeechTarget(request.target());
 }
 
 void
-IntentRecognizeSpeechHandler::onRecognitionData()
+RecognitionSpeechHandler::onRecognitionData()
 {
     static const int MinDataSize = 512;
 
@@ -151,14 +150,14 @@ IntentRecognizeSpeechHandler::onRecognitionData()
 }
 
 void
-IntentRecognizeSpeechHandler::onRecognitionError(sys::error_code error)
+RecognitionSpeechHandler::onRecognitionError(sys::error_code error)
 {
     sendResponse(error);
     submit(error);
 }
 
 void
-IntentRecognizeSpeechHandler::onRecognitionSuccess(Utterances result)
+RecognitionSpeechHandler::onRecognitionSuccess(Utterances result)
 {
     sendResponse(result);
     submit(std::move(result));

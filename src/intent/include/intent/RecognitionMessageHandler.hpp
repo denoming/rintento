@@ -1,16 +1,16 @@
 #pragma once
 
-#include "intent/IntentRecognizeConnection.hpp"
-#include "intent/IntentRecognizeHandler.hpp"
+#include "intent/RecognitionConnection.hpp"
+#include "intent/RecognitionHandler.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 #include "intent/WitMessageRecognition.hpp"
 #include "intent/WitRecognitionObserver.hpp"
 
 namespace jar {
 
-class IntentRecognizeMessageHandler final : public IntentRecognizeHandler {
+class RecognitionMessageHandler final : public RecognitionHandler {
 public:
-    IntentRecognizeMessageHandler(IntentRecognizeConnection::Ptr connection,
+    RecognitionMessageHandler(RecognitionConnection::Ptr connection,
                                   WitRecognitionFactory::Ptr factory,
                                   Callback callback);
 

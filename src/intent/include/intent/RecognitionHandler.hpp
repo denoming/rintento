@@ -2,23 +2,23 @@
 
 #include "intent/Http.hpp"
 #include "intent/Types.hpp"
-#include "intent/IntentRecognizeConnection.hpp"
+#include "intent/RecognitionConnection.hpp"
 
 #include <memory>
 #include <functional>
 
 namespace jar {
 
-class IntentRecognizeHandler {
+class RecognitionHandler {
 public:
-    using Ptr = std::unique_ptr<IntentRecognizeHandler>;
+    using Ptr = std::unique_ptr<RecognitionHandler>;
     using Buffer = beast::flat_buffer;
     using Parser = http::request_parser<http::empty_body>;
     using Callback = std::function<void(Utterances result, sys::error_code error)>;
 
-    IntentRecognizeHandler(IntentRecognizeConnection::Ptr connection, Callback callback);
+    RecognitionHandler(RecognitionConnection::Ptr connection, Callback callback);
 
-    virtual ~IntentRecognizeHandler() = default;
+    virtual ~RecognitionHandler() = default;
 
     void
     setNext(Ptr handler);
@@ -27,10 +27,10 @@ public:
     handle(Buffer& buffer, Parser& parser);
 
 protected:
-    IntentRecognizeConnection&
+    RecognitionConnection&
     connection();
 
-    const IntentRecognizeConnection&
+    const RecognitionConnection&
     connection() const;
 
     void
@@ -47,7 +47,7 @@ protected:
 
 private:
     Ptr _next;
-    IntentRecognizeConnection::Ptr _connection;
+    RecognitionConnection::Ptr _connection;
     Callback _callback;
 };
 

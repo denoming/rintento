@@ -7,9 +7,9 @@
 
 namespace jar {
 
-class IntentRecognizeConnection : public std::enable_shared_from_this<IntentRecognizeConnection> {
+class RecognitionConnection : public std::enable_shared_from_this<RecognitionConnection> {
 public:
-    using Ptr = std::shared_ptr<IntentRecognizeConnection>;
+    using Ptr = std::shared_ptr<RecognitionConnection>;
 
     template<typename Body>
     using ReadingCallback = std::function<void(http::request<Body> request, sys::error_code error)>;
@@ -25,13 +25,13 @@ public:
     create(tcp::socket&& socket)
     {
         // clang-format off
-        return std::shared_ptr<IntentRecognizeConnection>(
-            new IntentRecognizeConnection{std::move(socket)}
+        return std::shared_ptr<RecognitionConnection>(
+            new RecognitionConnection{std::move(socket)}
         );
         // clang-format on
     }
 
-    ~IntentRecognizeConnection()
+    ~RecognitionConnection()
     {
         _stream.close();
     }
@@ -115,7 +115,7 @@ public:
     }
 
 private:
-    IntentRecognizeConnection(tcp::socket&& socket)
+    RecognitionConnection(tcp::socket&& socket)
         : _stream{std::move(socket)}
     {
     }
@@ -134,7 +134,7 @@ private:
     template<typename Body>
     class TypedReadingAction final : public Action {
     public:
-        TypedReadingAction(IntentRecognizeConnection& connection, ReadingCallback<Body> callback)
+        TypedReadingAction(RecognitionConnection& connection, ReadingCallback<Body> callback)
             : _connection{connection}
             , _callback{std::move(callback)}
         {
@@ -154,7 +154,7 @@ private:
         }
 
     private:
-        IntentRecognizeConnection& _connection;
+        RecognitionConnection& _connection;
         ReadingCallback<Body> _callback;
         beast::flat_buffer _buffer;
         http::request<Body> _request;
@@ -166,7 +166,7 @@ private:
         using Response = http::response<Body>;
         using Callback = std::function<void(sys::error_code error)>;
 
-        TypedWritingAction(IntentRecognizeConnection& connection,
+        TypedWritingAction(RecognitionConnection& connection,
                            http::response<Body> response,
                            Callback callback)
             : _connection{connection}
@@ -189,7 +189,7 @@ private:
         }
 
     private:
-        IntentRecognizeConnection& _connection;
+        RecognitionConnection& _connection;
         http::response<Body> _response;
         Callback _callback;
     };
@@ -197,7 +197,7 @@ private:
     template<typename Body>
     class TypedReadingHeaderAction : public Action {
     public:
-        TypedReadingHeaderAction(IntentRecognizeConnection& connection,
+        TypedReadingHeaderAction(RecognitionConnection& connection,
                                  ReadingHeaderCallback<Body> callback)
             : _connection{connection}
             , _callback{std::move(callback)}
@@ -218,7 +218,7 @@ private:
         }
 
     private:
-        IntentRecognizeConnection& _connection;
+        RecognitionConnection& _connection;
         ReadingHeaderCallback<Body> _callback;
         beast::flat_buffer _buffer;
         http::request_parser<Body> _parser;
@@ -227,7 +227,7 @@ private:
     template<typename Body, typename Fields = http::fields>
     class TypedWritingHeaderAction : public Action {
     public:
-        TypedWritingHeaderAction(IntentRecognizeConnection& connection,
+        TypedWritingHeaderAction(RecognitionConnection& connection,
                                  http::response_header<Fields> header,
                                  WritingHeaderCallback callback)
             : _connection{connection}
@@ -251,7 +251,7 @@ private:
         }
 
     private:
-        IntentRecognizeConnection& _connection;
+        RecognitionConnection& _connection;
         WritingHeaderCallback _callback;
         http::response_header<Fields> _header;
         http::response_serializer<Body, Fields> _serializer;

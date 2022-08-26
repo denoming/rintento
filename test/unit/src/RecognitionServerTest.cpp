@@ -3,24 +3,24 @@
 
 #include "test/TestWorker.hpp"
 #include "test/Clients.hpp"
-#include "intent/IntentRecognizeServer.hpp"
+#include "intent/RecognitionServer.hpp"
 #include "intent/IntentPerformer.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 
 using namespace testing;
 using namespace jar;
 
-class IntentRecognizeServerTest : public Test {
+class RecognitionServerTest : public Test {
 public:
     const fs::path AssetAudioPath{fs::current_path() / "asset" / "audio"};
     const std::string_view ClientHost{"127.0.0.1"};
     const std::string_view ClientPort{"8080"};
     const tcp::endpoint ServerEndpoint{net::ip::make_address("0.0.0.0"), 8080};
 
-    IntentRecognizeServerTest()
+    RecognitionServerTest()
         : performer{IntentPerformer::create()}
         , factory{std::make_shared<WitRecognitionFactory>(worker.sslContext(), worker.executor())}
-        , recognizer{std::make_shared<IntentRecognizeServer>(worker.executor(), performer, factory)}
+        , recognizer{std::make_shared<RecognitionServer>(worker.executor(), performer, factory)}
     {
     }
 
@@ -40,10 +40,10 @@ public:
     TestWorker worker;
     IntentPerformer::Ptr performer;
     WitRecognitionFactory::Ptr factory;
-    IntentRecognizeServer::Ptr recognizer;
+    RecognitionServer::Ptr recognizer;
 };
 
-TEST_F(IntentRecognizeServerTest, RecognizeMessage)
+TEST_F(RecognitionServerTest, RecognizeMessage)
 {
     recognizer->listen(ServerEndpoint);
 
@@ -54,7 +54,7 @@ TEST_F(IntentRecognizeServerTest, RecognizeMessage)
     recognizer->shutdown();
 }
 
-TEST_F(IntentRecognizeServerTest, RecognizeSpeech)
+TEST_F(RecognitionServerTest, RecognizeSpeech)
 {
     recognizer->listen(ServerEndpoint);
 

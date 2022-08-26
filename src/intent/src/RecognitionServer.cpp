@@ -1,11 +1,11 @@
-#include "intent/IntentRecognizeServer.hpp"
+#include "intent/RecognitionServer.hpp"
 
 #include "common/Logger.hpp"
-#include "intent/IntentRecognizeConnection.hpp"
+#include "intent/RecognitionConnection.hpp"
 
 namespace jar {
 
-IntentRecognizeServer::IntentRecognizeServer(net::any_io_executor& executor,
+RecognitionServer::RecognitionServer(net::any_io_executor& executor,
                                              IntentPerformer::Ptr performer,
                                              WitRecognitionFactory::Ptr factory)
     : _executor{executor}
@@ -16,7 +16,7 @@ IntentRecognizeServer::IntentRecognizeServer(net::any_io_executor& executor,
 }
 
 bool
-IntentRecognizeServer::listen(tcp::endpoint endpoint)
+RecognitionServer::listen(tcp::endpoint endpoint)
 {
     sys::error_code error;
     _acceptor.open(endpoint.protocol(), error);
@@ -44,34 +44,34 @@ IntentRecognizeServer::listen(tcp::endpoint endpoint)
     }
 
     net::dispatch(_acceptor.get_executor(),
-                  beast::bind_front_handler(&IntentRecognizeServer::accept, shared_from_this()));
+                  beast::bind_front_handler(&RecognitionServer::accept, shared_from_this()));
 
     return true;
 }
 
 void
-IntentRecognizeServer::shutdown()
+RecognitionServer::shutdown()
 {
     net::dispatch(net::bind_executor(_acceptor.get_executor(),
                                      [self = shared_from_this()]() { self->close(); }));
 }
 
 void
-IntentRecognizeServer::accept()
+RecognitionServer::accept()
 {
     _acceptor.async_accept(
         net::make_strand(_executor),
-        beast::bind_front_handler(&IntentRecognizeServer::onAcceptDone, shared_from_this()));
+        beast::bind_front_handler(&RecognitionServer::onAcceptDone, shared_from_this()));
 }
 
 void
-IntentRecognizeServer::onAcceptDone(sys::error_code error, tcp::socket socket)
+RecognitionServer::onAcceptDone(sys::error_code error, tcp::socket socket)
 {
     if (error) {
         LOGE("Failed to accept: <{}>", error.what());
     } else {
         LOGD("Connection was established");
-        auto connection = IntentRecognizeConnection::create(std::move(socket));
+        auto connection = RecognitionConnection::create(std::move(socket));
         if (!dispatch(connection)) {
             LOGE("Failed to dispatch connection");
             connection->close();
@@ -82,14 +82,14 @@ IntentRecognizeServer::onAcceptDone(sys::error_code error, tcp::socket socket)
 }
 
 void
-IntentRecognizeServer::close()
+RecognitionServer::close()
 {
     sys::error_code error;
     _acceptor.close(error);
 }
 
 bool
-IntentRecognizeServer::dispatch(IntentRecognizeConnection::Ptr connection)
+RecognitionServer::dispatch(RecognitionConnection::Ptr connection)
 {
     sys::error_code error;
     const auto endpoint = connection->endpointRemote(error);
@@ -104,7 +104,7 @@ IntentRecognizeServer::dispatch(IntentRecognizeConnection::Ptr connection)
         return false;
     }
 
-    auto dispatcher = IntentRecognizeDispatcher::create(identity, connection, _performer, _factory);
+    auto dispatcher = RecognitionDispatcher::create(identity, connection, _performer, _factory);
     {
         std::lock_guard lock{_dispatchersGuard};
         _dispatchers.emplace(identity, dispatcher);
