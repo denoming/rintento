@@ -6,25 +6,36 @@
 #include "intent/WitRecognitionFactory.hpp"
 
 #include <memory>
+#include <functional>
 
 namespace jar {
 
-class IntentRecognizeProcessor : public std::enable_shared_from_this<IntentRecognizeProcessor> {
+class IntentRecognizeDispatcher : public std::enable_shared_from_this<IntentRecognizeDispatcher> {
 public:
-    using Ptr = std::shared_ptr<IntentRecognizeProcessor>;
+    using Ptr = std::shared_ptr<IntentRecognizeDispatcher>;
+
+    using DoneSignature = void(std::uint16_t identity);
 
     static Ptr
-    create(IntentRecognizeConnection::Ptr connection,
+    create(uint16_t identity,
+           IntentRecognizeConnection::Ptr connection,
            IntentPerformer::Ptr executor,
            WitRecognitionFactory::Ptr factory);
 
+    uint16_t
+    identity() const;
+
     void
-    process();
+    whenDone(std::function<DoneSignature> callback);
+
+    void
+    dispatch();
 
 private:
-    IntentRecognizeProcessor(IntentRecognizeConnection::Ptr connection,
-                             IntentPerformer::Ptr performer,
-                             WitRecognitionFactory::Ptr factory);
+    IntentRecognizeDispatcher(uint16_t identity,
+                              IntentRecognizeConnection::Ptr connection,
+                              IntentPerformer::Ptr performer,
+                              WitRecognitionFactory::Ptr factory);
 
     void
     readHeader();
@@ -40,11 +51,16 @@ private:
     IntentRecognizeHandler::Ptr
     getHandler();
 
+    void
+    finalize();
+
 private:
+    uint16_t _identity;
     IntentRecognizeConnection::Ptr _connection;
     IntentPerformer::Ptr _performer;
     WitRecognitionFactory::Ptr _factory;
     IntentRecognizeHandler::Ptr _handler;
+    std::function<DoneSignature> _doneCallback;
 };
 
 } // namespace jar

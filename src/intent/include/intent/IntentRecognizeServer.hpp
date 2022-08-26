@@ -1,10 +1,12 @@
 #pragma once
 
 #include "intent/Http.hpp"
-#include "intent/IntentRecognizeProcessor.hpp"
+#include "intent/IntentRecognizeDispatcher.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 
 #include <memory>
+#include <map>
+#include <mutex>
 
 namespace jar {
 
@@ -32,12 +34,15 @@ private:
     void
     close();
 
+    bool dispatch(IntentRecognizeConnection::Ptr connection);
+
 private:
     net::any_io_executor& _executor;
     IntentPerformer::Ptr _performer;
     WitRecognitionFactory::Ptr _factory;
     tcp::acceptor _acceptor;
-    IntentRecognizeProcessor::Ptr _processor;
+    std::mutex _dispatchersGuard;
+    std::map<std::uint16_t, IntentRecognizeDispatcher::Ptr> _dispatchers;
 };
 
 } // namespace jar

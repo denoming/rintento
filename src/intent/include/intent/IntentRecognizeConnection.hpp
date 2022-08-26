@@ -36,6 +36,18 @@ public:
         _stream.close();
     }
 
+    tcp::endpoint
+    endpointLocal(sys::error_code& error) const
+    {
+        return _stream.socket().local_endpoint(error);
+    }
+
+    tcp::endpoint
+    endpointRemote(sys::error_code error) const
+    {
+        return _stream.socket().remote_endpoint(error);
+    }
+
     beast::tcp_stream&
     stream()
     {
@@ -94,6 +106,12 @@ public:
         net::dispatch(executor(), [self = shared_from_this(), c = std::move(callback)]() {
             self->pushAction(std::make_unique<Action>(*self, std::move(c)));
         });
+    }
+
+    void
+    close()
+    {
+        _stream.close();
     }
 
 private:

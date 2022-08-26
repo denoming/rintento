@@ -65,7 +65,7 @@ IntentRecognizeMessageHandler::handle(Buffer& buffer, Parser& parser)
     _recognition = _factory->message();
     assert(_recognition);
 
-    _observer = WitRecognitionObserver::create(_recognition);
+    _observer = WitRecognitionObserver::create(_recognition, connection().executor());
     assert(_observer);
     _observer->whenData([this]() { onRecognitionData(); });
     _observer->whenError([this](auto error) { onRecognitionError(error); });

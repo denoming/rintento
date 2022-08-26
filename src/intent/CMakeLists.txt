@@ -22,7 +22,7 @@ target_sources(${TARGET}
             src/WitIntentParser.cpp
             src/WitRecognitionFactory.cpp
             src/IntentRecognizeServer.cpp
-            src/IntentRecognizeProcessor.cpp
+            src/IntentRecognizeDispatcher.cpp
             src/IntentPerformer.cpp
             src/IntentRecognizeHandler.cpp
             src/IntentRecognizeMessageHandler.cpp

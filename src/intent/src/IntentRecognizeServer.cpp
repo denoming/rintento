@@ -72,8 +72,10 @@ IntentRecognizeServer::onAcceptDone(sys::error_code error, tcp::socket socket)
     } else {
         LOGD("Connection was established");
         auto connection = IntentRecognizeConnection::create(std::move(socket));
-        _processor = IntentRecognizeProcessor::create(connection, _performer, _factory);
-        _processor->process();
+        if (!dispatch(connection)) {
+            LOGE("Failed to dispatch connection");
+            connection->close();
+        }
     }
 
     accept();
@@ -84,6 +86,37 @@ IntentRecognizeServer::close()
 {
     sys::error_code error;
     _acceptor.close(error);
+}
+
+bool
+IntentRecognizeServer::dispatch(IntentRecognizeConnection::Ptr connection)
+{
+    sys::error_code error;
+    const auto endpoint = connection->endpointRemote(error);
+    if (error) {
+        LOGE("Failed to get dispatcher identity: <{}> error", error.what());
+        return false;
+    }
+
+    const auto identity = endpoint.port();
+    if (_dispatchers.contains(identity)) {
+        LOGE("Dispatcher identity already exists");
+        return false;
+    }
+
+    auto dispatcher = IntentRecognizeDispatcher::create(identity, connection, _performer, _factory);
+    {
+        std::lock_guard lock{_dispatchersGuard};
+        _dispatchers.emplace(identity, dispatcher);
+    }
+    dispatcher->whenDone([this](uint16_t identity) {
+        LOGD("The <{}> dispatcher has finished", identity);
+        std::lock_guard lock{_dispatchersGuard};
+        _dispatchers.erase(identity);
+    });
+    LOGD("The <{}> dispatcher is going to start", identity);
+    dispatcher->dispatch();
+    return true;
 }
 
 } // namespace jar
