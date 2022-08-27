@@ -8,12 +8,14 @@ target_include_directories(${TARGET}
 )
 
 target_link_libraries(${TARGET}
-    PUBLIC Boost::headers
+    PUBLIC Boost::program_options Boost::headers
     PRIVATE spdlog::spdlog
 )
 
 target_sources(${TARGET}
     PRIVATE src/LoggerInitializer.cpp
+            src/Application.cpp
+            src/Worker.cpp
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_20)

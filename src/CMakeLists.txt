@@ -11,11 +11,11 @@ set_target_properties(${TARGET}
 )
 
 target_sources(${TARGET}
-    PRIVATE main.cpp
+    PRIVATE ExecutorService.cpp
 )
 
 target_link_libraries(${TARGET}
-    PRIVATE Jarvis::Intent
+    PRIVATE Jarvis::Common Jarvis::Intent
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_20)
