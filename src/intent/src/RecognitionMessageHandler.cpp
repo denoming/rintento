@@ -36,7 +36,7 @@ isMessageTarget(std::string_view target)
 } // namespace
 
 RecognitionMessageHandler::RecognitionMessageHandler(RecognitionConnection::Ptr connection,
-    WitRecognitionFactory::Ptr factory,
+                                                     WitRecognitionFactory::Ptr factory,
     Callback callback)
     : RecognitionHandler{std::move(connection), std::move(callback)}
     , _factory{std::move(factory)}

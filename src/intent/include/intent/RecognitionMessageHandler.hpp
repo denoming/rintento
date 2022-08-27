@@ -11,8 +11,8 @@ namespace jar {
 class RecognitionMessageHandler final : public RecognitionHandler {
 public:
     RecognitionMessageHandler(RecognitionConnection::Ptr connection,
-                                  WitRecognitionFactory::Ptr factory,
-                                  Callback callback);
+                              WitRecognitionFactory::Ptr factory,
+                              Callback callback);
 
     void
     handle(Buffer& buffer, Parser& parser) override;

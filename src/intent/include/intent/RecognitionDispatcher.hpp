@@ -34,8 +34,8 @@ public:
 private:
     RecognitionDispatcher(uint16_t identity,
                           RecognitionConnection::Ptr connection,
-                              IntentPerformer::Ptr performer,
-                              WitRecognitionFactory::Ptr factory);
+                          IntentPerformer::Ptr performer,
+                          WitRecognitionFactory::Ptr factory);
 
     void
     readHeader();

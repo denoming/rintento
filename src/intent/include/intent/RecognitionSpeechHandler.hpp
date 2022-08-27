@@ -16,8 +16,8 @@ namespace jar {
 class RecognitionSpeechHandler final : public RecognitionHandler {
 public:
     RecognitionSpeechHandler(RecognitionConnection::Ptr connection,
-                                 WitRecognitionFactory::Ptr factory,
-                                 Callback callback);
+                             WitRecognitionFactory::Ptr factory,
+                             Callback callback);
 
     ~RecognitionSpeechHandler() override;
 

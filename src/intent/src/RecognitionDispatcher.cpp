@@ -11,8 +11,8 @@ namespace jar {
 RecognitionDispatcher::Ptr
 RecognitionDispatcher::create(uint16_t identity,
                               RecognitionConnection::Ptr connection,
-                                  IntentPerformer::Ptr performer,
-                                  WitRecognitionFactory::Ptr factory)
+                              IntentPerformer::Ptr performer,
+                              WitRecognitionFactory::Ptr factory)
 {
     assert(identity > 0);
     assert(connection);
@@ -28,8 +28,8 @@ RecognitionDispatcher::create(uint16_t identity,
 
 RecognitionDispatcher::RecognitionDispatcher(uint16_t identity,
                                              RecognitionConnection::Ptr connection,
-                                                     IntentPerformer::Ptr performer,
-                                                     WitRecognitionFactory::Ptr factory)
+                                             IntentPerformer::Ptr performer,
+                                             WitRecognitionFactory::Ptr factory)
     : _identity{identity}
     , _connection{std::move(connection)}
     , _performer{std::move(performer)}
@@ -67,8 +67,8 @@ RecognitionDispatcher::readHeader()
 
 void
 RecognitionDispatcher::onReadHeaderDone(beast::flat_buffer& buffer,
-                                            http::request_parser<http::empty_body>& parser,
-                                            sys::error_code error)
+                                        http::request_parser<http::empty_body>& parser,
+                                        sys::error_code error)
 {
     if (error == http::error::end_of_stream) {
         LOGI("Connection was closed");

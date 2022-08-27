@@ -42,7 +42,7 @@ saveToFile(const char* data, std::size_t size)
 namespace jar {
 
 RecognitionSpeechHandler::RecognitionSpeechHandler(RecognitionConnection::Ptr connection,
-    WitRecognitionFactory::Ptr factory,
+                                                   WitRecognitionFactory::Ptr factory,
     Callback callback)
     : RecognitionHandler{std::move(connection), std::move(callback)}
     , _factory{std::move(factory)}
@@ -79,13 +79,13 @@ RecognitionSpeechHandler::handle(Buffer& buffer, Parser& parser)
     _recognition = _factory->speech();
     assert(_recognition);
 
-    _observer = WitRecognitionObserver::create(_recognition, connection().executor());
+    _observer = WitRecognitionObserver::create(_recognition);
     assert(_observer);
     _observer->whenData([this]() { onRecognitionData(); });
     _observer->whenError([this](auto error) { onRecognitionError(error); });
     _observer->whenSuccess([this](auto result) { onRecognitionSuccess(std::move(result)); });
 
-    LOGD("Run message recognition");
+    LOGD("Run speech recognition");
     _recognition->run();
 
     auto onHeader = [this](std::uint64_t size, auto extensions, sys::error_code& error) {
@@ -113,7 +113,7 @@ RecognitionSpeechHandler::handle(Buffer& buffer, Parser& parser)
     }
 
     if (!error) {
-        LOGD("Receiving of chunks has been done");
+        LOGD("Receiving of chunks has been done: <{}> bytes", _speechData.available());
         _speechData.complete();
         if (_recognition->starving()) {
             onRecognitionData();
