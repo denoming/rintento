@@ -7,9 +7,20 @@
 
 namespace jar {
 
-WitMessageRecognition::WitMessageRecognition(ssl::context& context, net::any_io_executor& executor)
-    : _resolver{executor}
-    , _stream{executor, context}
+WitMessageRecognition::Ptr
+WitMessageRecognition::create(ssl::context& context, net::any_io_executor executor)
+{
+    // clang-format off
+    return std::shared_ptr<WitMessageRecognition>(
+        new WitMessageRecognition(context, std::move(executor))
+    );
+    // clang-format on
+}
+
+WitMessageRecognition::WitMessageRecognition(ssl::context& context, net::any_io_executor executor)
+    : _executor{std::move(executor)}
+    , _resolver{_executor}
+    , _stream{_executor, context}
 {
 }
 
@@ -57,12 +68,6 @@ WitMessageRecognition::feed(std::string_view message)
         starving(false);
         write();
     });
-}
-
-WitMessageRecognition::Ptr
-WitMessageRecognition::create(ssl::context& context, net::any_io_executor& executor)
-{
-    return std::shared_ptr<WitMessageRecognition>(new WitMessageRecognition(context, executor));
 }
 
 void

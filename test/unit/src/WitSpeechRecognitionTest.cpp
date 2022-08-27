@@ -3,10 +3,11 @@
 
 #include "test/Matchers.hpp"
 #include "test/Utils.hpp"
-#include "test/TestWorker.hpp"
 #include "test/TestWaiter.hpp"
+#include "common/Worker.hpp"
 #include "intent/WitSpeechRecognition.hpp"
 #include "intent/WitRecognitionObserver.hpp"
+#include "intent/WitRecognitionFactory.hpp"
 
 #include <thread>
 #include <fstream>
@@ -21,7 +22,8 @@ public:
     const fs::path AssetAudioPath{fs::current_path() / "asset" / "audio"};
 
     WitSpeechRecognitionTest()
-        : recognition{WitSpeechRecognition::create(worker.sslContext(), worker.executor())}
+        : factory{worker.executor()}
+        , recognition{factory.speech()}
     {
     }
 
@@ -38,7 +40,8 @@ public:
     }
 
 public:
-    TestWorker worker;
+    Worker worker;
+    WitRecognitionFactory factory;
     TestWaiter waiter;
     WitSpeechRecognition::Ptr recognition;
 };

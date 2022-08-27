@@ -7,6 +7,7 @@
 #include <memory>
 #include <map>
 #include <mutex>
+#include <condition_variable>
 
 namespace jar {
 
@@ -14,9 +15,10 @@ class RecognitionServer : public std::enable_shared_from_this<RecognitionServer>
 public:
     using Ptr = std::shared_ptr<RecognitionServer>;
 
-    RecognitionServer(net::any_io_executor& executor,
-                      IntentPerformer::Ptr performer,
-                      WitRecognitionFactory::Ptr factory);
+    static RecognitionServer::Ptr
+    create(net::any_io_executor executor,
+           IntentPerformer::Ptr performer,
+           WitRecognitionFactory::Ptr factory);
 
     bool
     listen(tcp::endpoint endpoint);
@@ -25,11 +27,24 @@ public:
     shutdown();
 
 private:
+    RecognitionServer(net::any_io_executor executor,
+                      IntentPerformer::Ptr performer,
+                      WitRecognitionFactory::Ptr factory);
+
     void
     accept();
 
     void
     onAcceptDone(sys::error_code error, tcp::socket socket);
+
+    void
+    waitForShutdown();
+
+    void
+    notifyShutdownReady();
+
+    bool
+    readyToShutdown() const;
 
     void
     close();
@@ -38,11 +53,15 @@ private:
     dispatch(RecognitionConnection::Ptr connection);
 
 private:
-    net::any_io_executor& _executor;
+    net::any_io_executor _executor;
     IntentPerformer::Ptr _performer;
     WitRecognitionFactory::Ptr _factory;
+    mutable std::mutex _shutdownGuard;
+    std::condition_variable _shutdownReadyCv;
+    bool _shutdownReady;
+    bool _acceptorReady;
     tcp::acceptor _acceptor;
-    std::mutex _dispatchersGuard;
+    mutable std::mutex _dispatchersGuard;
     std::map<std::uint16_t, RecognitionDispatcher::Ptr> _dispatchers;
 };
 

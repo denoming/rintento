@@ -12,7 +12,7 @@ class WitRecognitionFactory {
 public:
     using Ptr = std::shared_ptr<WitRecognitionFactory>;
 
-    WitRecognitionFactory(ssl::context& context, net::any_io_executor& executor);
+    WitRecognitionFactory(net::any_io_executor executor);
 
     WitMessageRecognition::Ptr
     message();
@@ -21,8 +21,8 @@ public:
     speech();
 
 private:
-    ssl::context& _context;
-    net::any_io_executor& _executor;
+    ssl::context _context;
+    net::any_io_executor _executor;
 };
 
 } // namespace jar

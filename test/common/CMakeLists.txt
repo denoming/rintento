@@ -10,7 +10,6 @@ set_target_properties(${TARGET}
 
 target_sources(${TARGET}
     PRIVATE src/TestMain.cpp
-            src/TestWorker.cpp
             src/TestWaiter.cpp
             src/Clients.cpp
             src/Utils.cpp

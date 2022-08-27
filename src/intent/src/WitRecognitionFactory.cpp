@@ -2,10 +2,12 @@
 
 namespace jar {
 
-WitRecognitionFactory::WitRecognitionFactory(ssl::context& context, net::any_io_executor& executor)
-    : _context{context}
-    , _executor{executor}
+WitRecognitionFactory::WitRecognitionFactory(net::any_io_executor executor)
+    : _context{ssl::context::tlsv12_client}
+    , _executor{std::move(executor)}
 {
+    _context.set_default_verify_paths();
+    _context.set_verify_mode(ssl::verify_peer);
 }
 
 WitMessageRecognition::Ptr

@@ -17,7 +17,7 @@ public:
     using Ptr = std::shared_ptr<WitSpeechRecognition>;
 
     static Ptr
-    create(ssl::context& context, net::any_io_executor& executor);
+    create(ssl::context& context, net::any_io_executor executor);
 
     void
     run();
@@ -32,7 +32,7 @@ public:
     finalize();
 
 private:
-    explicit WitSpeechRecognition(ssl::context& context, net::any_io_executor& executor);
+    explicit WitSpeechRecognition(ssl::context& context, net::any_io_executor executor);
 
     void
     resolve(std::string_view host, std::string_view port);
@@ -84,6 +84,7 @@ private:
     onShutdownDone(sys::error_code error);
 
 private:
+    net::any_io_executor _executor;
     tcp::resolver _resolver;
     beast::ssl_stream<beast::tcp_stream> _stream;
     http::request<http::empty_body> _request;

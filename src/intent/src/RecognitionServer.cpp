@@ -5,19 +5,35 @@
 
 namespace jar {
 
-RecognitionServer::RecognitionServer(net::any_io_executor& executor,
-                                             IntentPerformer::Ptr performer,
-                                             WitRecognitionFactory::Ptr factory)
-    : _executor{executor}
+RecognitionServer::Ptr
+RecognitionServer::create(net::any_io_executor executor,
+                          IntentPerformer::Ptr performer,
+                          WitRecognitionFactory::Ptr factory)
+{
+    // clang-format off
+    return std::shared_ptr<RecognitionServer>(
+        new RecognitionServer{std::move(executor), std::move(performer), std::move(factory)}
+    );
+    // clang-format on
+}
+
+RecognitionServer::RecognitionServer(net::any_io_executor executor,
+                                     IntentPerformer::Ptr performer,
+                                     WitRecognitionFactory::Ptr factory)
+    : _executor{std::move(executor)}
     , _performer{std::move(performer)}
-    , _acceptor{net::make_strand(executor)}
+    , _acceptor{net::make_strand(_executor)}
     , _factory{factory}
+    , _shutdownReady{false}
+    , _acceptorReady{false}
 {
 }
 
 bool
 RecognitionServer::listen(tcp::endpoint endpoint)
 {
+    _shutdownReady = false;
+
     sys::error_code error;
     _acceptor.open(endpoint.protocol(), error);
     if (error) {
@@ -52,8 +68,15 @@ RecognitionServer::listen(tcp::endpoint endpoint)
 void
 RecognitionServer::shutdown()
 {
-    net::dispatch(net::bind_executor(_acceptor.get_executor(),
-                                     [self = shared_from_this()]() { self->close(); }));
+    net::dispatch(net::bind_executor(_acceptor.get_executor(), [self = shared_from_this()]() {
+        self->close();
+        if (self->readyToShutdown()) {
+            LOGD("Server is ready to shutdown");
+            self->notifyShutdownReady();
+        }
+    }));
+
+    waitForShutdown();
 }
 
 void
@@ -67,9 +90,7 @@ RecognitionServer::accept()
 void
 RecognitionServer::onAcceptDone(sys::error_code error, tcp::socket socket)
 {
-    if (error) {
-        LOGE("Failed to accept: <{}>", error.what());
-    } else {
+    if (!error) {
         LOGD("Connection was established");
         auto connection = RecognitionConnection::create(std::move(socket));
         if (!dispatch(connection)) {
@@ -82,10 +103,39 @@ RecognitionServer::onAcceptDone(sys::error_code error, tcp::socket socket)
 }
 
 void
+RecognitionServer::waitForShutdown()
+{
+    std::unique_lock lock{_shutdownGuard};
+    _shutdownReadyCv.wait(lock, [this](){
+        return _shutdownReady;
+    });
+}
+
+void
+RecognitionServer::notifyShutdownReady()
+{
+    std::unique_lock lock{_shutdownGuard};
+    _shutdownReady = true;
+    lock.unlock();
+    _shutdownReadyCv.notify_one();
+}
+
+bool
+RecognitionServer::readyToShutdown() const
+{
+    std::scoped_lock lock{_shutdownGuard, _dispatchersGuard};
+    return _acceptorReady && _dispatchers.empty();
+}
+
+void
 RecognitionServer::close()
 {
     sys::error_code error;
     _acceptor.close(error);
+    {
+        std::lock_guard lock{_shutdownGuard};
+        _acceptorReady = true;
+    }
 }
 
 bool
@@ -110,11 +160,17 @@ RecognitionServer::dispatch(RecognitionConnection::Ptr connection)
         _dispatchers.emplace(identity, dispatcher);
     }
     dispatcher->whenDone([this](uint16_t identity) {
-        LOGD("The <{}> dispatcher has finished", identity);
-        std::lock_guard lock{_dispatchersGuard};
-        _dispatchers.erase(identity);
+        LOGD("Dispatcher <{}> has done", identity);
+        {
+            std::lock_guard lock{_dispatchersGuard};
+            _dispatchers.erase(identity);
+        }
+        if (readyToShutdown()) {
+            LOGD("Server is ready to shutdown");
+            notifyShutdownReady();
+        }
     });
-    LOGD("The <{}> dispatcher is going to start", identity);
+    LOGD("Dispatcher <{}> is going to start", identity);
     dispatcher->dispatch();
     return true;
 }

@@ -1,12 +1,13 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include "test/Matchers.hpp"
-#include "test/TestWorker.hpp"
-#include "test/TestWaiter.hpp"
+#include "common/Worker.hpp"
 #include "intent/Config.hpp"
 #include "intent/WitMessageRecognition.hpp"
 #include "intent/WitRecognitionObserver.hpp"
+#include "intent/WitRecognitionFactory.hpp"
+#include "test/Matchers.hpp"
+#include "test/TestWaiter.hpp"
 
 #include <thread>
 
@@ -16,7 +17,8 @@ using namespace jar;
 class WitMessageRecognitionTest : public Test {
 public:
     WitMessageRecognitionTest()
-        : recognition{WitMessageRecognition::create(worker.sslContext(), worker.executor())}
+        : factory{worker.executor()}
+        , recognition{factory.message()}
     {
     }
 
@@ -33,7 +35,8 @@ public:
     }
 
 public:
-    TestWorker worker;
+    Worker worker;
+    WitRecognitionFactory factory;
     TestWaiter waiter;
     WitMessageRecognition::Ptr recognition;
 };

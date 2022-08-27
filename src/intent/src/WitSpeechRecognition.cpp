@@ -9,9 +9,20 @@
 
 namespace jar {
 
-WitSpeechRecognition::WitSpeechRecognition(ssl::context& context, net::any_io_executor& executor)
-    : _resolver{executor}
-    , _stream{executor, context}
+WitSpeechRecognition::Ptr
+WitSpeechRecognition::create(ssl::context& context, net::any_io_executor executor)
+{
+    // clang-format off
+    return std::shared_ptr<WitSpeechRecognition>(
+        new WitSpeechRecognition(context, executor)
+    );
+    // clang-format on
+}
+
+WitSpeechRecognition::WitSpeechRecognition(ssl::context& context, net::any_io_executor executor)
+    : _executor{std::move(executor)}
+    , _resolver{_executor}
+    , _stream{_executor, context}
 {
 }
 
@@ -75,12 +86,6 @@ WitSpeechRecognition::finalize()
         starving(false);
         writeLastChunk();
     });
-}
-
-WitSpeechRecognition::Ptr
-WitSpeechRecognition::create(ssl::context& context, net::any_io_executor& executor)
-{
-    return std::shared_ptr<WitSpeechRecognition>(new WitSpeechRecognition(context, executor));
 }
 
 void
@@ -223,7 +228,7 @@ WitSpeechRecognition::onReadContinueDone(sys::error_code error, std::size_t byte
         LOGD("Operation was interrupted");
         notifyError(sys::errc::make_error_code(sys::errc::operation_canceled));
     } else {
-        LOGD("Ready to provide message data");
+        LOGD("Ready to provide speech data");
         starving(true);
         notifyData();
     }

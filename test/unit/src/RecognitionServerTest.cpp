@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include "test/TestWorker.hpp"
-#include "test/Clients.hpp"
+#include "common/Worker.hpp"
 #include "intent/RecognitionServer.hpp"
 #include "intent/IntentPerformer.hpp"
 #include "intent/WitRecognitionFactory.hpp"
+#include "test/Clients.hpp"
 
 using namespace testing;
 using namespace jar;
@@ -18,9 +18,9 @@ public:
     const tcp::endpoint ServerEndpoint{net::ip::make_address("0.0.0.0"), 8080};
 
     RecognitionServerTest()
-        : performer{IntentPerformer::create()}
-        , factory{std::make_shared<WitRecognitionFactory>(worker.sslContext(), worker.executor())}
-        , recognizer{std::make_shared<RecognitionServer>(worker.executor(), performer, factory)}
+        : factory{std::make_shared<WitRecognitionFactory>(worker.executor())}
+        , performer{IntentPerformer::create()}
+        , server{RecognitionServer::create(worker.executor(), performer, factory)}
     {
     }
 
@@ -37,30 +37,30 @@ public:
     }
 
 public:
-    TestWorker worker;
-    IntentPerformer::Ptr performer;
+    Worker worker;
     WitRecognitionFactory::Ptr factory;
-    RecognitionServer::Ptr recognizer;
+    IntentPerformer::Ptr performer;
+    RecognitionServer::Ptr server;
 };
 
 TEST_F(RecognitionServerTest, RecognizeMessage)
 {
-    recognizer->listen(ServerEndpoint);
+    server->listen(ServerEndpoint);
 
     static const std::string_view Message{"turn off the light"};
     EXPECT_THAT(clients::recognizeMessage(ClientHost, ClientPort, Message),
                 FieldsAre(IsTrue(), IsEmpty()));
 
-    recognizer->shutdown();
+    server->shutdown();
 }
 
 TEST_F(RecognitionServerTest, RecognizeSpeech)
 {
-    recognizer->listen(ServerEndpoint);
+    server->listen(ServerEndpoint);
 
     static const fs::path filePath{AssetAudioPath / "turn-off-the-light.raw"};
     EXPECT_THAT(clients::recognizeSpeech(ClientHost, ClientPort, filePath),
                 FieldsAre(IsTrue(), IsEmpty()));
 
-    recognizer->shutdown();
+    server->shutdown();
 }
