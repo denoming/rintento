@@ -32,7 +32,7 @@ std::size_t
 SpeechDataBuffer::available() const
 {
     std::lock_guard lock{_guard};
-    return (_buffer.size() - _offset > 0);
+    return (_buffer.size() - _offset);
 }
 
 std::size_t
