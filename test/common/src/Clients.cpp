@@ -130,7 +130,7 @@ recognizeSpeech(std::string_view host, std::string_view port, fs::path speechFil
 
     {
         const auto buffer = net::const_buffer(fileData.get(), fileSize);
-        LOGD("Client: Write the speech data to socket");
+        LOGD("Client: Write <{}> bytes of speech data to socket", fileSize);
         net::write(stream, http::make_chunk(buffer));
         LOGD("Client: Finalize writing of speech fata");
         net::write(stream, http::make_chunk_last());
