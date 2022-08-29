@@ -1,6 +1,6 @@
 if(Boost_DEBUG)
     message(STATUS "Boost debug mode is active")
-    find_package(Boost 1.79.0 REQUIRED COMPONENTS ALL)
+    find_package(Boost 1.78.0 REQUIRED COMPONENTS ALL)
 else()
-    find_package(Boost 1.79.0 REQUIRED COMPONENTS program_options json)
+    find_package(Boost 1.78.0 REQUIRED COMPONENTS program_options json)
 endif()
