@@ -1,19 +1,11 @@
-include(ExternalProject)
-
-set(installDir ${CMAKE_CURRENT_BINARY_DIR}/external/url)
-
-ExternalProject_Add(boost-url
+include(FetchContent)
+FetchContent_Declare(boost-url
     GIT_REPOSITORY https://github.com/CPPAlliance/url.git
-    GIT_TAG ef2db3c1e52474b881812da92ae495cd936ed150
-    INSTALL_DIR ${installDir}
-    CMAKE_ARGS -DBOOST_URL_BUILD_TESTS=OFF
-               -DBOOST_URL_BUILD_EXAMPLES=OFF
-               -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-    EXCLUDE_FROM_ALL TRUE
+    GIT_TAG 954eb5b7e6af8228fa3b8a644c6a2e51b29980e7
 )
 
-add_library(Boost::url STATIC IMPORTED)
-
-set_target_properties(Boost::url PROPERTIES IMPORTED_LOCATION ${installDir}/lib/libboost_url.a)
-
-target_include_directories(Boost::url INTERFACE ${installDir}/include)
+FetchContent_GetProperties(boost-url)
+if(NOT boost-url_POPULATED)
+    FetchContent_Populate(boost-url)
+    add_subdirectory(${boost-url_SOURCE_DIR} ${boost-url_BINARY_DIR})
+endif()

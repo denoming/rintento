@@ -1,9 +1,13 @@
 #include "intent/Utils.hpp"
 
 #include <boost/url/urls.hpp>
+#include <boost/url/pct_encoding.hpp>
+#include "boost/url/rfc/pchars.hpp"
 
 #include <fmt/format.h>
 #include <fmt/chrono.h>
+
+#include <vector>
 
 namespace urls = boost::urls;
 
@@ -19,7 +23,7 @@ encode(std::string_view input)
     const urls::pct_encode_opts opts = {
         .space_to_plus = true,
     };
-    return urls::pct_encode_to_value(input, opts, urls::pchars);
+    return urls::pct_encode_to_string(input, urls::pchars, opts);
 }
 
 std::string
@@ -28,7 +32,9 @@ decode(std::string_view input)
     const urls::pct_decode_opts opts = {
         .plus_to_space = true,
     };
-    return urls::pct_decode_to_value(input, opts, urls::pchars);
+    std::vector<char> buffer(input.size() * 2, '\0');
+    const auto r = urls::pct_decode(buffer.data(), buffer.data() + buffer.size(), input, opts);
+    return r.has_value() ? std::string(buffer.data(), r.value()) : "";
 }
 
 } // namespace pct

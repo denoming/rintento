@@ -9,7 +9,7 @@ target_include_directories(${TARGET}
 
 target_link_libraries(${TARGET}
     PUBLIC Jarvis::Common
-    PRIVATE fmt::fmt OpenSSL::SSL OpenSSL::Crypto Boost::json Boost::url
+    PUBLIC fmt::fmt OpenSSL::SSL OpenSSL::Crypto Boost::json Boost::url
 )
 
 target_sources(${TARGET}

@@ -19,7 +19,9 @@ peekMessage(std::string_view target)
         const auto decodedParams = params->decoded();
         if (auto queryItemIt = decodedParams.find("q"); queryItemIt != decodedParams.end()) {
             if (const auto& queryItem = *queryItemIt; queryItem.has_value) {
-                return queryItem.value;
+                std::string output;
+                queryItem.value.assign_to(output);
+                return output;
             }
         }
     }

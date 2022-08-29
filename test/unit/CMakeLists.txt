@@ -12,6 +12,7 @@ target_sources(${TARGET}
             src/WitMessageRecognitionTest.cpp
             src/WitSpeechRecognitionTest.cpp
             src/RecognitionServerTest.cpp
+            src/UtilsTest.cpp
 )
 
 target_link_libraries(${TARGET}
