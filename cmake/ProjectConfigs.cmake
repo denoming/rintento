@@ -18,7 +18,6 @@ endif()
 
 include(AddBoost)
 include(AddOpenSsl)
-include(AddFmt)
 include(AddSpdLog)
 include(AddBoostUrl)
 

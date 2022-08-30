@@ -8,8 +8,8 @@ target_include_directories(${TARGET}
 )
 
 target_link_libraries(${TARGET}
-    PUBLIC Boost::program_options Boost::headers
-    PRIVATE spdlog::spdlog
+    PUBLIC Boost::headers Boost::program_options Boost::system
+    PUBLIC spdlog::spdlog
 )
 
 target_sources(${TARGET}
