@@ -2,7 +2,6 @@
 
 #include "common/Logger.hpp"
 #include "common/LoggerInitializer.hpp"
-#include "intent/IntentSubsystem.hpp"
 
 namespace jar {
 
@@ -23,8 +22,6 @@ ExecutorService::defineOptions(po::options_description& description)
 void
 ExecutorService::initialize(Application& application)
 {
-    addSubsystem(std::make_unique<IntentSubsystem>());
-
     Application::initialize(application);
 }
 
