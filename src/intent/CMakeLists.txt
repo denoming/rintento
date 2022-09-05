@@ -25,6 +25,7 @@ target_sources(${TARGET}
             src/RecognitionServer.cpp
             src/RecognitionDispatcher.cpp
             src/IntentPerformer.cpp
+            src/IntentSubsystem.cpp
             src/RecognitionHandler.cpp
             src/RecognitionMessageHandler.cpp
             src/RecognitionSpeechHandler.cpp
