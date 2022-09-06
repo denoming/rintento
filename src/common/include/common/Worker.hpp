@@ -19,7 +19,13 @@ public:
     void
     stop();
 
-    net::io_context::executor_type
+    [[nodiscard]] net::io_context&
+    context();
+
+    [[nodiscard]] const net::io_context&
+    context() const;
+
+    [[nodiscard]] net::io_context::executor_type
     executor();
 
 private:

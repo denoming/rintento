@@ -40,24 +40,18 @@ getResult(const std::string& input)
     return {};
 }
 
-Result
-recognizeMessage(std::string_view host, std::string_view port, std::string_view message)
+template<typename EndpointSequence>
+static Result
+recognizeMessage(net::io_context& context,
+                 const EndpointSequence& endpoints,
+                 std::string_view message)
 {
-    net::io_context context;
-    tcp::resolver resolver{context};
-    LOGD("Client: Resolve given host");
-    auto const results = resolver.resolve(host, port);
-    if (results.empty()) {
-        return {};
-    }
-
     beast::tcp_stream stream{context};
     LOGD("Client: Connect to the given host");
-    stream.connect(results);
+    stream.connect(endpoints);
 
     const auto target = format::messageTarget(message);
     http::request<http::empty_body> req{http::verb::get, target, kHttpVersion11};
-    req.set(http::field::host, host);
     req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     LOGD("Client: Write recognize request");
     http::write(stream, req);
@@ -75,24 +69,16 @@ recognizeMessage(std::string_view host, std::string_view port, std::string_view 
     return getResult(res.body());
 }
 
+template<typename EndpointSequence>
 Result
-recognizeSpeech(std::string_view host, std::string_view port, fs::path speechFile)
+recognizeSpeech(net::io_context& context, const EndpointSequence& endpoints, fs::path speechFile)
 {
-    net::io_context context;
-    tcp::resolver resolver{context};
-    LOGD("Client: Resolve given host");
-    auto const results = resolver.resolve(host, port);
-    if (results.empty()) {
-        return {};
-    }
-
     beast::tcp_stream stream{context};
     LOGD("Client: Connect to the given host");
-    stream.connect(results);
+    stream.connect(endpoints);
 
     const auto target = format::speechTarget();
     http::request<http::empty_body> req{http::verb::post, target, kHttpVersion11};
-    req.set(http::field::host, host);
     req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     req.set(http::field::transfer_encoding, "chunked");
     req.set(http::field::expect, "100-continue");
@@ -147,6 +133,50 @@ recognizeSpeech(std::string_view host, std::string_view port, fs::path speechFil
     stream.close();
 
     return getResult(res.body());
+}
+
+Result
+recognizeMessage(net::io_context& context, std::uint16_t port, std::string_view message)
+{
+    tcp::endpoint endpoint{net::ip::make_address_v4("127.0.0.1"), port};
+    return recognizeMessage(context, std::vector{endpoint}, message);
+}
+
+Result
+recognizeMessage(net::io_context& context,
+                 std::string_view host,
+                 std::string_view port,
+                 std::string_view message)
+{
+    tcp::resolver resolver{context};
+    auto const results = resolver.resolve(host, port);
+    if (results.empty()) {
+        LOGE("Client: Failed to resolve given host");
+        return {};
+    }
+    return recognizeMessage(context, results, message);
+}
+
+Result
+recognizeSpeech(net::io_context& context, std::uint16_t port, fs::path speechFile)
+{
+    tcp::endpoint endpoint{net::ip::make_address_v4("127.0.0.1"), port};
+    return recognizeSpeech(context, std::vector{endpoint}, speechFile);
+}
+
+Result
+recognizeSpeech(net::io_context& context,
+                std::string_view host,
+                std::string_view port,
+                fs::path speechFile)
+{
+    tcp::resolver resolver{context};
+    auto const results = resolver.resolve(host, port);
+    if (results.empty()) {
+        LOGE("Client: Failed to resolve given host");
+        return {};
+    }
+    return recognizeSpeech(context, results, speechFile);
 }
 
 } // namespace jar::clients

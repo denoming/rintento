@@ -28,6 +28,18 @@ Worker::stop()
     }
 }
 
+net::io_context&
+Worker::context()
+{
+    return _context;
+}
+
+const net::io_context&
+Worker::context() const
+{
+    return _context;
+}
+
 net::io_context::executor_type
 Worker::executor()
 {

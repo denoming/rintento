@@ -1,13 +1,14 @@
 #pragma once
 
+#include "intent/Constants.hpp"
 #include "intent/Http.hpp"
 #include "intent/RecognitionDispatcher.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 
-#include <memory>
-#include <map>
-#include <mutex>
 #include <condition_variable>
+#include <map>
+#include <memory>
+#include <mutex>
 
 namespace jar {
 
@@ -21,7 +22,7 @@ public:
            WitRecognitionFactory::Ptr factory);
 
     bool
-    listen(net::ip::port_type port);
+    listen(net::ip::port_type port = kDefaultServerPort);
 
     bool
     listen(tcp::endpoint endpoint);
