@@ -1,9 +1,11 @@
 #include "intent/IntentSubsystem.hpp"
 
+#include "common/Application.hpp"
 #include "common/Logger.hpp"
-#include "intent/WitRecognitionFactory.hpp"
+#include "intent/Constants.hpp"
 #include "intent/IntentPerformer.hpp"
 #include "intent/RecognitionServer.hpp"
+#include "intent/WitRecognitionFactory.hpp"
 
 namespace jar {
 
@@ -30,9 +32,17 @@ IntentSubsystem::setUp(Application& application)
 
     _worker.start();
 
+    auto port = kDefaultServerPort;
+    if (application.options().contains("port")) {
+        port = application.options().at("port").as<std::uint16_t>();
+    }
+
     assert(_server);
-    const tcp::endpoint ServerEndpoint{net::ip::make_address("0.0.0.0"), 8080};
-    _server->listen(ServerEndpoint);
+    if (_server->listen(port)) {
+        LOGI("Starting server on <{}> port was success", port);
+    } else {
+        LOGE("Starting server on <{}> port has failed", port);
+    }
 }
 
 void

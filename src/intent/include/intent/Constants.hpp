@@ -4,6 +4,8 @@
 
 namespace jar {
 
+static constexpr std::uint16_t kDefaultServerPort{8000};
+
 static constexpr double kConfidentThreshold{0.92};
 
 static constexpr std::chrono::seconds kHttpTimeout{15};

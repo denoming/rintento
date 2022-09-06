@@ -18,7 +18,7 @@ ExecutorService::defineOptions(po::options_description& description)
 {
     Application::defineOptions(description);
 
-    description.add_options()("port,p", po::value<int>(), "The number of port");
+    description.add_options()("port,p", po::value<std::uint16_t>(), "The number of port");
 }
 
 void

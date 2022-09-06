@@ -30,6 +30,13 @@ RecognitionServer::RecognitionServer(net::any_io_executor executor,
 }
 
 bool
+RecognitionServer::listen(net::ip::port_type port)
+{
+    tcp::endpoint endpoint{net::ip::address_v4::any(), port};
+    return listen(endpoint);
+}
+
+bool
 RecognitionServer::listen(tcp::endpoint endpoint)
 {
     _shutdownReady = false;
@@ -106,9 +113,7 @@ void
 RecognitionServer::waitForShutdown()
 {
     std::unique_lock lock{_shutdownGuard};
-    _shutdownReadyCv.wait(lock, [this](){
-        return _shutdownReady;
-    });
+    _shutdownReadyCv.wait(lock, [this]() { return _shutdownReady; });
 }
 
 void

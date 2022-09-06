@@ -20,6 +20,9 @@ public:
     int
     run();
 
+    [[nodiscard]]
+    const po::variables_map& options() const;
+
 protected:
     virtual void
     defineOptions(po::options_description& description);
@@ -32,6 +35,12 @@ protected:
 
     void
     initialize(Application& application) override;
+
+    void
+    setUp(Application& application) override;
+
+    void
+    tearDown() override;
 
     void
     finalize() override;

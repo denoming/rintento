@@ -21,6 +21,9 @@ public:
            WitRecognitionFactory::Ptr factory);
 
     bool
+    listen(net::ip::port_type port);
+
+    bool
     listen(tcp::endpoint endpoint);
 
     void

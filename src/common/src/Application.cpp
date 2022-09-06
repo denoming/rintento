@@ -43,6 +43,12 @@ Application::run()
     return EXIT_SUCCESS;
 }
 
+const po::variables_map&
+Application::options() const
+{
+    return _options;
+}
+
 void
 Application::defineOptions(po::options_description& description)
 {
@@ -73,6 +79,22 @@ Application::initialize(Application& application)
 {
     for (auto& subsystem : _subsystems) {
         subsystem->initialize(*this);
+    }
+}
+
+void
+Application::setUp(Application& application)
+{
+    for (auto& subsystem : _subsystems) {
+        subsystem->setUp(*this);
+    }
+}
+
+void
+Application::tearDown()
+{
+    for (auto& subsystem : _subsystems) {
+        subsystem->tearDown();
     }
 }
 
