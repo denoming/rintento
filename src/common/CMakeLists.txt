@@ -16,6 +16,7 @@ target_sources(${TARGET}
     PRIVATE src/LoggerInitializer.cpp
             src/Application.cpp
             src/Worker.cpp
+            src/Subsystem.cpp
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_20)

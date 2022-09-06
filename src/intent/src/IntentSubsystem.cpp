@@ -16,11 +16,17 @@ IntentSubsystem::name() const
 void
 IntentSubsystem::initialize(Application& application)
 {
-    LOGI("Initialize {} subsystem", name());
+    Subsystem::initialize(application);
 
     _factory = std::make_shared<WitRecognitionFactory>(_worker.executor());
     _performer = IntentPerformer::create();
     _server = RecognitionServer::create(_worker.executor(), _performer, _factory);
+}
+
+void
+IntentSubsystem::setUp(Application& application)
+{
+    Subsystem::setUp(application);
 
     _worker.start();
 
@@ -30,15 +36,21 @@ IntentSubsystem::initialize(Application& application)
 }
 
 void
-IntentSubsystem::finalize()
+IntentSubsystem::tearDown()
 {
-    LOGI("Finalize {} subsystem", name());
+    Subsystem::tearDown();
 
     if (_server) {
         _server->shutdown();
     }
 
     _worker.stop();
+}
+
+void
+IntentSubsystem::finalize()
+{
+    Subsystem::finalize();
 
     _server.reset();
     _performer.reset();

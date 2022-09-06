@@ -18,6 +18,12 @@ public:
     initialize(Application& application) final;
 
     void
+    setUp(Application& application) final;
+
+    void
+    tearDown() final;
+
+    void
     finalize() final;
 
 private:

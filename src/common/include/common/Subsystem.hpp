@@ -13,18 +13,23 @@ public:
     virtual ~Subsystem() = default;
 
     virtual const char*
-    name() const = 0;
+    name() const
+        = 0;
 
 protected:
     friend class Application;
 
     virtual void
-    initialize(Application& application)
-        = 0;
+    initialize(Application& application);
 
     virtual void
-    finalize()
-        = 0;
+    setUp(Application& application);
+
+    virtual void
+    tearDown();
+
+    virtual void
+    finalize();
 };
 
 } // namespace jar

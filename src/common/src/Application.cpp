@@ -32,7 +32,9 @@ Application::run()
 
     try {
         initialize(*this);
+        setUp(*this);
         proceed();
+        tearDown();
     } catch (const std::exception& e) {
         LOGE("Application exception: {}", e.what());
         return EXIT_FAILURE;
