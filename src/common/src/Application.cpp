@@ -60,7 +60,7 @@ Application::waitForTermination()
 {
     asio::io_context context;
     boost::asio::signal_set signals(context, SIGINT, SIGTERM);
-    signals.async_wait([&context](const sys::error_code& error, int signal) {
+    signals.async_wait([&context](const auto& /*error*/, int /*signal*/) {
         if (!context.stopped()) {
             context.stop();
         }
