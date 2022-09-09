@@ -14,19 +14,23 @@ class RecognitionDispatcher : public std::enable_shared_from_this<RecognitionDis
 public:
     using Ptr = std::shared_ptr<RecognitionDispatcher>;
 
-    using DoneSignature = void(std::uint16_t identity);
+    using onDoneSignature = void(std::uint16_t identity);
 
-    static Ptr
+    [[nodiscard]] static Ptr
     create(uint16_t identity,
            RecognitionConnection::Ptr connection,
            IntentPerformer::Ptr executor,
            WitRecognitionFactory::Ptr factory);
 
-    uint16_t
+    [[nodiscard]] uint16_t
     identity() const;
 
+    template<std::invocable<std::uint16_t> Callback>
     void
-    whenDone(std::function<DoneSignature> callback);
+    onDone(Callback&& callback)
+    {
+        _doneCallback = std::move(callback);
+    }
 
     void
     dispatch();
@@ -60,7 +64,7 @@ private:
     IntentPerformer::Ptr _performer;
     WitRecognitionFactory::Ptr _factory;
     RecognitionHandler::Ptr _handler;
-    std::function<DoneSignature> _doneCallback;
+    std::function<onDoneSignature> _doneCallback;
 };
 
 } // namespace jar

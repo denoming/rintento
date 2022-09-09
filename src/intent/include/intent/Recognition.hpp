@@ -4,6 +4,7 @@
 #include "intent/Types.hpp"
 
 #include <atomic>
+#include <concepts>
 #include <condition_variable>
 #include <functional>
 #include <mutex>

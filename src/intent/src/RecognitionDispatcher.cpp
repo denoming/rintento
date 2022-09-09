@@ -14,11 +14,6 @@ RecognitionDispatcher::create(uint16_t identity,
                               IntentPerformer::Ptr performer,
                               WitRecognitionFactory::Ptr factory)
 {
-    assert(identity > 0);
-    assert(connection);
-    assert(performer);
-    assert(factory);
-
     // clang-format off
     return std::shared_ptr<RecognitionDispatcher>(
         new RecognitionDispatcher{identity, std::move(connection), std::move(performer), std::move(factory)}
@@ -35,19 +30,16 @@ RecognitionDispatcher::RecognitionDispatcher(uint16_t identity,
     , _performer{std::move(performer)}
     , _factory{std::move(factory)}
 {
+    assert(identity > 0);
+    assert(connection);
+    assert(performer);
+    assert(factory);
 }
 
 uint16_t
 RecognitionDispatcher::identity() const
 {
     return _identity;
-}
-
-void
-RecognitionDispatcher::whenDone(std::function<DoneSignature> callback)
-{
-    assert(callback);
-    _doneCallback = std::move(callback);
 }
 
 void
@@ -60,8 +52,10 @@ void
 RecognitionDispatcher::readHeader()
 {
     _connection->readHeader<http::empty_body>(
-        [self = shared_from_this()](auto& buffer, auto& parser, auto error) {
-            self->onReadHeaderDone(buffer, parser, error);
+        [weakSelf = weak_from_this()](auto& buffer, auto& parser, auto error) {
+            if (auto self = weakSelf.lock()) {
+                self->onReadHeaderDone(buffer, parser, error);
+            }
         });
 }
 
@@ -90,7 +84,7 @@ void
 RecognitionDispatcher::onComplete(Utterances utterances, sys::error_code error)
 {
     if (error) {
-        LOGE("Request dispatching has failed: <{}> error", error.what());
+        LOGE("Request dispatching has failed: <{}> error", error.message());
     } else {
         LOGD("Request dispatching has succeed: <{}> size", utterances.size());
         _performer->perform(std::move(utterances));
@@ -102,21 +96,27 @@ RecognitionDispatcher::onComplete(Utterances utterances, sys::error_code error)
 RecognitionHandler::Ptr
 RecognitionDispatcher::getHandler()
 {
-    auto handler1
-        = RecognitionMessageHandler::create(_connection, _factory, [this](auto result, auto error) {
-              LOGD("Recognize message handler has finished: success<{}>", !error.failed());
-              onComplete(std::move(result), error);
-          });
-    auto handler2
-        = RecognitionSpeechHandler::create(_connection, _factory, [this](auto result, auto error) {
-              LOGD("Recognize speech handler has finished: success<{}>", !error.failed());
-              onComplete(std::move(result), error);
-          });
-    auto handler3
-        = RecognitionTerminalHandler::create(_connection, [this](auto result, auto error) {
-              LOGD("Terminal handler has finished");
-              onComplete(std::move(result), error);
-          });
+    auto handler1 = RecognitionMessageHandler::create(
+        _connection, _factory, [weakSelf = weak_from_this()](auto result, auto error) {
+            if (auto self = weakSelf.lock()) {
+                LOGD("Recognize message handler has finished: success<{}>", !error.failed());
+                self->onComplete(std::move(result), error);
+            }
+        });
+    auto handler2 = RecognitionSpeechHandler::create(
+        _connection, _factory, [weakSelf = weak_from_this()](auto result, auto error) {
+            if (auto self = weakSelf.lock()) {
+                LOGD("Recognize speech handler has finished: success<{}>", !error.failed());
+                self->onComplete(std::move(result), error);
+            }
+        });
+    auto handler3 = RecognitionTerminalHandler::create(
+        _connection, [weakSelf = weak_from_this()](auto result, auto error) {
+            if (auto self = weakSelf.lock()) {
+                LOGD("Terminal handler has finished");
+                self->onComplete(std::move(result), error);
+            }
+        });
     handler2->setNext(std::move(handler3));
     handler1->setNext(std::move(handler2));
     return handler1;

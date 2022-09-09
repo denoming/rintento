@@ -164,7 +164,7 @@ RecognitionServer::dispatch(RecognitionConnection::Ptr connection)
         std::lock_guard lock{_dispatchersGuard};
         _dispatchers.emplace(identity, dispatcher);
     }
-    dispatcher->whenDone([this](uint16_t identity) {
+    dispatcher->onDone([this](uint16_t identity) {
         LOGD("Dispatcher <{}> has done", identity);
         {
             std::lock_guard lock{_dispatchersGuard};
