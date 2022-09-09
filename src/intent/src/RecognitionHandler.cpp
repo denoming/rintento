@@ -43,8 +43,7 @@ getResponse(std::string payload)
 
 } // namespace
 
-RecognitionHandler::RecognitionHandler(RecognitionConnection::Ptr connection,
-                                               Callback callback)
+RecognitionHandler::RecognitionHandler(RecognitionConnection::Ptr connection, Callback callback)
     : _connection{std::move(connection)}
     , _callback{std::move(callback)}
 {

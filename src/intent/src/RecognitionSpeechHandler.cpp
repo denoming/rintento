@@ -1,12 +1,12 @@
 #include "intent/RecognitionSpeechHandler.hpp"
 
-#include "intent/Types.hpp"
 #include "common/Logger.hpp"
+#include "intent/Types.hpp"
 
-#include <boost/url/urls.hpp>
-#include <boost/json/value.hpp>
-#include <boost/json/serialize.hpp>
 #include <boost/circular_buffer.hpp>
+#include <boost/json/serialize.hpp>
+#include <boost/json/value.hpp>
+#include <boost/url/urls.hpp>
 
 #include <fstream>
 
@@ -41,21 +41,26 @@ saveToFile(const char* data, std::size_t size)
 
 namespace jar {
 
+RecognitionSpeechHandler::Ptr
+RecognitionSpeechHandler::create(RecognitionConnection::Ptr connection,
+                                 WitRecognitionFactory::Ptr factory,
+                                 Callback callback)
+{
+    // clang-format off
+    return std::shared_ptr<RecognitionSpeechHandler>(
+        new RecognitionSpeechHandler(std::move(connection), std::move(factory), std::move(callback))
+    );
+    // clang-format on
+}
+
 RecognitionSpeechHandler::RecognitionSpeechHandler(RecognitionConnection::Ptr connection,
                                                    WitRecognitionFactory::Ptr factory,
-    Callback callback)
+                                                   Callback callback)
     : RecognitionHandler{std::move(connection), std::move(callback)}
     , _factory{std::move(factory)}
     , _speechData{SpeechBufferCapacity}
 {
     assert(_factory);
-}
-
-RecognitionSpeechHandler::~RecognitionSpeechHandler()
-{
-    if (_onDataCon.connected()) {
-        _onDataCon.disconnect();
-    }
 }
 
 void
@@ -78,14 +83,27 @@ RecognitionSpeechHandler::handle(Buffer& buffer, Parser& parser)
 
     _recognition = _factory->speech();
     assert(_recognition);
-
-    _observer = WitRecognitionObserver::create(_recognition);
-    assert(_observer);
-    _observer->whenData([this]() { onRecognitionData(); });
-    _observer->whenError([this](auto error) { onRecognitionError(error); });
-    _observer->whenSuccess([this](auto result) { onRecognitionSuccess(std::move(result)); });
-
-    LOGD("Run speech recognition");
+    _recognition->onReady(
+        [weakSelf = weak_from_this(), executor = connection().executor()](auto result, auto error) {
+            if (error) {
+                net::post(executor, [weakSelf, error]() {
+                    if (auto self = weakSelf.lock()) {
+                        self->onRecognitionError(error);
+                    }
+                });
+            } else {
+                net::post(executor, [weakSelf, result = std::move(result)]() {
+                    if (auto self = weakSelf.lock()) {
+                        self->onRecognitionSuccess(std::move(result));
+                    }
+                });
+            }
+        });
+    _recognition->onData([weakSelf = weak_from_this()]() {
+        if (auto self = weakSelf.lock()) {
+            self->onRecognitionData();
+        }
+    });
     _recognition->run();
 
     auto onHeader = [this](std::uint64_t size, auto extensions, sys::error_code& error) {

@@ -1,16 +1,15 @@
-#include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
-#include "test/Matchers.hpp"
-#include "test/Utils.hpp"
-#include "test/TestWaiter.hpp"
 #include "common/Worker.hpp"
-#include "intent/WitSpeechRecognition.hpp"
-#include "intent/WitRecognitionObserver.hpp"
 #include "intent/WitRecognitionFactory.hpp"
+#include "intent/WitSpeechRecognition.hpp"
+#include "test/Matchers.hpp"
+#include "test/TestWaiter.hpp"
+#include "test/Utils.hpp"
 
-#include <thread>
 #include <fstream>
+#include <thread>
 
 using namespace testing;
 using namespace jar;
@@ -50,14 +49,15 @@ TEST_F(WitSpeechRecognitionTest, RecognizeSpeech1)
 {
     const std::string_view Message{"turn off the light"};
 
-    MockFunction<WitRecognitionObserver::SuccessSignature> callback;
-    EXPECT_CALL(callback, Call(Contains(isUtterance(Message))));
-    auto pending = WitRecognitionObserver::create(recognition);
-    ASSERT_TRUE(pending);
-    pending->whenSuccess(callback.AsStdFunction());
+    MockFunction<Recognition::OnReadySignature> callback;
+    EXPECT_CALL(callback,
+                Call(Contains(isUtterance("turn off the light",
+                                          Contains(isConfidentIntent("light_off", 0.9f)))),
+                     IsFalse()));
+    recognition->onReady(callback.AsStdFunction());
 
     bool guard{false};
-    signals::scoped_connection c = recognition->onData([this, &guard]() {
+    recognition->onData([this, &guard]() {
         guard = true;
         waiter.notify();
     });
@@ -80,25 +80,20 @@ TEST_F(WitSpeechRecognitionTest, RecognizeSpeech1)
     guard = false;
 
     recognition->finalize();
-
-    sys::error_code error;
-    const auto outcome = pending->get(error);
-    EXPECT_FALSE(error);
-    EXPECT_THAT(outcome,
-                Contains(isUtterance("turn off the light",
-                                     Contains(isConfidentIntent("light_off", 0.9f)))));
+    recognition->wait();
 }
 
 TEST_F(WitSpeechRecognitionTest, RecognizeSpeech2)
 {
-    MockFunction<WitRecognitionObserver::SuccessSignature> callback;
-    EXPECT_CALL(callback, Call(Contains(isUtterance("turn on the light"))));
-    auto pending = WitRecognitionObserver::create(recognition);
-    ASSERT_TRUE(pending);
-    pending->whenSuccess(callback.AsStdFunction());
+    MockFunction<Recognition::OnReadySignature> callback;
+    EXPECT_CALL(callback,
+                Call(Contains(isUtterance("turn on the light",
+                                          Contains(isConfidentIntent("light_on", 0.9f)))),
+                     IsFalse()));
+    recognition->onReady(callback.AsStdFunction());
 
     bool guard{false};
-    signals::scoped_connection c = recognition->onData([this, &guard]() {
+    recognition->onData([this, &guard]() {
         guard = true;
         waiter.notify();
     });
@@ -121,32 +116,19 @@ TEST_F(WitSpeechRecognitionTest, RecognizeSpeech2)
     guard = false;
 
     recognition->finalize();
-
-    sys::error_code error;
-    const auto outcome = pending->get(error);
-    EXPECT_FALSE(error);
-    EXPECT_THAT(
-        outcome,
-        Contains(isUtterance("turn on the light", Contains(isConfidentIntent("light_on", 0.9f)))));
+    recognition->wait();
 }
 
 TEST_F(WitSpeechRecognitionTest, CancelRecognizeSpeech)
 {
-    MockFunction<WitRecognitionObserver::ErrorSignature> callback;
-    EXPECT_CALL(callback, Call(IsTrue()));
-    auto pending = WitRecognitionObserver::create(recognition);
-    ASSERT_TRUE(pending);
-    pending->whenError(callback.AsStdFunction());
-
+    MockFunction<Recognition::OnReadySignature> callback;
+    EXPECT_CALL(callback, Call(IsEmpty(), IsTrue()));
+    recognition->onReady(callback.AsStdFunction());
     recognition->run();
 
     // Waiting some time to simulate real situation
     std::this_thread::sleep_for(std::chrono::milliseconds{50});
 
-    pending->cancel();
-
-    sys::error_code error;
-    const auto outcome = pending->get(error);
-    EXPECT_THAT(outcome, IsEmpty());
-    EXPECT_EQ(error.value(), int(std::errc::operation_canceled));
+    recognition->cancel();
+    recognition->wait();
 }

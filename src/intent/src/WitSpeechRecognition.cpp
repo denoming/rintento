@@ -1,9 +1,11 @@
 #include "intent/WitSpeechRecognition.hpp"
 
-#include "intent/Constants.hpp"
-#include "intent/Utils.hpp"
-#include "intent/Config.hpp"
 #include "common/Logger.hpp"
+#include "intent/Config.hpp"
+#include "intent/Constants.hpp"
+#include "intent/HttpUtils.hpp"
+#include "intent/Utils.hpp"
+#include "intent/WitIntentParser.hpp"
 
 #include <fstream>
 
@@ -42,7 +44,7 @@ WitSpeechRecognition::run(std::string_view host, std::string_view port, std::str
     sys::error_code error;
     if (!setTlsHostName(_stream, host, error)) {
         LOGE("Failed to set TLS hostname: ", error.message());
-        notifyError(error);
+        setError(error);
         return;
     }
 
@@ -107,13 +109,13 @@ WitSpeechRecognition::onResolveDone(sys::error_code error,
 {
     if (error) {
         LOGE("Failed to resolve: <{}>", error.what());
-        notifyError(error);
+        setError(error);
         return;
     }
 
-    if (interrupted()) {
+    if (cancelled()) {
         LOGD("Operation was interrupted");
-        notifyError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
     } else {
         LOGD("Resolve address was successful: <{}>", result.size());
         connect(result);
@@ -138,13 +140,13 @@ WitSpeechRecognition::onConnectDone(sys::error_code error,
 {
     if (error) {
         LOGE("Failed to connect: <{}>", error.what());
-        notifyError(error);
+        setError(error);
         return;
     }
 
-    if (interrupted()) {
+    if (cancelled()) {
         LOGD("Operation was interrupted");
-        notifyError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
     } else {
         LOGD("Connecting to host <{}> address was done", endpoint.address().to_string());
         handshake();
@@ -171,13 +173,13 @@ WitSpeechRecognition::onHandshakeDone(sys::error_code error)
     if (error) {
         LOGE("Failed to handshake: <{}>", error.what());
         beast::get_lowest_layer(_stream).close();
-        notifyError(error);
+        setError(error);
         return;
     }
 
-    if (interrupted()) {
+    if (cancelled()) {
         LOGD("Operation was interrupted");
-        notifyError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
     } else {
         LOGD("Handshaking was successful");
         readContinue();
@@ -194,7 +196,7 @@ WitSpeechRecognition::readContinue()
     const auto bytesTransferred = http::write_header(_stream, hs, error);
     if (error) {
         LOGE("Failed to write request header: <{}>", error.what());
-        notifyError(error);
+        setError(error);
     } else {
         LOGD("Writing of request header was successful: <{}> bytes", bytesTransferred);
         http::async_read(_stream,
@@ -213,24 +215,23 @@ WitSpeechRecognition::onReadContinueDone(sys::error_code error, std::size_t byte
     if (error) {
         LOGE("Failed to read continue: <{}>", error.what());
         beast::get_lowest_layer(_stream).close();
-        notifyError(error);
+        setError(error);
         return;
     }
 
     if (_response.result() != http::status::continue_) {
         LOGE("Continue reading is not available");
         beast::get_lowest_layer(_stream).close();
-        notifyError(std::make_error_code(std::errc::illegal_byte_sequence));
+        setError(std::make_error_code(std::errc::illegal_byte_sequence));
         return;
     }
 
-    if (interrupted()) {
+    if (cancelled()) {
         LOGD("Operation was interrupted");
-        notifyError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
     } else {
         LOGD("Ready to provide speech data");
         starving(true);
-        notifyData();
     }
 }
 
@@ -253,20 +254,19 @@ WitSpeechRecognition::onWriteNextChunkDone(sys::error_code error, std::size_t by
     if (error) {
         LOGE("Failed to write next chunk: <{}>", error.what());
         beast::get_lowest_layer(_stream).close();
-        notifyError(error);
+        setError(error);
         return;
     }
 
-    if (interrupted()) {
+    if (cancelled()) {
         LOGD("Operation was interrupted");
-        notifyError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
         return;
     }
 
     LOGD("Writing of next chunk was successful: {} bytes", bytesTransferred);
 
     starving(true);
-    notifyData();
 }
 
 void
@@ -288,13 +288,13 @@ WitSpeechRecognition::onWriteLastChunkDone(sys::error_code error, std::size_t by
     if (error) {
         LOGE("Failed to write last chunk: <{}>", error.what());
         beast::get_lowest_layer(_stream).close();
-        notifyError(error);
+        setError(error);
         return;
     }
 
-    if (interrupted()) {
+    if (cancelled()) {
         LOGD("Operation was interrupted");
-        notifyError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
         return;
     }
 
@@ -323,13 +323,13 @@ WitSpeechRecognition::onReadDone(sys::error_code error, std::size_t bytesTransfe
     if (error) {
         LOGE("Failed to read: <{}>", error.what());
         beast::get_lowest_layer(_stream).close();
-        notifyError(error);
+        setError(error);
         return;
     }
 
-    if (interrupted()) {
+    if (cancelled()) {
         LOGD("Operation was interrupted");
-        notifyError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
         return;
     }
 
@@ -361,7 +361,7 @@ WitSpeechRecognition::onShutdownDone(sys::error_code error)
         LOGD("Shutdown of connection was successful");
     }
 
-    notifySuccess(_response.body());
+    submit(_response.body());
 
     beast::get_lowest_layer(_stream).close();
 }

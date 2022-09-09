@@ -5,26 +5,30 @@
 #include "intent/SpeechDataBuffer.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 #include "intent/WitSpeechRecognition.hpp"
-#include "intent/WitRecognitionObserver.hpp"
 
 #include <boost/circular_buffer.hpp>
 
-#include <mutex>
+#include <memory>
 
 namespace jar {
 
-class RecognitionSpeechHandler final : public RecognitionHandler {
+class RecognitionSpeechHandler final
+    : public RecognitionHandler,
+      public std::enable_shared_from_this<RecognitionSpeechHandler> {
 public:
+    [[nodiscard]] static Ptr
+    create(RecognitionConnection::Ptr connection,
+           WitRecognitionFactory::Ptr factory,
+           Callback callback);
+
+    void
+    handle(Buffer& buffer, Parser& parser) final;
+
+private:
     RecognitionSpeechHandler(RecognitionConnection::Ptr connection,
                              WitRecognitionFactory::Ptr factory,
                              Callback callback);
 
-    ~RecognitionSpeechHandler() override;
-
-    void
-    handle(Buffer& buffer, Parser& parser) override;
-
-private:
     bool
     canHandle(const Parser::value_type& request) const;
 
@@ -40,8 +44,6 @@ private:
 private:
     WitRecognitionFactory::Ptr _factory;
     WitSpeechRecognition::Ptr _recognition;
-    WitRecognitionObserver::Ptr _observer;
-    signals::connection _onDataCon;
     SpeechDataBuffer _speechData;
 };
 

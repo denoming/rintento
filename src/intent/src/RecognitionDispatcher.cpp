@@ -102,21 +102,21 @@ RecognitionDispatcher::onComplete(Utterances utterances, sys::error_code error)
 RecognitionHandler::Ptr
 RecognitionDispatcher::getHandler()
 {
-    auto handler1 = std::make_unique<RecognitionMessageHandler>(
-        _connection, _factory, [this](auto result, sys::error_code error) {
-            LOGD("Recognize message handler has finished: success<{}>", !error.failed());
-            onComplete(std::move(result), error);
-        });
-    auto handler2 = std::make_unique<RecognitionSpeechHandler>(
-        _connection, _factory, [this](auto result, auto error) {
-            LOGD("Recognize speech handler has finished: success<{}>", !error.failed());
-            onComplete(std::move(result), error);
-        });
-    auto handler3 = std::make_unique<RecognitionTerminalHandler>(
-        _connection, [this](auto result, auto error) {
-            LOGD("Terminal handler has finished");
-            onComplete(std::move(result), error);
-        });
+    auto handler1
+        = RecognitionMessageHandler::create(_connection, _factory, [this](auto result, auto error) {
+              LOGD("Recognize message handler has finished: success<{}>", !error.failed());
+              onComplete(std::move(result), error);
+          });
+    auto handler2
+        = RecognitionSpeechHandler::create(_connection, _factory, [this](auto result, auto error) {
+              LOGD("Recognize speech handler has finished: success<{}>", !error.failed());
+              onComplete(std::move(result), error);
+          });
+    auto handler3
+        = RecognitionTerminalHandler::create(_connection, [this](auto result, auto error) {
+              LOGD("Terminal handler has finished");
+              onComplete(std::move(result), error);
+          });
     handler2->setNext(std::move(handler3));
     handler1->setNext(std::move(handler2));
     return handler1;

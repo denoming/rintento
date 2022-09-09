@@ -1,9 +1,11 @@
 #include "intent/WitMessageRecognition.hpp"
 
 #include "common/Logger.hpp"
-#include "intent/Constants.hpp"
-#include "intent/Utils.hpp"
 #include "intent/Config.hpp"
+#include "intent/Constants.hpp"
+#include "intent/HttpUtils.hpp"
+#include "intent/Utils.hpp"
+#include "intent/WitIntentParser.hpp"
 
 namespace jar {
 
@@ -40,7 +42,7 @@ WitMessageRecognition::run(std::string_view host, std::string_view port, std::st
     sys::error_code error;
     if (!setTlsHostName(_stream, host, error)) {
         LOGE("Failed to set TLS hostname: ", error.message());
-        notifyError(error);
+        setError(error);
         return;
     }
 
@@ -89,19 +91,19 @@ WitMessageRecognition::onResolveDone(sys::error_code error,
 {
     if (error) {
         LOGE("Failed to resolve address: <{}>", error.what());
-        notifyError(error);
+        setError(error);
         return;
     }
 
-    if (interrupted()) {
+    if (cancelled()) {
         LOGD("Operation was interrupted");
-        notifyError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
         return;
     }
 
     if (result.empty()) {
         LOGE("No address of given host available");
-        notifyError(sys::errc::make_error_code(sys::errc::address_not_available));
+        setError(sys::errc::make_error_code(sys::errc::address_not_available));
     } else {
         LOGD("Resolve address was successful: <{}>", result.size());
         connect(result);
@@ -128,13 +130,13 @@ WitMessageRecognition::onConnectDone(sys::error_code error,
 {
     if (error) {
         LOGE("Failed to connect: <{}>", error.what());
-        notifyError(error);
+        setError(error);
         return;
     }
 
-    if (interrupted()) {
+    if (cancelled()) {
         LOGD("Operation was interrupted");
-        notifyError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
         return;
     }
 
@@ -163,17 +165,16 @@ WitMessageRecognition::onHandshakeDone(sys::error_code error)
     if (error) {
         LOGE("Failed to handshake: <{}>", error.what());
         beast::get_lowest_layer(_stream).close();
-        notifyError(error);
+        setError(error);
         return;
     }
 
-    if (interrupted()) {
+    if (cancelled()) {
         LOGD("Operation was interrupted");
-        notifyError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
     } else {
         LOGD("Ready to provide message data");
         starving(true);
-        notifyData();
     }
 }
 
@@ -198,13 +199,13 @@ WitMessageRecognition::onWriteDone(sys::error_code error, std::size_t bytesTrans
     if (error) {
         LOGE("Failed to write request: <{}>", error.what());
         beast::get_lowest_layer(_stream).close();
-        notifyError(error);
+        setError(error);
         return;
     }
 
-    if (interrupted()) {
+    if (cancelled()) {
         LOGD("Operation was interrupted");
-        notifyError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
         return;
     }
 
@@ -235,13 +236,13 @@ WitMessageRecognition::onReadDone(sys::error_code error, std::size_t bytesTransf
     if (error) {
         LOGE("Failed to read response: <{}>", error.what());
         beast::get_lowest_layer(_stream).close();
-        notifyError(error);
+        setError(error);
         return;
     }
 
-    if (interrupted()) {
+    if (cancelled()) {
         LOGD("Operation was interrupted");
-        notifyError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
         return;
     }
 
@@ -275,7 +276,7 @@ WitMessageRecognition::onShutdownDone(sys::error_code error)
         LOGD("Shutdown of connection was successful");
     }
 
-    notifySuccess(_response.body());
+    submit(_response.body());
 
     beast::get_lowest_layer(_stream).close();
 }

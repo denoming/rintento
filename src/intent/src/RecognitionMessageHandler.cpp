@@ -1,7 +1,7 @@
 #include "intent/RecognitionMessageHandler.hpp"
 
-#include "intent/Utils.hpp"
 #include "common/Logger.hpp"
+#include "intent/Utils.hpp"
 
 #include <boost/url/urls.hpp>
 
@@ -37,9 +37,21 @@ isMessageTarget(std::string_view target)
 
 } // namespace
 
+RecognitionMessageHandler::Ptr
+RecognitionMessageHandler::create(RecognitionConnection::Ptr connection,
+                                  WitRecognitionFactory::Ptr factory,
+                                  Callback callback)
+{
+    // clang-format off
+    return std::shared_ptr<RecognitionMessageHandler>(
+        new RecognitionMessageHandler(std::move(connection), std::move(factory), std::move(callback))
+    );
+    // clang-format on
+}
+
 RecognitionMessageHandler::RecognitionMessageHandler(RecognitionConnection::Ptr connection,
                                                      WitRecognitionFactory::Ptr factory,
-    Callback callback)
+                                                     Callback callback)
     : RecognitionHandler{std::move(connection), std::move(callback)}
     , _factory{std::move(factory)}
 {
@@ -65,14 +77,27 @@ RecognitionMessageHandler::handle(Buffer& buffer, Parser& parser)
 
     _recognition = _factory->message();
     assert(_recognition);
-
-    _observer = WitRecognitionObserver::create(_recognition, connection().executor());
-    assert(_observer);
-    _observer->whenData([this]() { onRecognitionData(); });
-    _observer->whenError([this](auto error) { onRecognitionError(error); });
-    _observer->whenSuccess([this](auto result) { onRecognitionSuccess(std::move(result)); });
-
-    LOGD("Run message recognition");
+    _recognition->onReady(
+        [weakSelf = weak_from_this(), executor = connection().executor()](auto result, auto error) {
+            if (error) {
+                net::post(executor, [weakSelf, error]() {
+                    if (auto self = weakSelf.lock()) {
+                        self->onRecognitionError(error);
+                    }
+                });
+            } else {
+                net::post(executor, [weakSelf, result = std::move(result)]() {
+                    if (auto self = weakSelf.lock()) {
+                        self->onRecognitionSuccess(std::move(result));
+                    }
+                });
+            }
+        });
+    _recognition->onData([weakSelf = weak_from_this()]() {
+        if (auto self = weakSelf.lock()) {
+            self->onRecognitionData();
+        }
+    });
     _recognition->run();
 }
 

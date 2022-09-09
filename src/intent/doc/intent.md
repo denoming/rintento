@@ -5,45 +5,39 @@
 @startuml
 !theme vibrant
 
-class RecognitionObserver {
+class Recognition {
     +ready(): bool
     +wait()
-    +get(error&): Utterances
     +cancel()
+    +onReady(callback)
+    #setResult(value)
+    #setError(value)
 }
 
-WitRecognitionObserver <|-- RecognitionObserver
+class WitRecognition {
+    +cancelled(): bool
+    +starving(): bool
+    +onData(callback)
+}
 
 class WitMessageRecognition {
     {static} create(context, executor)
-    +run(host, port, auth, message)
+    +run()
+    +run(host, port, auth)
+    +feed(message);
 }
 
 class WitSpeechRecognition {
     {static} create(context, executor)
-    +run(host, port, auth, path)
+    +run()
+    +run(host, port, auth)
+    +feed(buffer)
+    +finalize()
 }
 
-class WitRecognition {
-    +cancel()
-    +onData(slot): connection <signal>
-    +onError(slot): connection <signal>
-    +onSuccess(slot): connection <signal>
-}
-
+WitRecognition <|-- Recognition
 WitMessageRecognition <|-- WitRecognition
 WitSpeechRecognition <|-- WitRecognition
-
-class RecognitionConnection
-class IntentRecognizeSession
-
-IntentRecognizeMessageSession <|-- IntentRecognizeSession
-IntentRecognizeSpeechSession <|-- IntentRecognizeSession
-
-class RecognitionServer {
-    +start()
-    +stop()
-}
 
 @enduml
 ```

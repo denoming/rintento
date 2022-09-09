@@ -2,7 +2,18 @@
 
 namespace jar {
 
-RecognitionTerminalHandler::RecognitionTerminalHandler(RecognitionConnection::Ptr connection, Callback callback)
+RecognitionTerminalHandler::Ptr
+RecognitionTerminalHandler::create(RecognitionConnection::Ptr connection, Callback callback)
+{
+    // clang-format off
+    return std::shared_ptr<RecognitionTerminalHandler>(
+        new RecognitionTerminalHandler(std::move(connection), std::move(callback))
+    );
+    // clang-format on
+}
+
+RecognitionTerminalHandler::RecognitionTerminalHandler(RecognitionConnection::Ptr connection,
+                                                       Callback callback)
     : RecognitionHandler{std::move(connection), std::move(callback)}
 {
 }

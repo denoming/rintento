@@ -15,11 +15,11 @@ target_link_libraries(${TARGET}
 
 target_sources(${TARGET}
     PRIVATE src/Types.cpp
-            src/RecognitionObserver.cpp
+            src/HttpUtils.cpp
+            src/Recognition.cpp
             src/WitRecognition.cpp
             src/WitMessageRecognition.cpp
             src/WitSpeechRecognition.cpp
-            src/WitRecognitionObserver.cpp
             src/WitIntentParser.cpp
             src/WitRecognitionFactory.cpp
             src/RecognitionServer.cpp

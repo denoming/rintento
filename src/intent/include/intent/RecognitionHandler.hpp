@@ -11,7 +11,7 @@ namespace jar {
 
 class RecognitionHandler {
 public:
-    using Ptr = std::unique_ptr<RecognitionHandler>;
+    using Ptr = std::shared_ptr<RecognitionHandler>;
     using Buffer = beast::flat_buffer;
     using Parser = http::request_parser<http::empty_body>;
     using Callback = std::function<void(Utterances result, sys::error_code error)>;
