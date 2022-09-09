@@ -1,8 +1,8 @@
-#include "test/Matchers.hpp"
 #include "intent/WitIntentParser.hpp"
+#include "test/Matchers.hpp"
 
-#include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 using namespace testing;
 using namespace jar;
@@ -25,13 +25,9 @@ TEST(WitIntentParserTest, Parse1)
     )"};
 
     WitIntentParser parser;
-    sys::error_code error;
-    const auto outcome = parser.parse(kInput, error);
-    ASSERT_THAT(error, IsFalse());
-    ASSERT_THAT(outcome, SizeIs(1));
-    EXPECT_THAT(parser.parse(kInput, error),
-                Contains(isUtterance("turn off the light",
-                                     Contains(isConfidentIntent("light_off", 0.9f)))));
+    EXPECT_THAT(parser.parse(kInput),
+                Optional(Contains(isUtterance("turn off the light",
+                                              Contains(isConfidentIntent("light_off", 0.9f))))));
 }
 
 TEST(WitIntentParserTest, Parse2)
@@ -65,11 +61,27 @@ TEST(WitIntentParserTest, Parse2)
     )"};
 
     WitIntentParser parser;
-    sys::error_code error;
-    const auto outcome = parser.parse(kInput, error);
-    ASSERT_THAT(error, IsFalse());
-    ASSERT_THAT(outcome, SizeIs(1));
-    EXPECT_THAT(parser.parse(kInput, error),
-                Contains(isUtterance("Turn on the light",
-                                     Contains(isConfidentIntent("light_on", 0.9f)))));
+    EXPECT_THAT(parser.parse(kInput),
+                Optional(Contains(isUtterance("Turn on the light",
+                                              Contains(isConfidentIntent("light_on", 0.9f))))));
+}
+
+TEST(WitIntentParserTest, ErrorParse)
+{
+    static const std::string_view kInput{R"(
+        {
+            "text": "Turn"
+        }
+        {
+            "entities:
+    )"};
+
+    WitIntentParser parser;
+    EXPECT_EQ(parser.parse(kInput), std::nullopt);
+}
+
+TEST(WitIntentParserTest, ParseEmpty)
+{
+    WitIntentParser parser;
+    EXPECT_EQ(parser.parse(""), std::nullopt);
 }

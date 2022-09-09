@@ -1,5 +1,8 @@
 #include "intent/WitIntentParser.hpp"
 
+#include "common/Logger.hpp"
+#include "intent/Http.hpp"
+
 #include <optional>
 
 namespace jar {
@@ -52,26 +55,30 @@ toUtterance(const json::object& object)
         return std::nullopt;
     }
     std::string text{textObject->as_string().begin(), textObject->as_string().end()};
-
     return Utterance{std::move(text), std::move(intents)};
 }
 
 } // namespace
 
-Utterances
-WitIntentParser::parse(std::string_view input, sys::error_code& error)
+std::optional<Utterances>
+WitIntentParser::parse(std::string_view input)
 {
     _parser.reset();
 
     if (input.empty()) {
-        error = json::make_error_code(json::error::not_found);
-        return {};
+        LOGE("Input value is empty");
+        return std::nullopt;
     }
 
     Utterances utterances;
     std::size_t nextRoot{0};
     do {
+        sys::error_code error;
         nextRoot = _parser.write_some(input, error);
+        if (error) {
+            LOGE("Failed to parse: {}", error.message());
+            return std::nullopt;
+        }
         if (!nextRoot) {
             break;
         }

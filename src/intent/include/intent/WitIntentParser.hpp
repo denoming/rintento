@@ -8,10 +8,10 @@ namespace json = boost::json;
 
 namespace jar {
 
-class WitIntentParser : public IntentParser {
+class WitIntentParser final : public IntentParser {
 public:
-    [[nodiscard]] Utterances
-    parse(std::string_view input, sys::error_code& error) override;
+    [[nodiscard]] std::optional<Utterances>
+    parse(std::string_view input) final;
 
 private:
     json::stream_parser _parser;

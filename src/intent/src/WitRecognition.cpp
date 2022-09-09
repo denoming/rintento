@@ -47,13 +47,11 @@ WitRecognition::starving(bool value)
 void
 WitRecognition::submit(const std::string& result)
 {
-    sys::error_code error;
     WitIntentParser parser;
-    auto utterances = parser.parse(result, error);
-    if (error) {
-        setError(error);
+    if (auto utterances = parser.parse(result); utterances) {
+        setResult(std::move(utterances.value()));
     } else {
-        setResult(std::move(utterances));
+        setError(sys::errc::make_error_code(sys::errc::bad_message));
     }
 }
 
