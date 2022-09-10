@@ -1,11 +1,11 @@
 #include "intent/Utils.hpp"
 
-#include <boost/url/urls.hpp>
-#include <boost/url/pct_encoding.hpp>
 #include "boost/url/rfc/pchars.hpp"
+#include <boost/url/pct_encoding.hpp>
+#include <boost/url/urls.hpp>
 
-#include <spdlog/fmt/fmt.h>
 #include <spdlog/fmt/chrono.h>
+#include <spdlog/fmt/fmt.h>
 
 #include <vector>
 
@@ -70,5 +70,40 @@ speechTargetWithDate()
 }
 
 } // namespace format
+
+namespace parser {
+
+std::optional<std::string>
+peekMessage(std::string_view target)
+{
+    if (const auto pos = target.find_first_of('?'); pos != std::string_view::npos) {
+        const auto params = urls::parse_query_params(target.substr(pos + 1));
+        const auto decodedParams = params->decoded();
+        if (auto queryItemIt = decodedParams.find("q"); queryItemIt != decodedParams.end()) {
+            if (const auto& queryItem = *queryItemIt; queryItem.has_value) {
+                std::string output;
+                queryItem.value.assign_to(output);
+                return output;
+            }
+        }
+    }
+    return std::nullopt;
+}
+
+bool
+isMessageTarget(std::string_view input)
+{
+    static constexpr std::string_view kPrefix{"/message"};
+    return input.starts_with(kPrefix);
+}
+
+bool
+isSpeechTarget(std::string_view input)
+{
+    static constexpr std::string_view kPrefix{"/speech"};
+    return input.starts_with(kPrefix);
+}
+
+} // namespace parser
 
 } // namespace jar

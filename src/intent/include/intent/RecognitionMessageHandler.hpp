@@ -26,8 +26,11 @@ private:
     RecognitionMessageHandler(std::shared_ptr<RecognitionConnection> connection,
                               std::shared_ptr<WitRecognitionFactory> factory);
 
-    bool
+    [[nodiscard]] bool
     canHandle(const Parser::value_type& request) const;
+
+    [[nodiscard]] std::shared_ptr<WitMessageRecognition>
+    createRecognition();
 
     void
     onRecognitionData();

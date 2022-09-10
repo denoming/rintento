@@ -6,39 +6,7 @@
 #include "intent/WitMessageRecognition.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 
-#include <boost/url/urls.hpp>
-
-namespace urls = boost::urls;
-
 namespace jar {
-
-namespace {
-
-std::optional<std::string>
-peekMessage(std::string_view target)
-{
-    if (const auto pos = target.find_first_of('?'); pos != std::string_view::npos) {
-        const auto params = urls::parse_query_params(target.substr(pos + 1));
-        const auto decodedParams = params->decoded();
-        if (auto queryItemIt = decodedParams.find("q"); queryItemIt != decodedParams.end()) {
-            if (const auto& queryItem = *queryItemIt; queryItem.has_value) {
-                std::string output;
-                queryItem.value.assign_to(output);
-                return output;
-            }
-        }
-    }
-    return std::nullopt;
-}
-
-bool
-isMessageTarget(std::string_view target)
-{
-    static constexpr std::string_view kPrefix{"/message"};
-    return target.starts_with(kPrefix);
-}
-
-} // namespace
 
 std::shared_ptr<RecognitionMessageHandler>
 RecognitionMessageHandler::create(std::shared_ptr<RecognitionConnection> connection,
@@ -69,7 +37,7 @@ RecognitionMessageHandler::handle(Buffer& buffer, Parser& parser)
     }
 
     const auto request = parser.release();
-    if (auto messageOpt = peekMessage(request.target()); messageOpt) {
+    if (auto messageOpt = parser::peekMessage(request.target()); messageOpt) {
         _message = std::move(*messageOpt);
     } else {
         LOGE("Missing message in request target");
@@ -77,9 +45,23 @@ RecognitionMessageHandler::handle(Buffer& buffer, Parser& parser)
         return;
     }
 
-    _recognition = _factory->message();
+    _recognition = createRecognition();
     assert(_recognition);
-    _recognition->onReady(
+    _recognition->run();
+}
+
+bool
+RecognitionMessageHandler::canHandle(const Parser::value_type& request) const
+{
+    return parser::isMessageTarget(request.target());
+}
+
+std::shared_ptr<WitMessageRecognition>
+RecognitionMessageHandler::createRecognition()
+{
+    auto recognition = _factory->message();
+    assert(recognition);
+    recognition->onReady(
         [weakSelf = weak_from_this(), executor = connection().executor()](auto result, auto error) {
             if (error) {
                 net::post(executor, [weakSelf, error]() {
@@ -95,24 +77,18 @@ RecognitionMessageHandler::handle(Buffer& buffer, Parser& parser)
                 });
             }
         });
-    _recognition->onData([weakSelf = weak_from_this()]() {
+    recognition->onData([weakSelf = weak_from_this()]() {
         if (auto self = weakSelf.lock()) {
             self->onRecognitionData();
         }
     });
-    _recognition->run();
-}
-
-bool
-RecognitionMessageHandler::canHandle(const Parser::value_type& request) const
-{
-    return isMessageTarget(request.target());
+    return recognition;
 }
 
 void
 RecognitionMessageHandler::onRecognitionData()
 {
-    LOGD("Feed up the recognition using given message");
+    LOGD("Feed up the recognition using given message: <{}> length", _message.size());
     assert(_recognition);
     _recognition->feed(std::move(_message));
 }
@@ -120,6 +96,7 @@ RecognitionMessageHandler::onRecognitionData()
 void
 RecognitionMessageHandler::onRecognitionError(sys::error_code error)
 {
+    LOGD("Submit recognition error: <{}>", error.message());
     sendResponse(error);
     submit(error);
 }
@@ -127,6 +104,7 @@ RecognitionMessageHandler::onRecognitionError(sys::error_code error)
 void
 RecognitionMessageHandler::onRecognitionSuccess(Utterances result)
 {
+    LOGD("Submit recognition success: <{}> size", result.size());
     sendResponse(result);
     submit(std::move(result));
 }

@@ -25,8 +25,14 @@ private:
     RecognitionSpeechHandler(std::shared_ptr<RecognitionConnection> connection,
                              std::shared_ptr<WitRecognitionFactory> factory);
 
-    bool
+    [[nodiscard]] bool
     canHandle(const Parser::value_type& request) const;
+
+    [[nodiscard]] std::shared_ptr<WitSpeechRecognition>
+    createRecognition();
+
+    void
+    handleSpeechData(Buffer& buffer, Parser& parser);
 
     void
     onRecognitionData();

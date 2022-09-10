@@ -3,44 +3,11 @@
 #include "common/Logger.hpp"
 #include "intent/RecognitionConnection.hpp"
 #include "intent/Types.hpp"
+#include "intent/Utils.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 #include "intent/WitSpeechRecognition.hpp"
 
-#include <boost/circular_buffer.hpp>
-#include <boost/json/serialize.hpp>
-#include <boost/json/value.hpp>
-#include <boost/url/urls.hpp>
-
-#include <fstream>
-
-namespace urls = boost::urls;
-namespace json = boost::json;
-
 static const int SpeechBufferCapacity = 1024 * 1024;
-
-namespace {
-
-bool
-isSpeechTarget(std::string_view target)
-{
-    static constexpr std::string_view kPrefix{"/speech"};
-    return target.starts_with(kPrefix);
-}
-
-void
-saveToFile(const char* data, std::size_t size)
-{
-    const fs::path filePath{fs::current_path() / "file.raw"};
-    std::fstream ss{filePath, std::ios::out | std::ios::binary};
-    if (ss.is_open()) {
-        ss.write(data, size);
-        ss.sync();
-    } else {
-        LOGE("Client: Failed to open speech file");
-    }
-}
-
-} // namespace
 
 namespace jar {
 
@@ -83,9 +50,25 @@ RecognitionSpeechHandler::handle(Buffer& buffer, Parser& parser)
     res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
     http::write(connection().stream(), res);
 
-    _recognition = _factory->speech();
+    _recognition = createRecognition();
     assert(_recognition);
-    _recognition->onReady(
+    _recognition->run();
+
+    handleSpeechData(buffer, parser);
+}
+
+bool
+RecognitionSpeechHandler::canHandle(const Parser::value_type& request) const
+{
+    return parser::isSpeechTarget(request.target());
+}
+
+std::shared_ptr<WitSpeechRecognition>
+RecognitionSpeechHandler::createRecognition()
+{
+    auto recognition = _factory->speech();
+    assert(recognition);
+    recognition->onReady(
         [weakSelf = weak_from_this(), executor = connection().executor()](auto result, auto error) {
             if (error) {
                 net::post(executor, [weakSelf, error]() {
@@ -101,13 +84,17 @@ RecognitionSpeechHandler::handle(Buffer& buffer, Parser& parser)
                 });
             }
         });
-    _recognition->onData([weakSelf = weak_from_this()]() {
+    recognition->onData([weakSelf = weak_from_this()]() {
         if (auto self = weakSelf.lock()) {
             self->onRecognitionData();
         }
     });
-    _recognition->run();
+    return recognition;
+}
 
+void
+RecognitionSpeechHandler::handleSpeechData(Buffer& buffer, Parser& parser)
+{
     auto onHeader = [this](std::uint64_t size, auto extensions, sys::error_code& error) {
         if (size > _speechData.capacity()) {
             error = http::error::body_limit;
@@ -141,12 +128,6 @@ RecognitionSpeechHandler::handle(Buffer& buffer, Parser& parser)
     }
 }
 
-bool
-RecognitionSpeechHandler::canHandle(const Parser::value_type& request) const
-{
-    return isSpeechTarget(request.target());
-}
-
 void
 RecognitionSpeechHandler::onRecognitionData()
 {
@@ -172,6 +153,7 @@ RecognitionSpeechHandler::onRecognitionData()
 void
 RecognitionSpeechHandler::onRecognitionError(sys::error_code error)
 {
+    LOGD("Submit recognition error: <{}>", error.message());
     sendResponse(error);
     submit(error);
 }
@@ -179,6 +161,7 @@ RecognitionSpeechHandler::onRecognitionError(sys::error_code error)
 void
 RecognitionSpeechHandler::onRecognitionSuccess(Utterances result)
 {
+    LOGD("Submit recognition success: <{}> size", result.size());
     sendResponse(result);
     submit(std::move(result));
 }
