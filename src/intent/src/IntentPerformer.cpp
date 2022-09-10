@@ -2,7 +2,7 @@
 
 namespace jar {
 
-IntentPerformer::Ptr
+std::shared_ptr<IntentPerformer>
 IntentPerformer::create()
 {
     return std::shared_ptr<IntentPerformer>(new IntentPerformer);

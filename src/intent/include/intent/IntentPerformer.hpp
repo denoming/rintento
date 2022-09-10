@@ -8,9 +8,7 @@ namespace jar {
 
 class IntentPerformer {
 public:
-    using Ptr = std::shared_ptr<IntentPerformer>;
-
-    static Ptr
+    static std::shared_ptr<IntentPerformer>
     create();
 
     void
