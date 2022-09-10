@@ -37,7 +37,7 @@ public:
     Worker worker;
     WitRecognitionFactory factory;
     TestWaiter waiter;
-    WitMessageRecognition::Ptr recognition;
+    std::shared_ptr<WitMessageRecognition> recognition;
 };
 
 TEST_F(WitMessageRecognitionTest, RecognizeMessage)

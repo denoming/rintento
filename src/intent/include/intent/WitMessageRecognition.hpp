@@ -11,9 +11,7 @@ namespace jar {
 class WitMessageRecognition : public WitRecognition,
                               public std::enable_shared_from_this<WitMessageRecognition> {
 public:
-    using Ptr = std::shared_ptr<WitMessageRecognition>;
-
-    static Ptr
+    static std::shared_ptr<WitMessageRecognition>
     create(ssl::context& context, net::any_io_executor executor);
 
     void

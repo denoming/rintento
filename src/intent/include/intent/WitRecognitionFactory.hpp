@@ -1,12 +1,13 @@
 #pragma once
 
 #include "intent/Http.hpp"
-#include "intent/WitMessageRecognition.hpp"
-#include "intent/WitSpeechRecognition.hpp"
 
 #include <memory>
 
 namespace jar {
+
+class WitMessageRecognition;
+class WitSpeechRecognition;
 
 class WitRecognitionFactory {
 public:
@@ -14,10 +15,10 @@ public:
 
     WitRecognitionFactory(net::any_io_executor executor);
 
-    WitMessageRecognition::Ptr
+    std::shared_ptr<WitMessageRecognition>
     message();
 
-    WitSpeechRecognition::Ptr
+    std::shared_ptr<WitSpeechRecognition>
     speech();
 
 private:

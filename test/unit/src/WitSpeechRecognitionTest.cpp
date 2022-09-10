@@ -42,7 +42,7 @@ public:
     Worker worker;
     WitRecognitionFactory factory;
     TestWaiter waiter;
-    WitSpeechRecognition::Ptr recognition;
+    std::shared_ptr<WitSpeechRecognition> recognition;
 };
 
 TEST_F(WitSpeechRecognitionTest, RecognizeSpeech1)

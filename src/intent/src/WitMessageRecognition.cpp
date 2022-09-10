@@ -9,7 +9,7 @@
 
 namespace jar {
 
-WitMessageRecognition::Ptr
+std::shared_ptr<WitMessageRecognition>
 WitMessageRecognition::create(ssl::context& context, net::any_io_executor executor)
 {
     // clang-format off

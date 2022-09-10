@@ -14,9 +14,7 @@ namespace jar {
 class WitSpeechRecognition : public WitRecognition,
                              public std::enable_shared_from_this<WitSpeechRecognition> {
 public:
-    using Ptr = std::shared_ptr<WitSpeechRecognition>;
-
-    static Ptr
+    static std::shared_ptr<WitSpeechRecognition>
     create(ssl::context& context, net::any_io_executor executor);
 
     void

@@ -11,7 +11,7 @@
 
 namespace jar {
 
-WitSpeechRecognition::Ptr
+std::shared_ptr<WitSpeechRecognition>
 WitSpeechRecognition::create(ssl::context& context, net::any_io_executor executor)
 {
     // clang-format off

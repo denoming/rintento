@@ -1,5 +1,8 @@
 #include "intent/WitRecognitionFactory.hpp"
 
+#include "intent/WitMessageRecognition.hpp"
+#include "intent/WitSpeechRecognition.hpp"
+
 namespace jar {
 
 WitRecognitionFactory::WitRecognitionFactory(net::any_io_executor executor)
@@ -10,13 +13,13 @@ WitRecognitionFactory::WitRecognitionFactory(net::any_io_executor executor)
     _context.set_verify_mode(ssl::verify_peer);
 }
 
-WitMessageRecognition::Ptr
+std::shared_ptr<WitMessageRecognition>
 WitRecognitionFactory::message()
 {
     return WitMessageRecognition::create(_context, _executor);
 }
 
-WitSpeechRecognition::Ptr
+std::shared_ptr<WitSpeechRecognition>
 WitRecognitionFactory::speech()
 {
     return WitSpeechRecognition::create(_context, _executor);
