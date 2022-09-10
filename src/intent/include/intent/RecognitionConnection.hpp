@@ -9,8 +9,6 @@ namespace jar {
 
 class RecognitionConnection : public std::enable_shared_from_this<RecognitionConnection> {
 public:
-    using Ptr = std::shared_ptr<RecognitionConnection>;
-
     template<typename Body>
     using ReadingCallback = std::function<void(http::request<Body> request, sys::error_code error)>;
     template<typename Body>
@@ -21,7 +19,7 @@ public:
     using WritingCallback = std::function<void(sys::error_code)>;
     using WritingHeaderCallback = std::function<void(sys::error_code)>;
 
-    static Ptr
+    static std::shared_ptr<RecognitionConnection>
     create(tcp::socket&& socket)
     {
         // clang-format off
