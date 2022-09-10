@@ -1,20 +1,22 @@
 #include "intent/RecognitionTerminalHandler.hpp"
 
+#include "intent/RecognitionConnection.hpp"
+
 namespace jar {
 
-RecognitionTerminalHandler::Ptr
-RecognitionTerminalHandler::create(RecognitionConnection::Ptr connection, Callback callback)
+std::shared_ptr<RecognitionHandler>
+RecognitionTerminalHandler::create(std::shared_ptr<RecognitionConnection> connection)
 {
     // clang-format off
     return std::shared_ptr<RecognitionTerminalHandler>(
-        new RecognitionTerminalHandler(std::move(connection), std::move(callback))
+        new RecognitionTerminalHandler(std::move(connection))
     );
     // clang-format on
 }
 
-RecognitionTerminalHandler::RecognitionTerminalHandler(RecognitionConnection::Ptr connection,
-                                                       Callback callback)
-    : RecognitionHandler{std::move(connection), std::move(callback)}
+RecognitionTerminalHandler::RecognitionTerminalHandler(
+    std::shared_ptr<RecognitionConnection> connection)
+    : RecognitionHandler{std::move(connection)}
 {
 }
 

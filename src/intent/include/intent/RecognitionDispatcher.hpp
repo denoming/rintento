@@ -1,26 +1,26 @@
 #pragma once
 
-#include "intent/IntentPerformer.hpp"
-#include "intent/RecognitionConnection.hpp"
-#include "intent/RecognitionHandler.hpp"
-#include "intent/WitRecognitionFactory.hpp"
+#include "intent/Types.hpp"
 
-#include <memory>
 #include <functional>
+#include <memory>
 
 namespace jar {
 
+class IntentPerformer;
+class RecognitionHandler;
+class RecognitionConnection;
+class WitRecognitionFactory;
+
 class RecognitionDispatcher : public std::enable_shared_from_this<RecognitionDispatcher> {
 public:
-    using Ptr = std::shared_ptr<RecognitionDispatcher>;
-
     using onDoneSignature = void(std::uint16_t identity);
 
-    [[nodiscard]] static Ptr
+    [[nodiscard]] static std::shared_ptr<RecognitionDispatcher>
     create(uint16_t identity,
-           RecognitionConnection::Ptr connection,
-           IntentPerformer::Ptr executor,
-           WitRecognitionFactory::Ptr factory);
+           std::shared_ptr<RecognitionConnection> connection,
+           std::shared_ptr<IntentPerformer> executor,
+           std::shared_ptr<WitRecognitionFactory> factory);
 
     [[nodiscard]] uint16_t
     identity() const;
@@ -37,9 +37,9 @@ public:
 
 private:
     RecognitionDispatcher(uint16_t identity,
-                          RecognitionConnection::Ptr connection,
-                          IntentPerformer::Ptr performer,
-                          WitRecognitionFactory::Ptr factory);
+                          std::shared_ptr<RecognitionConnection> connection,
+                          std::shared_ptr<IntentPerformer> performer,
+                          std::shared_ptr<WitRecognitionFactory> factory);
 
     void
     readHeader();
@@ -52,7 +52,7 @@ private:
     void
     onComplete(Utterances utterances, sys::error_code error);
 
-    RecognitionHandler::Ptr
+    std::shared_ptr<RecognitionHandler>
     getHandler();
 
     void
@@ -60,10 +60,10 @@ private:
 
 private:
     uint16_t _identity;
-    RecognitionConnection::Ptr _connection;
-    IntentPerformer::Ptr _performer;
-    WitRecognitionFactory::Ptr _factory;
-    RecognitionHandler::Ptr _handler;
+    std::shared_ptr<RecognitionConnection> _connection;
+    std::shared_ptr<IntentPerformer> _performer;
+    std::shared_ptr<WitRecognitionFactory> _factory;
+    std::shared_ptr<RecognitionHandler> _handler;
     std::function<onDoneSignature> _doneCallback;
 };
 

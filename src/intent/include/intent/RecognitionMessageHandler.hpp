@@ -1,30 +1,30 @@
 #pragma once
 
-#include "intent/RecognitionConnection.hpp"
 #include "intent/RecognitionHandler.hpp"
-#include "intent/WitMessageRecognition.hpp"
-#include "intent/WitRecognitionFactory.hpp"
 
 #include <memory>
+#include <string>
 
 namespace jar {
+
+class RecognitionConnection;
+class WitRecognitionFactory;
+class WitMessageRecognition;
 
 class RecognitionMessageHandler final
     : public RecognitionHandler,
       public std::enable_shared_from_this<RecognitionMessageHandler> {
 public:
-    [[nodiscard]] static Ptr
-    create(RecognitionConnection::Ptr connection,
-           WitRecognitionFactory::Ptr factory,
-           Callback callback);
+    [[nodiscard]] static std::shared_ptr<RecognitionMessageHandler>
+    create(std::shared_ptr<RecognitionConnection> connection,
+           std::shared_ptr<WitRecognitionFactory> factory);
 
     void
     handle(Buffer& buffer, Parser& parser) final;
 
 private:
-    RecognitionMessageHandler(RecognitionConnection::Ptr connection,
-                              WitRecognitionFactory::Ptr factory,
-                              Callback callback);
+    RecognitionMessageHandler(std::shared_ptr<RecognitionConnection> connection,
+                              std::shared_ptr<WitRecognitionFactory> factory);
 
     bool
     canHandle(const Parser::value_type& request) const;
@@ -39,8 +39,8 @@ private:
     onRecognitionSuccess(Utterances result);
 
 private:
-    WitRecognitionFactory::Ptr _factory;
-    WitMessageRecognition::Ptr _recognition;
+    std::shared_ptr<WitRecognitionFactory> _factory;
+    std::shared_ptr<WitMessageRecognition> _recognition;
     std::string _message;
 };
 

@@ -1,23 +1,25 @@
 #pragma once
 
-#include "intent/RecognitionConnection.hpp"
 #include "intent/RecognitionHandler.hpp"
 
 #include <memory>
 
 namespace jar {
 
-class RecognitionTerminalHandler : public RecognitionHandler,
-                                   public std::enable_shared_from_this<RecognitionTerminalHandler> {
+class RecognitionConnection;
+
+class RecognitionTerminalHandler final
+    : public RecognitionHandler,
+      public std::enable_shared_from_this<RecognitionTerminalHandler> {
 public:
-    [[nodiscard]] static Ptr
-    create(RecognitionConnection::Ptr connection, Callback callback);
+    [[nodiscard]] static std::shared_ptr<RecognitionHandler>
+    create(std::shared_ptr<RecognitionConnection> connection);
 
     void
-    handle(Buffer& buffer, Parser& parser) override;
+    handle(Buffer& buffer, Parser& parser) final;
 
 private:
-    RecognitionTerminalHandler(RecognitionConnection::Ptr connection, Callback callback);
+    RecognitionTerminalHandler(std::shared_ptr<RecognitionConnection> connection);
 };
 
 } // namespace jar

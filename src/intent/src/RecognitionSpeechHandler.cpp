@@ -1,7 +1,10 @@
 #include "intent/RecognitionSpeechHandler.hpp"
 
 #include "common/Logger.hpp"
+#include "intent/RecognitionConnection.hpp"
 #include "intent/Types.hpp"
+#include "intent/WitRecognitionFactory.hpp"
+#include "intent/WitSpeechRecognition.hpp"
 
 #include <boost/circular_buffer.hpp>
 #include <boost/json/serialize.hpp>
@@ -41,22 +44,21 @@ saveToFile(const char* data, std::size_t size)
 
 namespace jar {
 
-RecognitionSpeechHandler::Ptr
-RecognitionSpeechHandler::create(RecognitionConnection::Ptr connection,
-                                 WitRecognitionFactory::Ptr factory,
-                                 Callback callback)
+std::shared_ptr<RecognitionHandler>
+RecognitionSpeechHandler::create(std::shared_ptr<RecognitionConnection> connection,
+                                 std::shared_ptr<WitRecognitionFactory> factory)
 {
     // clang-format off
     return std::shared_ptr<RecognitionSpeechHandler>(
-        new RecognitionSpeechHandler(std::move(connection), std::move(factory), std::move(callback))
+        new RecognitionSpeechHandler(std::move(connection), std::move(factory))
     );
     // clang-format on
 }
 
-RecognitionSpeechHandler::RecognitionSpeechHandler(RecognitionConnection::Ptr connection,
-                                                   WitRecognitionFactory::Ptr factory,
-                                                   Callback callback)
-    : RecognitionHandler{std::move(connection), std::move(callback)}
+RecognitionSpeechHandler::RecognitionSpeechHandler(
+    std::shared_ptr<RecognitionConnection> connection,
+    std::shared_ptr<WitRecognitionFactory> factory)
+    : RecognitionHandler{std::move(connection)}
     , _factory{std::move(factory)}
     , _speechData{SpeechBufferCapacity}
 {

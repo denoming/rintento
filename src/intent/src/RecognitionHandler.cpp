@@ -1,6 +1,7 @@
 #include "intent/RecognitionHandler.hpp"
 
 #include "common/Logger.hpp"
+#include "intent/RecognitionConnection.hpp"
 
 #include <boost/json.hpp>
 
@@ -43,16 +44,14 @@ getResponse(std::string payload)
 
 } // namespace
 
-RecognitionHandler::RecognitionHandler(RecognitionConnection::Ptr connection, Callback callback)
+RecognitionHandler::RecognitionHandler(std::shared_ptr<RecognitionConnection> connection)
     : _connection{std::move(connection)}
-    , _callback{std::move(callback)}
 {
     assert(_connection);
-    assert(_callback);
 }
 
 void
-RecognitionHandler::setNext(Ptr handler)
+RecognitionHandler::setNext(std::shared_ptr<RecognitionHandler> handler)
 {
     assert(!_next);
     _next = std::move(handler);
@@ -81,13 +80,15 @@ RecognitionHandler::connection() const
 void
 RecognitionHandler::submit(Utterances result)
 {
-    _callback(std::move(result), {});
+    assert(_doneCallback);
+    _doneCallback(std::move(result), {});
 }
 
 void
 RecognitionHandler::submit(sys::error_code error)
 {
-    _callback({}, error);
+    assert(_doneCallback);
+    _doneCallback({}, error);
 }
 
 void

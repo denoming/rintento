@@ -35,9 +35,9 @@ public:
 
 public:
     Worker worker;
-    WitRecognitionFactory::Ptr factory;
-    IntentPerformer::Ptr performer;
-    RecognitionServer::Ptr server;
+    std::shared_ptr<WitRecognitionFactory> factory;
+    std::shared_ptr<IntentPerformer> performer;
+    std::shared_ptr<RecognitionServer> server;
 };
 
 TEST_F(RecognitionServerTest, RecognizeMessage)

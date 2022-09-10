@@ -1,18 +1,21 @@
 #include "intent/RecognitionDispatcher.hpp"
 
 #include "common/Logger.hpp"
+#include "intent/IntentPerformer.hpp"
+#include "intent/RecognitionConnection.hpp"
 #include "intent/RecognitionMessageHandler.hpp"
 #include "intent/RecognitionSpeechHandler.hpp"
 #include "intent/RecognitionTerminalHandler.hpp"
 #include "intent/Utils.hpp"
+#include "intent/WitRecognitionFactory.hpp"
 
 namespace jar {
 
-RecognitionDispatcher::Ptr
+std::shared_ptr<RecognitionDispatcher>
 RecognitionDispatcher::create(uint16_t identity,
-                              RecognitionConnection::Ptr connection,
-                              IntentPerformer::Ptr performer,
-                              WitRecognitionFactory::Ptr factory)
+                              std::shared_ptr<RecognitionConnection> connection,
+                              std::shared_ptr<IntentPerformer> performer,
+                              std::shared_ptr<WitRecognitionFactory> factory)
 {
     // clang-format off
     return std::shared_ptr<RecognitionDispatcher>(
@@ -22,9 +25,9 @@ RecognitionDispatcher::create(uint16_t identity,
 }
 
 RecognitionDispatcher::RecognitionDispatcher(uint16_t identity,
-                                             RecognitionConnection::Ptr connection,
-                                             IntentPerformer::Ptr performer,
-                                             WitRecognitionFactory::Ptr factory)
+                                             std::shared_ptr<RecognitionConnection> connection,
+                                             std::shared_ptr<IntentPerformer> performer,
+                                             std::shared_ptr<WitRecognitionFactory> factory)
     : _identity{identity}
     , _connection{std::move(connection)}
     , _performer{std::move(performer)}
@@ -93,30 +96,30 @@ RecognitionDispatcher::onComplete(Utterances utterances, sys::error_code error)
     readHeader();
 }
 
-RecognitionHandler::Ptr
+std::shared_ptr<RecognitionHandler>
 RecognitionDispatcher::getHandler()
 {
-    auto handler1 = RecognitionMessageHandler::create(
-        _connection, _factory, [weakSelf = weak_from_this()](auto result, auto error) {
-            if (auto self = weakSelf.lock()) {
-                LOGD("Recognize message handler has finished: success<{}>", !error.failed());
-                self->onComplete(std::move(result), error);
-            }
-        });
-    auto handler2 = RecognitionSpeechHandler::create(
-        _connection, _factory, [weakSelf = weak_from_this()](auto result, auto error) {
-            if (auto self = weakSelf.lock()) {
-                LOGD("Recognize speech handler has finished: success<{}>", !error.failed());
-                self->onComplete(std::move(result), error);
-            }
-        });
-    auto handler3 = RecognitionTerminalHandler::create(
-        _connection, [weakSelf = weak_from_this()](auto result, auto error) {
-            if (auto self = weakSelf.lock()) {
-                LOGD("Terminal handler has finished");
-                self->onComplete(std::move(result), error);
-            }
-        });
+    auto handler1 = RecognitionMessageHandler::create(_connection, _factory);
+    handler1->onDone([weakSelf = weak_from_this()](auto result, auto error) {
+        if (auto self = weakSelf.lock()) {
+            LOGD("Recognize message handler has finished: success<{}>", !error.failed());
+            self->onComplete(std::move(result), error);
+        }
+    });
+    auto handler2 = RecognitionSpeechHandler::create(_connection, _factory);
+    handler2->onDone([weakSelf = weak_from_this()](auto result, auto error) {
+        if (auto self = weakSelf.lock()) {
+            LOGD("Recognize speech handler has finished: success<{}>", !error.failed());
+            self->onComplete(std::move(result), error);
+        }
+    });
+    auto handler3 = RecognitionTerminalHandler::create(_connection);
+    handler3->onDone([weakSelf = weak_from_this()](auto result, auto error) {
+        if (auto self = weakSelf.lock()) {
+            LOGD("Terminal handler has finished");
+            self->onComplete(std::move(result), error);
+        }
+    });
     handler2->setNext(std::move(handler3));
     handler1->setNext(std::move(handler2));
     return handler1;

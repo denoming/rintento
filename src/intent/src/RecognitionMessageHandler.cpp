@@ -1,7 +1,10 @@
 #include "intent/RecognitionMessageHandler.hpp"
 
 #include "common/Logger.hpp"
+#include "intent/RecognitionConnection.hpp"
 #include "intent/Utils.hpp"
+#include "intent/WitMessageRecognition.hpp"
+#include "intent/WitRecognitionFactory.hpp"
 
 #include <boost/url/urls.hpp>
 
@@ -37,22 +40,21 @@ isMessageTarget(std::string_view target)
 
 } // namespace
 
-RecognitionMessageHandler::Ptr
-RecognitionMessageHandler::create(RecognitionConnection::Ptr connection,
-                                  WitRecognitionFactory::Ptr factory,
-                                  Callback callback)
+std::shared_ptr<RecognitionMessageHandler>
+RecognitionMessageHandler::create(std::shared_ptr<RecognitionConnection> connection,
+                                  std::shared_ptr<WitRecognitionFactory> factory)
 {
     // clang-format off
     return std::shared_ptr<RecognitionMessageHandler>(
-        new RecognitionMessageHandler(std::move(connection), std::move(factory), std::move(callback))
+        new RecognitionMessageHandler(std::move(connection), std::move(factory))
     );
     // clang-format on
 }
 
-RecognitionMessageHandler::RecognitionMessageHandler(RecognitionConnection::Ptr connection,
-                                                     WitRecognitionFactory::Ptr factory,
-                                                     Callback callback)
-    : RecognitionHandler{std::move(connection), std::move(callback)}
+RecognitionMessageHandler::RecognitionMessageHandler(
+    std::shared_ptr<RecognitionConnection> connection,
+    std::shared_ptr<WitRecognitionFactory> factory)
+    : RecognitionHandler{std::move(connection)}
     , _factory{std::move(factory)}
 {
     assert(_factory);

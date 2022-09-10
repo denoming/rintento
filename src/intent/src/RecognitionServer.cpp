@@ -2,13 +2,15 @@
 
 #include "common/Logger.hpp"
 #include "intent/RecognitionConnection.hpp"
+#include "intent/RecognitionDispatcher.hpp"
+#include "intent/WitRecognitionFactory.hpp"
 
 namespace jar {
 
-RecognitionServer::Ptr
+std::shared_ptr<RecognitionServer>
 RecognitionServer::create(net::any_io_executor executor,
-                          IntentPerformer::Ptr performer,
-                          WitRecognitionFactory::Ptr factory)
+                          std::shared_ptr<IntentPerformer> performer,
+                          std::shared_ptr<WitRecognitionFactory> factory)
 {
     // clang-format off
     return std::shared_ptr<RecognitionServer>(
@@ -18,8 +20,8 @@ RecognitionServer::create(net::any_io_executor executor,
 }
 
 RecognitionServer::RecognitionServer(net::any_io_executor executor,
-                                     IntentPerformer::Ptr performer,
-                                     WitRecognitionFactory::Ptr factory)
+                                     std::shared_ptr<IntentPerformer> performer,
+                                     std::shared_ptr<WitRecognitionFactory> factory)
     : _executor{std::move(executor)}
     , _performer{std::move(performer)}
     , _acceptor{net::make_strand(_executor)}
@@ -144,7 +146,7 @@ RecognitionServer::close()
 }
 
 bool
-RecognitionServer::dispatch(RecognitionConnection::Ptr connection)
+RecognitionServer::dispatch(std::shared_ptr<RecognitionConnection> connection)
 {
     sys::error_code error;
     const auto endpoint = connection->endpointRemote(error);

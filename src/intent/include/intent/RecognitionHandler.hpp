@@ -2,29 +2,37 @@
 
 #include "intent/Http.hpp"
 #include "intent/Types.hpp"
-#include "intent/RecognitionConnection.hpp"
 
-#include <memory>
+#include <concepts>
 #include <functional>
+#include <memory>
 
 namespace jar {
 
+class RecognitionConnection;
+
 class RecognitionHandler {
 public:
-    using Ptr = std::shared_ptr<RecognitionHandler>;
     using Buffer = beast::flat_buffer;
     using Parser = http::request_parser<http::empty_body>;
-    using Callback = std::function<void(Utterances result, sys::error_code error)>;
+    using OnDoneSignature = void(Utterances result, sys::error_code error);
 
-    RecognitionHandler(RecognitionConnection::Ptr connection, Callback callback);
+    RecognitionHandler(std::shared_ptr<RecognitionConnection> connection);
 
     virtual ~RecognitionHandler() = default;
 
     void
-    setNext(Ptr handler);
+    setNext(std::shared_ptr<RecognitionHandler> handler);
 
     virtual void
     handle(Buffer& buffer, Parser& parser);
+
+    template<std::invocable<Utterances, sys::error_code> Callback>
+    void
+    onDone(Callback&& callback)
+    {
+        _doneCallback = std::move(callback);
+    }
 
 protected:
     RecognitionConnection&
@@ -46,9 +54,9 @@ protected:
     sendResponse(sys::error_code error);
 
 private:
-    Ptr _next;
-    RecognitionConnection::Ptr _connection;
-    Callback _callback;
+    std::shared_ptr<RecognitionHandler> _next;
+    std::shared_ptr<RecognitionConnection> _connection;
+    std::function<OnDoneSignature> _doneCallback;
 };
 
 } // namespace jar
