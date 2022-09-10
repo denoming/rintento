@@ -1,5 +1,6 @@
 #include "ExecutorService.hpp"
 
+#include "common/Constants.hpp"
 #include "common/Logger.hpp"
 #include "common/LoggerInitializer.hpp"
 
@@ -17,8 +18,14 @@ void
 ExecutorService::defineOptions(po::options_description& description)
 {
     Application::defineOptions(description);
-
-    description.add_options()("port,p", po::value<std::uint16_t>(), "The number of port");
+    // clang-format off
+    description.add_options()
+        ("port", po::value<std::uint16_t>()->default_value(kDefaultServerPort))
+        ("backend.host", po::value<std::string>())
+        ("backend.port", po::value<std::uint16_t>())
+        ("backend.auth", po::value<std::string>())
+        ;
+    // clang-format on
 }
 
 void

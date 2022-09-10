@@ -1,6 +1,6 @@
 #pragma once
 
-#include "intent/Constants.hpp"
+#include "common/Constants.hpp"
 #include "intent/Http.hpp"
 
 #include <condition_variable>

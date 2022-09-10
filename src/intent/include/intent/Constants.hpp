@@ -4,13 +4,14 @@
 
 namespace jar {
 
-static constexpr std::uint16_t kDefaultServerPort{8000};
+/* HTTP default requests timeout */
+static constexpr auto kHttpTimeout = std::chrono::seconds{15};
 
-static constexpr double kConfidentThreshold{0.92};
+/* HTTP version codes */
+static constexpr auto kHttpVersion10 = std::uint32_t{10u};
+static constexpr auto kHttpVersion11 = std::uint32_t{11u};
 
-static constexpr std::chrono::seconds kHttpTimeout{15};
-
-static constexpr std::uint32_t kHttpVersion10{10u};
-static constexpr std::uint32_t kHttpVersion11{11u};
+/* Confident threshold to recognize is response is confident */
+static constexpr auto kConfidentThreshold = double{0.90};
 
 } // namespace jar
