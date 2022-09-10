@@ -12,7 +12,10 @@ namespace jar {
 
 class Application : public Subsystem {
 public:
-    Application();
+    static Application&
+    instance();
+
+    ~Application() override;
 
     void
     parseArgs(int argc, char* argv[]);
@@ -20,10 +23,12 @@ public:
     int
     run();
 
-    [[nodiscard]]
-    const po::variables_map& options() const;
+    [[nodiscard]] const po::variables_map&
+    options() const;
 
 protected:
+    Application();
+
     virtual void
     defineOptions(po::options_description& description);
 
@@ -62,6 +67,8 @@ private:
     Subsystems _subsystems;
     po::variables_map _options;
     bool _helpRequested;
+
+    static Application* s_instance;
 };
 
 } // namespace jar

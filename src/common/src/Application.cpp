@@ -12,9 +12,24 @@ namespace sys = boost::system;
 
 namespace jar {
 
+Application* Application::s_instance{nullptr};
+
+Application&
+Application::instance()
+{
+    assert(s_instance != nullptr);
+    return *s_instance;
+}
+
 Application::Application()
     : _helpRequested{false}
 {
+    s_instance = this;
+}
+
+Application::~Application()
+{
+    s_instance = nullptr;
 }
 
 void
