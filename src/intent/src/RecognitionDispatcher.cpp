@@ -33,10 +33,10 @@ RecognitionDispatcher::RecognitionDispatcher(uint16_t identity,
     , _performer{std::move(performer)}
     , _factory{std::move(factory)}
 {
-    assert(identity > 0);
-    assert(connection);
-    assert(performer);
-    assert(factory);
+    assert(_identity);
+    assert(_connection);
+    assert(_performer);
+    assert(_factory);
 }
 
 uint16_t
