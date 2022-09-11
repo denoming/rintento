@@ -23,7 +23,7 @@ public:
            std::shared_ptr<WitRecognitionFactory> factory);
 
     bool
-    listen(net::ip::port_type port = kDefaultServerPort);
+    listen(net::ip::port_type port = kDefaultProxyServerPort);
 
     bool
     listen(tcp::endpoint endpoint);

@@ -5,8 +5,10 @@
 
 namespace jar {
 
-WitRecognitionFactory::WitRecognitionFactory(net::any_io_executor executor)
-    : _context{ssl::context::tlsv12_client}
+WitRecognitionFactory::WitRecognitionFactory(std::shared_ptr<Config> config,
+                                             net::any_io_executor executor)
+    : _config{std::move(config)}
+    , _context{ssl::context::tlsv12_client}
     , _executor{std::move(executor)}
 {
     _context.set_default_verify_paths();
@@ -16,13 +18,13 @@ WitRecognitionFactory::WitRecognitionFactory(net::any_io_executor executor)
 std::shared_ptr<WitMessageRecognition>
 WitRecognitionFactory::message()
 {
-    return WitMessageRecognition::create(_context, _executor);
+    return WitMessageRecognition::create(_config, _context, _executor);
 }
 
 std::shared_ptr<WitSpeechRecognition>
 WitRecognitionFactory::speech()
 {
-    return WitSpeechRecognition::create(_context, _executor);
+    return WitSpeechRecognition::create(_config, _context, _executor);
 }
 
 } // namespace jar

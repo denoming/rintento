@@ -2,7 +2,11 @@
 
 #include "common/Application.hpp"
 
+#include <memory>
+
 namespace jar {
+
+class Config;
 
 class ExecutorService : public Application {
 public:
@@ -20,6 +24,9 @@ private:
 
     void
     proceed() override;
+
+private:
+    std::shared_ptr<Config> _config;
 };
 
 } // namespace jar

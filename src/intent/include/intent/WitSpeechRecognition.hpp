@@ -5,23 +5,22 @@
 
 #include <memory>
 #include <string_view>
-#include <filesystem>
-
-namespace fs = std::filesystem;
 
 namespace jar {
+
+class Config;
 
 class WitSpeechRecognition : public WitRecognition,
                              public std::enable_shared_from_this<WitSpeechRecognition> {
 public:
     static std::shared_ptr<WitSpeechRecognition>
-    create(ssl::context& context, net::any_io_executor executor);
+    create(std::shared_ptr<Config> config, ssl::context& context, net::any_io_executor executor);
 
     void
     run();
 
     void
-    run(std::string_view host, std::string_view port, std::string_view auth);
+    run(std::string_view host, std::uint16_t port, std::string_view auth);
 
     void
     feed(net::const_buffer buffer);
@@ -30,10 +29,12 @@ public:
     finalize();
 
 private:
-    explicit WitSpeechRecognition(ssl::context& context, net::any_io_executor executor);
+    explicit WitSpeechRecognition(std::shared_ptr<Config> config,
+                                  ssl::context& context,
+                                  net::any_io_executor executor);
 
     void
-    resolve(std::string_view host, std::string_view port);
+    resolve(std::string_view host, std::uint16_t);
 
     void
     onResolveDone(sys::error_code error, const tcp::resolver::results_type& result);
@@ -82,6 +83,7 @@ private:
     onShutdownDone(sys::error_code error);
 
 private:
+    std::shared_ptr<Config> _config;
     net::any_io_executor _executor;
     tcp::resolver _resolver;
     beast::ssl_stream<beast::tcp_stream> _stream;

@@ -1,6 +1,7 @@
 #include "intent/IntentSubsystem.hpp"
 
 #include "common/Application.hpp"
+#include "common/Config.hpp"
 #include "common/Logger.hpp"
 #include "intent/Constants.hpp"
 #include "intent/IntentPerformer.hpp"
@@ -8,6 +9,11 @@
 #include "intent/WitRecognitionFactory.hpp"
 
 namespace jar {
+
+IntentSubsystem::IntentSubsystem(std::shared_ptr<Config> config)
+    : _config{config}
+{
+}
 
 const char*
 IntentSubsystem::name() const
@@ -20,9 +26,9 @@ IntentSubsystem::initialize(Application& application)
 {
     Subsystem::initialize(application);
 
-    _factory = std::make_shared<WitRecognitionFactory>(_worker.executor());
+    _factory = std::make_shared<WitRecognitionFactory>(_config, _recognizeWorker.executor());
     _performer = IntentPerformer::create();
-    _server = RecognitionServer::create(_worker.executor(), _performer, _factory);
+    _server = RecognitionServer::create(_proxyWorker.executor(), _performer, _factory);
 }
 
 void
@@ -30,13 +36,10 @@ IntentSubsystem::setUp(Application& application)
 {
     Subsystem::setUp(application);
 
-    _worker.start();
+    _proxyWorker.start(_config->proxyServerThreads());
+    _recognizeWorker.start(_config->recognizeThreads());
 
-    auto port = kDefaultServerPort;
-    if (application.options().contains("port")) {
-        port = application.options().at("port").as<std::uint16_t>();
-    }
-
+    const auto port = _config->proxyServerPort();
     assert(_server);
     if (_server->listen(port)) {
         LOGI("Starting server on <{}> port was success", port);
@@ -54,7 +57,8 @@ IntentSubsystem::tearDown()
         _server->shutdown();
     }
 
-    _worker.stop();
+    _proxyWorker.stop();
+    _recognizeWorker.stop();
 }
 
 void

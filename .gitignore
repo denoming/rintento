@@ -1,6 +1,9 @@
 # API
 api/*.private.*
 
+# Private config files
+asset/config/*.json
+
 # CMake
 *build*
 

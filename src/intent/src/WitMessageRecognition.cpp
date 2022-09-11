@@ -1,7 +1,7 @@
 #include "intent/WitMessageRecognition.hpp"
 
+#include "common/Config.hpp"
 #include "common/Logger.hpp"
-#include "intent/Config.hpp"
 #include "intent/Constants.hpp"
 #include "intent/HttpUtils.hpp"
 #include "intent/Utils.hpp"
@@ -10,17 +10,22 @@
 namespace jar {
 
 std::shared_ptr<WitMessageRecognition>
-WitMessageRecognition::create(ssl::context& context, net::any_io_executor executor)
+WitMessageRecognition::create(std::shared_ptr<Config> config,
+                              ssl::context& context,
+                              net::any_io_executor executor)
 {
     // clang-format off
     return std::shared_ptr<WitMessageRecognition>(
-        new WitMessageRecognition(context, std::move(executor))
+        new WitMessageRecognition(config, context, std::move(executor))
     );
     // clang-format on
 }
 
-WitMessageRecognition::WitMessageRecognition(ssl::context& context, net::any_io_executor executor)
-    : _executor{std::move(executor)}
+WitMessageRecognition::WitMessageRecognition(std::shared_ptr<Config> config,
+                                             ssl::context& context,
+                                             net::any_io_executor executor)
+    : _config{std::move(config)}
+    , _executor{std::move(executor)}
     , _resolver{_executor}
     , _stream{_executor, context}
 {
@@ -29,14 +34,28 @@ WitMessageRecognition::WitMessageRecognition(ssl::context& context, net::any_io_
 void
 WitMessageRecognition::run()
 {
-    run(WitBackendHost, WitBackendPort, WitBackendAuth);
+    const auto host = _config->recognizeServerHost();
+    const auto port = _config->recognizeServerPort();
+    const auto auth = _config->recognizeServerAuth();
+
+    if (host.empty() || (port == 0) || auth.empty()) {
+        LOGE("Recognize server options are invalid: host<{}>, port<{}>, auth<{}>",
+             !host.empty(),
+             (port > 0),
+             !auth.empty());
+        net::post(_executor, [self = shared_from_this()]() {
+            self->setError(sys::errc::make_error_code(sys::errc::invalid_argument));
+        });
+    } else {
+        run(host, port, auth);
+    }
 }
 
 void
-WitMessageRecognition::run(std::string_view host, std::string_view port, std::string_view auth)
+WitMessageRecognition::run(std::string_view host, std::uint16_t port, std::string_view auth)
 {
     assert(!host.empty());
-    assert(!port.empty());
+    assert(port > 0);
     assert(!auth.empty());
 
     sys::error_code error;
@@ -73,13 +92,14 @@ WitMessageRecognition::feed(std::string_view message)
 }
 
 void
-WitMessageRecognition::resolve(std::string_view host, std::string_view port)
+WitMessageRecognition::resolve(std::string_view host, std::uint16_t port)
 {
     LOGD("Resolve given host address: <{}:{}>", host, port);
 
+    auto portStr = std::to_string(port);
     _resolver.async_resolve(
         host,
-        port,
+        portStr,
         net::bind_cancellation_slot(
             onCancel(),
             beast::bind_front_handler(&WitMessageRecognition::onResolveDone, shared_from_this())));

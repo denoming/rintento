@@ -17,6 +17,7 @@ target_sources(${TARGET}
             src/Application.cpp
             src/Worker.cpp
             src/Subsystem.cpp
+            src/Config.cpp
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_20)

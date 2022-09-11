@@ -1,7 +1,7 @@
 #include "intent/WitSpeechRecognition.hpp"
 
 #include "common/Logger.hpp"
-#include "intent/Config.hpp"
+#include "common/Config.hpp"
 #include "intent/Constants.hpp"
 #include "intent/HttpUtils.hpp"
 #include "intent/Utils.hpp"
@@ -12,17 +12,22 @@
 namespace jar {
 
 std::shared_ptr<WitSpeechRecognition>
-WitSpeechRecognition::create(ssl::context& context, net::any_io_executor executor)
+WitSpeechRecognition::create(std::shared_ptr<Config> config,
+                             ssl::context& context,
+                             net::any_io_executor executor)
 {
     // clang-format off
     return std::shared_ptr<WitSpeechRecognition>(
-        new WitSpeechRecognition(context, executor)
+        new WitSpeechRecognition(std::move(config), context, executor)
     );
     // clang-format on
 }
 
-WitSpeechRecognition::WitSpeechRecognition(ssl::context& context, net::any_io_executor executor)
-    : _executor{std::move(executor)}
+WitSpeechRecognition::WitSpeechRecognition(std::shared_ptr<Config> config,
+                                           ssl::context& context,
+                                           net::any_io_executor executor)
+    : _config{std::move(config)}
+    , _executor{std::move(executor)}
     , _resolver{_executor}
     , _stream{_executor, context}
 {
@@ -31,14 +36,28 @@ WitSpeechRecognition::WitSpeechRecognition(ssl::context& context, net::any_io_ex
 void
 WitSpeechRecognition::run()
 {
-    run(WitBackendHost, WitBackendPort, WitBackendAuth);
+    const auto host = _config->recognizeServerHost();
+    const auto port = _config->recognizeServerPort();
+    const auto auth = _config->recognizeServerAuth();
+
+    if (host.empty() || (port == 0) || auth.empty()) {
+        LOGE("Recognize server options are invalid: host<{}>, port<{}>, auth<{}>",
+             !host.empty(),
+             (port > 0),
+             !auth.empty());
+        net::post(_executor, [self = shared_from_this()]() {
+            self->setError(sys::errc::make_error_code(sys::errc::invalid_argument));
+        });
+    } else {
+        run(host, port, auth);
+    }
 }
 
 void
-WitSpeechRecognition::run(std::string_view host, std::string_view port, std::string_view auth)
+WitSpeechRecognition::run(std::string_view host, std::uint16_t port, std::string_view auth)
 {
     assert(!host.empty());
-    assert(!port.empty());
+    assert(port > 0);
     assert(!auth.empty());
 
     sys::error_code error;
@@ -91,13 +110,14 @@ WitSpeechRecognition::finalize()
 }
 
 void
-WitSpeechRecognition::resolve(std::string_view host, std::string_view port)
+WitSpeechRecognition::resolve(std::string_view host, std::uint16_t port)
 {
     LOGD("Resolve given host address: <{}:{}>", host, port);
 
+    auto portStr = std::to_string(port);
     _resolver.async_resolve(
         host,
-        port,
+        portStr,
         net::bind_cancellation_slot(
             onCancel(),
             beast::bind_front_handler(&WitSpeechRecognition::onResolveDone, shared_from_this())));

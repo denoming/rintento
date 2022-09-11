@@ -1,6 +1,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "common/Config.hpp"
 #include "common/Worker.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 #include "intent/WitSpeechRecognition.hpp"
@@ -16,14 +17,26 @@ using namespace jar;
 
 namespace fs = std::filesystem;
 
+static const fs::path kConfigFilePath{fs::current_path() / "asset" / "config" / "config.json"};
+
 class WitSpeechRecognitionTest : public Test {
 public:
     const fs::path AssetAudioPath{fs::current_path() / "asset" / "audio"};
 
     WitSpeechRecognitionTest()
-        : factory{worker.executor()}
+        : factory{config, worker.executor()}
         , recognition{factory.speech()}
     {
+    }
+
+    static void
+    SetUpTestSuite()
+    {
+        if (!config) {
+            config = std::make_shared<Config>();
+            ASSERT_TRUE(fs::exists(kConfigFilePath));
+            ASSERT_TRUE(config->load(kConfigFilePath));
+        }
     }
 
     void
@@ -39,11 +52,15 @@ public:
     }
 
 public:
+    static std::shared_ptr<Config> config;
+
     Worker worker;
     WitRecognitionFactory factory;
     TestWaiter waiter;
     std::shared_ptr<WitSpeechRecognition> recognition;
 };
+
+std::shared_ptr<Config> WitSpeechRecognitionTest::config;
 
 TEST_F(WitSpeechRecognitionTest, RecognizeSpeech1)
 {
