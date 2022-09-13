@@ -1,7 +1,7 @@
 include(CheckCCompilerFlag)
 
-option(ENABLE_COMPILER_WARNINGS
-       "Enable compiler warnings"
+option(ENABLE_COMPILER_CHECKING
+       "Enable compiler extra checking"
        OFF)
 option(ENABLE_SEPARATING_DEBUG_SYMBOLS
        "Enable separating debug symbols"

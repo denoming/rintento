@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 
 project(jarvis-executor
     VERSION 0.1.0
-    DESCRIPTION "Jarvis Executor"
+    DESCRIPTION "Jarvis Executor Project"
 )
 
 include(cmake/ProjectOptions.cmake)
