@@ -16,7 +16,7 @@ public:
            const std::tm&,
            spdlog::memory_buf_t& buffer) override
     {
-        static constexpr const char* kFullFormat{"{:.<40}"};
+        static constexpr const char* kFullFormat{"{:.<35}"};
         static constexpr const char* kNullFormat{"{:^5}"};
 
         if (msg.source.empty()) {
@@ -41,7 +41,7 @@ namespace jar {
 void
 LoggerInitializer::initialize()
 {
-    static constexpr const char* kFormat{"[%Y-%m-%d %H:%M:%S.%e] [%P:%t] %^[%L]%$ [%*] %v"};
+    static constexpr const char* kFormat{"[%Y-%m-%d %H:%M:%S.%e] [%P:%t] [%L] %-80!v [%*]"};
 
     auto formatter = std::make_unique<spdlog::pattern_formatter>();
     formatter->add_flag<ShotFilenameAndLine>('*').set_pattern(kFormat);
