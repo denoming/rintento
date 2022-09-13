@@ -5,6 +5,7 @@
 
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <spdlog/fmt/ostr.h>
 
 #include <fstream>
 
@@ -81,11 +82,13 @@ Config::load(fs::path filePath)
 {
     std::error_code error;
     if (!fs::exists(filePath, error)) {
+        LOGE("Config file <{}> doesn't exist", filePath);
         return false;
     }
 
     std::ifstream stream{filePath};
     if (!stream) {
+        LOGE("Failed to open file stream for <{}> config file", filePath);
         return false;
     }
 
@@ -100,23 +103,49 @@ Config::load(fs::path filePath)
         return false;
     }
 
-    if (auto port = tree.get_optional<int>("proxy.port"); port) {
-        _options->proxyServerPort = static_cast<std::uint16_t>(port.get());
+    if (auto portOpt = tree.get_optional<int>("proxy.port"); portOpt) {
+        if (*portOpt > 0) {
+            _options->proxyServerPort = static_cast<std::uint16_t>(*portOpt);
+        } else {
+            LOGW("Invalid proxy port option value: {}", *portOpt);
+        }
     }
-    if (auto threads = tree.get_optional<int>("proxy.threads"); threads) {
-        _options->proxyServerThreads = static_cast<std::size_t>(threads.get());
+    if (auto threadsOpt = tree.get_optional<int>("proxy.threads"); threadsOpt) {
+        if (*threadsOpt > 0) {
+            _options->proxyServerThreads = static_cast<std::size_t>(*threadsOpt);
+        } else {
+            LOGW("Invalid proxy threads count option value: {}", *threadsOpt);
+        }
     }
-    if (auto host = tree.get_optional<std::string>("recognize.host"); host) {
-        _options->recognizeServerHost = std::move(host.get());
+    if (auto hostOpt = tree.get_optional<std::string>("recognize.host"); hostOpt) {
+        if (hostOpt->empty()) {
+            LOGW("Invalid recognize host option value");
+        } else {
+            _options->recognizeServerHost = std::move(*hostOpt);
+        }
     }
-    if (auto port = tree.get_optional<int>("recognize.port"); port) {
-        _options->recognizeServerPort = static_cast<std::uint16_t>(port.get());
+    if (auto portOpt = tree.get_optional<int>("recognize.port"); portOpt) {
+        if (*portOpt > 0) {
+            _options->recognizeServerPort = static_cast<std::uint16_t>(*portOpt);
+        } else {
+            LOGW("Invalid recognize port option value: {}", *portOpt);
+        }
     }
-    if (auto auth = tree.get_optional<std::string>("recognize.auth"); auth) {
-        _options->recognizeServerAuth = std::move(auth.get());
+    if (auto authOpt = tree.get_optional<std::string>("recognize.auth"); authOpt) {
+        if (authOpt->empty()) {
+            LOGW("Invalid recognize auth option value");
+        } else {
+            _options->recognizeServerAuth = std::move(*authOpt);
+        }
+    } else {
+        LOGW("Mandatory recognize auth option value is absent");
     }
-    if (auto threads = tree.get_optional<int>("recognize.threads"); threads) {
-        _options->recognizeServerThreads = static_cast<std::size_t>(threads.get());
+    if (auto threadsOpt = tree.get_optional<int>("recognize.threads"); threadsOpt) {
+        if (*threadsOpt > 0) {
+            _options->recognizeServerThreads = static_cast<std::size_t>(*threadsOpt);
+        } else {
+            LOGW("Invalid recognize threads count option value: {}", *threadsOpt);
+        }
     }
 
     return true;
