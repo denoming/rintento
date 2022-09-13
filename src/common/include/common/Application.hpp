@@ -72,3 +72,16 @@ private:
 };
 
 } // namespace jar
+
+#define APP_MAIN(ServiceName)                                                                      \
+    int main(int argn, char* argv[])                                                               \
+    {                                                                                              \
+        try {                                                                                      \
+            ServiceName service;                                                                   \
+            service.parseArgs(argn, argv);                                                         \
+            service.run();                                                                         \
+        } catch (...) {                                                                            \
+            return EXIT_FAILURE;                                                                   \
+        }                                                                                          \
+        return EXIT_SUCCESS;                                                                       \
+    }

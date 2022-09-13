@@ -59,20 +59,4 @@ ExecutorService::proceed()
 
 } // namespace jar
 
-int
-main(int argn, char* argv[])
-{
-    try {
-        jar::LoggerInitializer::initialize();
-        jar::ExecutorService service;
-        service.parseArgs(argn, argv);
-        service.run();
-    } catch (std::exception& e) {
-        LOGE("Unhandled exception: {}", e.what());
-        return EXIT_FAILURE;
-    } catch (...) {
-        LOGE("Unknown exception");
-        return EXIT_FAILURE;
-    }
-    return EXIT_SUCCESS;
-}
+APP_MAIN(jar::ExecutorService)

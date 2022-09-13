@@ -1,6 +1,7 @@
 #include "common/Application.hpp"
 
 #include "common/Logger.hpp"
+#include "common/LoggerInitializer.hpp"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/signal_set.hpp>
@@ -41,6 +42,8 @@ Application::parseArgs(int argc, char* argv[])
 int
 Application::run()
 {
+    LoggerInitializer::initialize();
+
     if (_helpRequested) {
         return EXIT_SUCCESS;
     }
