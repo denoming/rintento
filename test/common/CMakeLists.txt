@@ -1,12 +1,7 @@
-set(TARGET jarvis-test-common)
+set(TARGET jarvis-executor-test-common)
 
 add_library(${TARGET} STATIC "")
 add_library(Jarvis::Test::Common ALIAS ${TARGET})
-
-set_target_properties(${TARGET}
-    PROPERTIES
-        OUTPUT_NAME jarvis-test-common
-)
 
 target_sources(${TARGET}
     PRIVATE src/TestMain.cpp

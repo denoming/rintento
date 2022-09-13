@@ -1,11 +1,6 @@
-set(TARGET jarvis-unit-test)
+set(TARGET jarvis-executor-unit-test)
 
 add_executable(${TARGET} "")
-
-set_target_properties(${TARGET}
-    PROPERTIES
-        OUTPUT_NAME jarvis-unit-test
-)
 
 target_sources(${TARGET}
     PRIVATE src/WitIntentParserTest.cpp
