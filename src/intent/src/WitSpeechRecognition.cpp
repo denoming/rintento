@@ -3,7 +3,6 @@
 #include "common/Logger.hpp"
 #include "common/Config.hpp"
 #include "intent/Constants.hpp"
-#include "intent/HttpUtils.hpp"
 #include "intent/Utils.hpp"
 #include "intent/WitIntentParser.hpp"
 

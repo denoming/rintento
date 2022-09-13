@@ -1,4 +1,4 @@
-#include "intent/HttpUtils.hpp"
+#include "intent/Http.hpp"
 
 #include "intent/Constants.hpp"
 

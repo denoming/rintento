@@ -13,3 +13,15 @@ namespace beast = boost::beast;
 namespace http = beast::http;
 
 using tcp = net::ip::tcp;
+
+namespace jar {
+
+bool
+setTlsHostName(beast::ssl_stream<beast::tcp_stream>& stream,
+               std::string_view hostname,
+               sys::error_code& error);
+
+void
+resetTimeout(beast::ssl_stream<beast::tcp_stream>& stream);
+
+} // namespace jar
