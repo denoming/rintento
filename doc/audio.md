@@ -1,12 +1,15 @@
-# Audio
 
-Target characteristics:
- * encoding=signed-integer;
- * bits=16;
- * rate=16000;
- * endian=little.
+# Input audio format
 
-## Record raw audio from input device
+Input audio characteristics:
+* encoding=signed-integer;
+* bits=16;
+* rate=16000;
+* endian=little.
+
+# How-To
+
+## How-To: Recording raw audio from input device
 
 Find input device name:
 ```shell
@@ -32,7 +35,7 @@ Source #3
     Description: Built-in Audio Analog Stereo
 ```
 
-Record audio file:
+Recording audio file:
 ```shell
 $ gst-launch-1.0 -e pulsesrc device=alsa_input.pci-0000_00_1f.3.analog-stereo \
 ! queue \

@@ -1,6 +1,9 @@
-# Wit.AI API
+# Speech recognition services
 
-## Message recognition request
+
+## Wit.AI
+
+### Message recognition request
 
 ```text
 curl --http1.1 'https://api.wit.ai/message?v=20220618&q=turn%20off%20the%20light' \
@@ -8,7 +11,7 @@ curl --http1.1 'https://api.wit.ai/message?v=20220618&q=turn%20off%20the%20light
 -H "Authorization: Bearer $TOKEN"
 ```
 
-## Speech recognition request
+### Speech recognition request
 
 ```text
 curl --http1.1 'https://api.wit.ai/speech?v=20220618' \
@@ -19,14 +22,6 @@ curl --http1.1 'https://api.wit.ai/speech?v=20220618' \
 --data-binary "@turn-on-the-light.raw"
 ```
 
-## Options
-
+Useful options:
 * Specify local proxy: `--proxy http://localhost:8080`
 * Enable full traceability: `--trace`
-
-# J.A.R.V.I.S API
-
-```text
-curl -v "http://localhost:8080/message?q=turn+off+the+light" \
--H "Accept: application/json"
-```
