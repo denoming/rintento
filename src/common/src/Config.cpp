@@ -5,7 +5,7 @@
 
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
-#include <spdlog/fmt/ostr.h>
+#include <fmt/std.h>
 
 #include <fstream>
 
