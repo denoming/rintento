@@ -1,7 +1,7 @@
 #include "common/Config.hpp"
 
 #include "common/Constants.hpp"
-#include "common/Logger.hpp"
+#include "jarvis/Logger.hpp"
 
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>

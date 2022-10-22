@@ -1,7 +1,7 @@
 #include "intent/WitMessageRecognition.hpp"
 
 #include "common/Config.hpp"
-#include "common/Logger.hpp"
+#include "jarvis/Logger.hpp"
 #include "intent/Constants.hpp"
 #include "intent/Utils.hpp"
 #include "intent/WitIntentParser.hpp"

@@ -1,6 +1,6 @@
 #include "intent/RecognitionMessageHandler.hpp"
 
-#include "common/Logger.hpp"
+#include "jarvis/Logger.hpp"
 #include "intent/RecognitionConnection.hpp"
 #include "intent/Utils.hpp"
 #include "intent/WitMessageRecognition.hpp"

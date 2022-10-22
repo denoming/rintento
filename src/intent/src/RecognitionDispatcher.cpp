@@ -1,6 +1,5 @@
 #include "intent/RecognitionDispatcher.hpp"
 
-#include "common/Logger.hpp"
 #include "intent/IntentPerformer.hpp"
 #include "intent/RecognitionConnection.hpp"
 #include "intent/RecognitionMessageHandler.hpp"
@@ -8,6 +7,7 @@
 #include "intent/RecognitionTerminalHandler.hpp"
 #include "intent/Utils.hpp"
 #include "intent/WitRecognitionFactory.hpp"
+#include "jarvis/Logger.hpp"
 
 namespace jar {
 

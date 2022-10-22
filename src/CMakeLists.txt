@@ -11,18 +11,20 @@ set_target_properties(${TARGET}
 )
 
 target_sources(${TARGET}
-    PRIVATE ExecutorService.cpp
+    PRIVATE ExecutorApplication.cpp
 )
 
 target_link_libraries(${TARGET}
-    PRIVATE Jarvis::Common Jarvis::Intent
+    PRIVATE Jarvis::Common
+            Jarvis::Executor::Common
+            Jarvis::Executor::Intent
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_20)
 
 install(
     TARGETS ${TARGET}
-    COMPONENT JarvisExecutor_Runtime
+    COMPONENT JarvisExecutorRuntime
 )
 
 add_subdirectory(common)

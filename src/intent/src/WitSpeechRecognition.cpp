@@ -1,10 +1,10 @@
 #include "intent/WitSpeechRecognition.hpp"
 
-#include "common/Logger.hpp"
 #include "common/Config.hpp"
 #include "intent/Constants.hpp"
 #include "intent/Utils.hpp"
 #include "intent/WitIntentParser.hpp"
+#include "jarvis/Logger.hpp"
 
 #include <fstream>
 

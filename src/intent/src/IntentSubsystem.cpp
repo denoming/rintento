@@ -1,12 +1,12 @@
 #include "intent/IntentSubsystem.hpp"
 
-#include "common/Application.hpp"
 #include "common/Config.hpp"
-#include "common/Logger.hpp"
 #include "intent/Constants.hpp"
 #include "intent/IntentPerformer.hpp"
 #include "intent/RecognitionServer.hpp"
 #include "intent/WitRecognitionFactory.hpp"
+#include "jarvis/Application.hpp"
+#include "jarvis/Logger.hpp"
 
 namespace jar {
 

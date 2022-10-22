@@ -1,8 +1,8 @@
-#include "ExecutorService.hpp"
+#include "ExecutorApplication.hpp"
 
 #include "common/Config.hpp"
-#include "common/Logger.hpp"
-#include "common/LoggerInitializer.hpp"
+#include "jarvis/Logger.hpp"
+#include "jarvis/LoggerInitializer.hpp"
 
 #include "intent/IntentSubsystem.hpp"
 
@@ -11,13 +11,13 @@
 namespace jar {
 
 const char*
-ExecutorService::name() const
+ExecutorApplication::name() const
 {
-    return "ExecutorService";
+    return "Executor";
 }
 
 void
-ExecutorService::defineOptions(po::options_description& description)
+ExecutorApplication::defineOptions(po::options_description& description)
 {
     Application::defineOptions(description);
     // clang-format off
@@ -28,7 +28,7 @@ ExecutorService::defineOptions(po::options_description& description)
 }
 
 void
-ExecutorService::initialize(Application& application)
+ExecutorApplication::initialize(Application& application)
 {
     std::optional<std::string> configFile;
     if (application.options().contains("config-file")) {
@@ -50,7 +50,7 @@ ExecutorService::initialize(Application& application)
 }
 
 void
-ExecutorService::proceed()
+ExecutorApplication::proceed()
 {
     if (!waitForTermination()) {
         LOGE("Waiting for termination has failed");
@@ -59,4 +59,4 @@ ExecutorService::proceed()
 
 } // namespace jar
 
-APP_MAIN(jar::ExecutorService)
+APP_MAIN(jar::ExecutorApplication)

@@ -1,7 +1,7 @@
 set(TARGET jarvis-executor-test-common)
 
 add_library(${TARGET} STATIC "")
-add_library(Jarvis::Test::Common ALIAS ${TARGET})
+add_library(Jarvis::Executor::Test ALIAS ${TARGET})
 
 target_sources(${TARGET}
     PRIVATE src/TestMain.cpp
@@ -16,7 +16,8 @@ target_include_directories(${TARGET}
 
 target_link_libraries(${TARGET}
     PUBLIC GTest::gtest GTest::gmock
-    PUBLIC Jarvis::Common Jarvis::Intent
+    PUBLIC Jarvis::Executor::Common
+           Jarvis::Executor::Intent
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_20)

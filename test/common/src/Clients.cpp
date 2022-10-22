@@ -1,6 +1,6 @@
 #include "test/Clients.hpp"
 
-#include "common/Logger.hpp"
+#include "jarvis/Logger.hpp"
 #include "intent/Constants.hpp"
 #include "intent/Utils.hpp"
 

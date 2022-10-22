@@ -1,6 +1,6 @@
 #include "intent/RecognitionServer.hpp"
 
-#include "common/Logger.hpp"
+#include "jarvis/Logger.hpp"
 #include "intent/RecognitionConnection.hpp"
 #include "intent/RecognitionDispatcher.hpp"
 #include "intent/WitRecognitionFactory.hpp"

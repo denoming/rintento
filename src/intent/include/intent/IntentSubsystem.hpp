@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common/Subsystem.hpp"
+#include "jarvis/Subsystem.hpp"
 #include "common/Worker.hpp"
 
 namespace jar {

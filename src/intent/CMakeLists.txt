@@ -1,16 +1,18 @@
-set(TARGET jarvis-intent)
+set(TARGET jarvis-executor-intent)
 
 add_library(${TARGET} STATIC)
-add_library(Jarvis::Intent ALIAS ${TARGET})
+add_library(Jarvis::Executor::Intent ALIAS ${TARGET})
 
 target_include_directories(${TARGET}
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
 )
 
 target_link_libraries(${TARGET}
-    PUBLIC Jarvis::Common
+    PUBLIC Jarvis::Common Jarvis::Executor::Common
     PUBLIC Boost::headers Boost::json
-    PRIVATE OpenSSL::SSL OpenSSL::Crypto Boost::url
+    PRIVATE OpenSSL::SSL
+            OpenSSL::Crypto
+            Boost::url
 )
 
 target_sources(${TARGET}

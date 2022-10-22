@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common/Application.hpp"
+#include "jarvis/Application.hpp"
 
 #include <memory>
 
@@ -8,9 +8,9 @@ namespace jar {
 
 class Config;
 
-class ExecutorService : public Application {
+class ExecutorApplication : public Application {
 public:
-    ExecutorService() = default;
+    ExecutorApplication() = default;
 
     const char*
     name() const override;

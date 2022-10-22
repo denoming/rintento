@@ -24,5 +24,6 @@ include(AddBoost)
 include(AddOpenSsl)
 include(AddSpdLog)
 include(AddBoostUrl)
+include(AddJarvis)
 
 include(EnableCcache)

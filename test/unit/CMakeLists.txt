@@ -11,7 +11,8 @@ target_sources(${TARGET}
 )
 
 target_link_libraries(${TARGET}
-    PRIVATE Jarvis::Intent Jarvis::Test::Common
+    PRIVATE Jarvis::Executor::Intent
+            Jarvis::Executor::Test
 )
 
 target_compile_definitions(${TARGET}
