@@ -16,9 +16,10 @@ Recognition::ready() const
 void
 Recognition::wait()
 {
-    assert(!_ready);
     std::unique_lock lock{_readyGuard};
-    _whenReady.wait(lock, [this]() { return _ready.load(); });
+    if (!_ready) {
+        _whenReady.wait(lock, [this]() { return _ready.load(); });
+    }
 }
 
 void
