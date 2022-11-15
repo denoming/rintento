@@ -2,7 +2,7 @@
 
 set -e
 
-DOCKER_IMAGE_NAME=my/jarvis-dev-image:user
+DOCKER_IMAGE_NAME=my/jarvis-dev-image:executor
 
 PROJECT_DIR=$(dirname "$(dirname "$(realpath -s $0)")")
 USER_NAME=${USER}
@@ -21,7 +21,6 @@ build_image() {
   --build-arg UNAME=${USER_NAME} \
   --build-arg UID=${USER_UID} \
   --build-arg UID=${USER_GID} \
-  --build-arg PULSE_SERVER="unix:${XDG_RUNTIME_DIR}/pulse/native" \
   --file ${PROJECT_DIR}/Dockerfile ${PROJECT_DIR}
   "
 
@@ -36,13 +35,11 @@ run_image() {
   RUN_CMD=(docker run -it \
   --hostname "${USER_NAME}" \
   --rm \
-  --user="${USER_UID}:${USER_GID}"
+  --user="${USER_UID}:${USER_GID}" \
   --volume="${PROJECT_DIR}:${PROJECT_DIR}:rw" \
-  --volume="${XDG_RUNTIME_DIR}/pulse:${XDG_RUNTIME_DIR}/pulse" \
   --network=bridge \
   --workdir="${PROJECT_DIR}" \
-  --env PULSE_SERVER="unix:${XDG_RUNTIME_DIR}/pulse/native" \
-  "${DOCKER_IMAGE_NAME}" /bin/bash)
+  "${DOCKER_IMAGE_NAME}")
 
   if [ -n "$(docker images -q ${DOCKER_IMAGE_NAME})" ]; then
     "${RUN_CMD[@]}"
