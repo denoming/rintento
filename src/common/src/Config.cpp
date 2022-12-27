@@ -1,6 +1,7 @@
 #include "common/Config.hpp"
 
 #include "common/Constants.hpp"
+#include "common/Utils.hpp"
 #include "jarvis/Logger.hpp"
 
 #include <boost/property_tree/json_parser.hpp>
@@ -75,6 +76,18 @@ std::size_t
 Config::recognizeThreads() const
 {
     return _options->recognizeServerThreads;
+}
+
+bool
+Config::load()
+{
+    bool rv{false};
+    if (const auto filePathOpt = getEnvVar("JARVIS_EXECUTOR_CONFIG"); filePathOpt) {
+        rv = load(*filePathOpt);
+    } else {
+        LOGE("Set config file by JARVIS_EXECUTOR_CONFIG environment variable");
+    }
+    return rv;
 }
 
 bool

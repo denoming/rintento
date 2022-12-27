@@ -17,8 +17,6 @@ using namespace jar;
 
 namespace fs = std::filesystem;
 
-static const fs::path kConfigFilePath{fs::current_path() / "asset" / "config" / "config.json"};
-
 class WitSpeechRecognitionTest : public Test {
 public:
     const fs::path AssetAudioPath{fs::current_path() / "asset" / "audio"};
@@ -34,8 +32,7 @@ public:
     {
         if (!config) {
             config = std::make_shared<Config>();
-            ASSERT_TRUE(fs::exists(kConfigFilePath));
-            ASSERT_TRUE(config->load(kConfigFilePath));
+            ASSERT_TRUE(config->load());
         }
     }
 

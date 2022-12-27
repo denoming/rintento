@@ -16,6 +16,9 @@ public:
     ~Config() final;
 
     [[nodiscard]] bool
+    load();
+
+    [[nodiscard]] bool
     load(fs::path filePath);
 
     [[nodiscard]] std::uint16_t

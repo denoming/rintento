@@ -15,6 +15,7 @@ target_link_libraries(${TARGET}
 target_sources(${TARGET}
     PRIVATE src/Worker.cpp
             src/Config.cpp
+            src/Utils.cpp
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_20)

@@ -16,8 +16,6 @@ namespace fs = std::filesystem;
 using namespace testing;
 using namespace jar;
 
-static const fs::path kConfigFilePath{fs::current_path() / "asset" / "config" / "config.json"};
-
 class WitMessageRecognitionTest : public Test {
 public:
     WitMessageRecognitionTest()
@@ -31,8 +29,7 @@ public:
     {
         if (!config) {
             config = std::make_shared<Config>();
-            ASSERT_TRUE(fs::exists(kConfigFilePath));
-            ASSERT_TRUE(config->load(kConfigFilePath));
+            ASSERT_TRUE(config->load());
         }
     }
 
