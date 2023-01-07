@@ -8,8 +8,10 @@ target_include_directories(${TARGET}
 )
 
 target_link_libraries(${TARGET}
-    PUBLIC Jarvis::Common Jarvis::Executor::Common
-    PUBLIC Boost::headers Boost::json
+    PUBLIC Jarvis::Common
+           Jarvis::Executor::Common
+    PUBLIC Boost::headers
+           Boost::json
     PRIVATE OpenSSL::SSL
             OpenSSL::Crypto
             Boost::url

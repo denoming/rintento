@@ -14,7 +14,7 @@ class WitRecognitionFactory;
 
 class RecognitionDispatcher : public std::enable_shared_from_this<RecognitionDispatcher> {
 public:
-    using onDoneSignature = void(std::uint16_t identity);
+    using OnDone = void(std::uint16_t identity);
 
     [[nodiscard]] static std::shared_ptr<RecognitionDispatcher>
     create(uint16_t identity,
@@ -64,7 +64,7 @@ private:
     std::shared_ptr<IntentPerformer> _performer;
     std::shared_ptr<WitRecognitionFactory> _factory;
     std::shared_ptr<RecognitionHandler> _handler;
-    std::function<onDoneSignature> _doneCallback;
+    std::function<OnDone> _doneCallback;
 };
 
 } // namespace jar

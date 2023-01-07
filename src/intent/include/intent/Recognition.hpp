@@ -13,7 +13,7 @@ namespace jar {
 
 class Recognition {
 public:
-    using OnReadySignature = void(Utterances result, sys::error_code error);
+    using OnReady = void(Utterances result, sys::error_code error);
 
     Recognition();
 
@@ -44,7 +44,7 @@ protected:
     setError(sys::error_code value);
 
 private:
-    std::function<OnReadySignature> _readyCallback;
+    std::function<OnReady> _readyCallback;
     std::atomic<bool> _ready;
     std::mutex _readyGuard;
     std::condition_variable _whenReady;

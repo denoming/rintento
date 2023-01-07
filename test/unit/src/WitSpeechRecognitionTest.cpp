@@ -63,7 +63,7 @@ TEST_F(WitSpeechRecognitionTest, RecognizeSpeech1)
 {
     const std::string_view Message{"turn off the light"};
 
-    MockFunction<Recognition::OnReadySignature> callback;
+    MockFunction<Recognition::OnReady> callback;
     EXPECT_CALL(callback,
                 Call(Contains(isUtterance("turn off the light",
                                           Contains(isConfidentIntent("light_off", 0.9f)))),
@@ -99,7 +99,7 @@ TEST_F(WitSpeechRecognitionTest, RecognizeSpeech1)
 
 TEST_F(WitSpeechRecognitionTest, RecognizeSpeech2)
 {
-    MockFunction<Recognition::OnReadySignature> callback;
+    MockFunction<Recognition::OnReady> callback;
     EXPECT_CALL(callback,
                 Call(Contains(isUtterance("turn on the light",
                                           Contains(isConfidentIntent("light_on", 0.9f)))),
@@ -135,7 +135,7 @@ TEST_F(WitSpeechRecognitionTest, RecognizeSpeech2)
 
 TEST_F(WitSpeechRecognitionTest, CancelRecognizeSpeech)
 {
-    MockFunction<Recognition::OnReadySignature> callback;
+    MockFunction<Recognition::OnReady> callback;
     EXPECT_CALL(callback, Call(IsEmpty(), IsTrue()));
     recognition->onReady(callback.AsStdFunction());
     recognition->run();

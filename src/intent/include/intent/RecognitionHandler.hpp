@@ -13,9 +13,10 @@ class RecognitionConnection;
 
 class RecognitionHandler {
 public:
+    using OnDone = void(Utterances result, sys::error_code error);
+
     using Buffer = beast::flat_buffer;
     using Parser = http::request_parser<http::empty_body>;
-    using OnDoneSignature = void(Utterances result, sys::error_code error);
 
     RecognitionHandler(std::shared_ptr<RecognitionConnection> connection);
 
@@ -56,7 +57,7 @@ protected:
 private:
     std::shared_ptr<RecognitionHandler> _next;
     std::shared_ptr<RecognitionConnection> _connection;
-    std::function<OnDoneSignature> _doneCallback;
+    std::function<OnDone> _doneCallback;
 };
 
 } // namespace jar

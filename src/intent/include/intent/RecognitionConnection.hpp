@@ -10,11 +10,11 @@ namespace jar {
 class RecognitionConnection : public std::enable_shared_from_this<RecognitionConnection> {
 public:
     template<typename Body>
-    using ReadingCallback = std::function<void(http::request<Body> request, sys::error_code error)>;
+    using OnReady = std::function<void(http::request<Body> request, sys::error_code error)>;
     template<typename Body>
-    using ReadingHeaderCallback = std::function<void(beast::flat_buffer& buffer,
-                                                     http::request_parser<Body>& requestParser,
-                                                     sys::error_code error)>;
+    using OnReadyHeader = std::function<void(beast::flat_buffer& buffer,
+                                             http::request_parser<Body>& requestParser,
+                                             sys::error_code error)>;
 
     using WritingCallback = std::function<void(sys::error_code)>;
     using WritingHeaderCallback = std::function<void(sys::error_code)>;
@@ -66,7 +66,7 @@ public:
 
     template<typename Body>
     void
-    read(ReadingCallback<Body> callback)
+    read(OnReady<Body> callback)
     {
         using Action = TypedReadingAction<Body>;
         net::dispatch(executor(), [self = shared_from_this(), c = std::move(callback)]() {
@@ -76,7 +76,7 @@ public:
 
     template<typename Body>
     void
-    readHeader(ReadingHeaderCallback<Body> callback)
+    readHeader(OnReadyHeader<Body> callback)
     {
         using Action = TypedReadingHeaderAction<Body>;
         net::dispatch(executor(), [self = shared_from_this(), c = std::move(callback)]() {
@@ -132,7 +132,7 @@ private:
     template<typename Body>
     class TypedReadingAction final : public Action {
     public:
-        TypedReadingAction(RecognitionConnection& connection, ReadingCallback<Body> callback)
+        TypedReadingAction(RecognitionConnection& connection, OnReady<Body> callback)
             : _connection{connection}
             , _callback{std::move(callback)}
         {
@@ -153,7 +153,7 @@ private:
 
     private:
         RecognitionConnection& _connection;
-        ReadingCallback<Body> _callback;
+        OnReady<Body> _callback;
         beast::flat_buffer _buffer;
         http::request<Body> _request;
     };
@@ -195,8 +195,7 @@ private:
     template<typename Body>
     class TypedReadingHeaderAction : public Action {
     public:
-        TypedReadingHeaderAction(RecognitionConnection& connection,
-                                 ReadingHeaderCallback<Body> callback)
+        TypedReadingHeaderAction(RecognitionConnection& connection, OnReadyHeader<Body> callback)
             : _connection{connection}
             , _callback{std::move(callback)}
         {
@@ -217,7 +216,7 @@ private:
 
     private:
         RecognitionConnection& _connection;
-        ReadingHeaderCallback<Body> _callback;
+        OnReadyHeader<Body> _callback;
         beast::flat_buffer _buffer;
         http::request_parser<Body> _parser;
     };
