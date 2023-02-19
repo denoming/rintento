@@ -21,8 +21,3 @@ target_link_libraries(${TARGET}
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_20)
-
-target_compile_definitions(${TARGET}
-    PRIVATE BOOST_BEAST_USE_STD_STRING_VIEW
-    PRIVATE BOOST_ASIO_NO_TS_EXECUTORS
-)

@@ -6,16 +6,6 @@
 
 namespace jar {
 
-namespace pct {
-
-[[nodiscard]] std::string
-encode(std::string_view input);
-
-[[nodiscard]] std::string
-decode(std::string_view input);
-
-} // namespace pct
-
 namespace format {
 
 [[nodiscard]] std::string

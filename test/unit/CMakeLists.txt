@@ -15,11 +15,6 @@ target_link_libraries(${TARGET}
             Jarvis::Executor::Test
 )
 
-target_compile_definitions(${TARGET}
-    PRIVATE BOOST_BEAST_USE_STD_STRING_VIEW
-    PRIVATE BOOST_ASIO_NO_TS_EXECUTORS
-)
-
 if (NOT CMAKE_CROSSCOMPILING)
     gtest_discover_tests(${TARGET} WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 endif()
