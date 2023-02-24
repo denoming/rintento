@@ -1,6 +1,1 @@
-if(Boost_DEBUG)
-    message(STATUS "Boost debug mode is active")
-    find_package(Boost 1.81.0 REQUIRED COMPONENTS ALL)
-else()
-    find_package(Boost 1.81.0 REQUIRED COMPONENTS program_options json system url)
-endif()
+find_package(Boost 1.81.0 REQUIRED COMPONENTS ALL)
