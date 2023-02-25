@@ -2,9 +2,9 @@
 #include <gtest/gtest.h>
 
 #include "common/Config.hpp"
-#include "common/Worker.hpp"
 #include "intent/WitMessageRecognition.hpp"
 #include "intent/WitRecognitionFactory.hpp"
+#include "jarvis/Worker.hpp"
 #include "test/Matchers.hpp"
 #include "test/TestWaiter.hpp"
 

@@ -1,8 +1,8 @@
 #include "test/Clients.hpp"
 
-#include "jarvis/Logger.hpp"
 #include "intent/Constants.hpp"
 #include "intent/Utils.hpp"
+#include "jarvis/Logger.hpp"
 
 #include <boost/json.hpp>
 
@@ -42,11 +42,11 @@ getResult(const std::string& input)
 
 template<typename EndpointSequence>
 static Result
-recognizeMessage(io::io_context& context,
+recognizeMessage(io::any_io_executor executor,
                  const EndpointSequence& endpoints,
                  std::string_view message)
 {
-    beast::tcp_stream stream{context};
+    beast::tcp_stream stream{executor};
     LOGD("Client: Connect to the given host");
     stream.connect(endpoints);
 
@@ -71,9 +71,11 @@ recognizeMessage(io::io_context& context,
 
 template<typename EndpointSequence>
 Result
-recognizeSpeech(io::io_context& context, const EndpointSequence& endpoints, fs::path speechFile)
+recognizeSpeech(io::any_io_executor executor,
+                const EndpointSequence& endpoints,
+                fs::path speechFile)
 {
-    beast::tcp_stream stream{context};
+    beast::tcp_stream stream{executor};
     LOGD("Client: Connect to the given host");
     stream.connect(endpoints);
 
@@ -136,47 +138,47 @@ recognizeSpeech(io::io_context& context, const EndpointSequence& endpoints, fs::
 }
 
 Result
-recognizeMessage(io::io_context& context, std::uint16_t port, std::string_view message)
+recognizeMessage(io::any_io_executor executor, std::uint16_t port, std::string_view message)
 {
     tcp::endpoint endpoint{io::ip::make_address_v4("127.0.0.1"), port};
-    return recognizeMessage(context, std::vector{endpoint}, message);
+    return recognizeMessage(executor, std::vector{endpoint}, message);
 }
 
 Result
-recognizeMessage(io::io_context& context,
+recognizeMessage(io::any_io_executor executor,
                  std::string_view host,
                  std::string_view port,
                  std::string_view message)
 {
-    tcp::resolver resolver{context};
+    tcp::resolver resolver{executor};
     auto const results = resolver.resolve(host, port);
     if (results.empty()) {
         LOGE("Client: Failed to resolve given host");
         return {};
     }
-    return recognizeMessage(context, results, message);
+    return recognizeMessage(executor, results, message);
 }
 
 Result
-recognizeSpeech(io::io_context& context, std::uint16_t port, fs::path speechFile)
+recognizeSpeech(io::any_io_executor executor, std::uint16_t port, fs::path speechFile)
 {
     tcp::endpoint endpoint{io::ip::make_address_v4("127.0.0.1"), port};
-    return recognizeSpeech(context, std::vector{endpoint}, speechFile);
+    return recognizeSpeech(executor, std::vector{endpoint}, speechFile);
 }
 
 Result
-recognizeSpeech(io::io_context& context,
+recognizeSpeech(io::any_io_executor executor,
                 std::string_view host,
                 std::string_view port,
                 fs::path speechFile)
 {
-    tcp::resolver resolver{context};
+    tcp::resolver resolver{executor};
     auto const results = resolver.resolve(host, port);
     if (results.empty()) {
         LOGE("Client: Failed to resolve given host");
         return {};
     }
-    return recognizeSpeech(context, results, speechFile);
+    return recognizeSpeech(executor, results, speechFile);
 }
 
 } // namespace jar::clients

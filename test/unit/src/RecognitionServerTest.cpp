@@ -2,10 +2,10 @@
 #include <gtest/gtest.h>
 
 #include "common/Config.hpp"
-#include "common/Worker.hpp"
 #include "intent/IntentPerformer.hpp"
 #include "intent/RecognitionServer.hpp"
 #include "intent/WitRecognitionFactory.hpp"
+#include "jarvis/Worker.hpp"
 #include "test/Clients.hpp"
 
 using namespace testing;
@@ -35,11 +35,17 @@ public:
     SetUp() override
     {
         worker.start();
+
+        ASSERT_TRUE(server);
+        server->listen();
     }
 
     void
     TearDown() override
     {
+        ASSERT_TRUE(server);
+        server->shutdown();
+
         worker.stop();
     }
 
@@ -56,22 +62,16 @@ std::shared_ptr<Config> RecognitionServerTest::config;
 
 TEST_F(RecognitionServerTest, RecognizeMessage)
 {
-    server->listen();
-
     static const std::string_view Message{"turn off the light"};
-    EXPECT_THAT(clients::recognizeMessage(worker.context(), kDefaultProxyServerPort, Message),
-                FieldsAre(IsTrue(), IsEmpty()));
 
-    server->shutdown();
+    auto result = clients::recognizeMessage(worker.executor(), kDefaultProxyServerPort, Message);
+    EXPECT_THAT(result, FieldsAre(IsTrue(), IsEmpty()));
 }
 
 TEST_F(RecognitionServerTest, RecognizeSpeech)
 {
-    server->listen();
-
     static const fs::path filePath{AssetAudioPath / "turn-off-the-light.raw"};
-    EXPECT_THAT(clients::recognizeSpeech(worker.context(), kDefaultProxyServerPort, filePath),
-                FieldsAre(IsTrue(), IsEmpty()));
 
-    server->shutdown();
+    auto result = clients::recognizeSpeech(worker.executor(), kDefaultProxyServerPort, filePath);
+    EXPECT_THAT(result, FieldsAre(IsTrue(), IsEmpty()));
 }

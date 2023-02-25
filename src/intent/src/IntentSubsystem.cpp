@@ -12,6 +12,8 @@ namespace jar {
 
 IntentSubsystem::IntentSubsystem(std::shared_ptr<Config> config)
     : _config{config}
+    , _proxyWorker{config.get()->proxyServerThreads()}
+    , _recognizeWorker{config->recognizeThreads()}
 {
 }
 
@@ -36,8 +38,8 @@ IntentSubsystem::setUp(Application& application)
 {
     Subsystem::setUp(application);
 
-    _proxyWorker.start(_config->proxyServerThreads());
-    _recognizeWorker.start(_config->recognizeThreads());
+    _proxyWorker.start();
+    _recognizeWorker.start();
 
     const auto port = _config->proxyServerPort();
     assert(_server);
