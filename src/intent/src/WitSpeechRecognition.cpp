@@ -66,16 +66,16 @@ WitSpeechRecognition::run(std::string_view host, std::uint16_t port, std::string
         return;
     }
 
-    _request.version(kHttpVersion11);
-    _request.target(format::speechTargetWithDate());
-    _request.method(http::verb::post);
-    _request.set(http::field::host, host);
-    _request.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-    _request.set(http::field::authorization, auth);
-    _request.set(http::field::content_type,
-                 "audio/raw; encoding=signed-integer; bits=16; rate=16000; endian=little");
-    _request.set(http::field::transfer_encoding, "chunked");
-    _request.set(http::field::expect, "100-continue");
+    _req.version(kHttpVersion11);
+    _req.target(format::speechTargetWithDate());
+    _req.method(http::verb::post);
+    _req.set(http::field::host, host);
+    _req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+    _req.set(http::field::authorization, auth);
+    _req.set(http::field::content_type,
+             "audio/raw; encoding=signed-integer; bits=16; rate=16000; endian=little");
+    _req.set(http::field::transfer_encoding, "chunked");
+    _req.set(http::field::expect, "100-continue");
 
     resolve(host, port);
 }
@@ -144,6 +144,8 @@ WitSpeechRecognition::onResolveDone(sys::error_code error,
 void
 WitSpeechRecognition::connect(const tcp::resolver::results_type& addresses)
 {
+    LOGD("Connect to host endpoints");
+
     net::resetTimeout(_stream);
 
     beast::get_lowest_layer(_stream).async_connect(
@@ -211,7 +213,7 @@ WitSpeechRecognition::readContinue()
     net::resetTimeout(_stream);
 
     sys::error_code error;
-    http::request_serializer<http::empty_body, http::fields> hs{_request};
+    http::request_serializer<http::empty_body, http::fields> hs{_req};
     const auto bytesTransferred = http::write_header(_stream, hs, error);
     if (error) {
         LOGE("Failed to write request header: <{}>", error.what());
@@ -219,8 +221,8 @@ WitSpeechRecognition::readContinue()
     } else {
         LOGD("Writing of request header was successful: <{}> bytes", bytesTransferred);
         http::async_read(_stream,
-                         _buffer,
-                         _response,
+                         _buf,
+                         _res,
                          io::bind_cancellation_slot(
                              onCancel(),
                              beast::bind_front_handler(&WitSpeechRecognition::onReadContinueDone,
@@ -238,7 +240,7 @@ WitSpeechRecognition::onReadContinueDone(sys::error_code error, std::size_t byte
         return;
     }
 
-    if (_response.result() != http::status::continue_) {
+    if (_res.result() != http::status::continue_) {
         LOGE("Continue reading is not available");
         beast::get_lowest_layer(_stream).close();
         setError(std::make_error_code(std::errc::illegal_byte_sequence));
@@ -280,12 +282,10 @@ WitSpeechRecognition::onWriteNextChunkDone(sys::error_code error, std::size_t by
     if (cancelled()) {
         LOGD("Operation was interrupted");
         setError(sys::errc::make_error_code(sys::errc::operation_canceled));
-        return;
+    } else {
+        LOGD("Writing of next chunk was successful: {} bytes", bytesTransferred);
+        starving(true);
     }
-
-    LOGD("Writing of next chunk was successful: {} bytes", bytesTransferred);
-
-    starving(true);
 }
 
 void
@@ -314,12 +314,10 @@ WitSpeechRecognition::onWriteLastChunkDone(sys::error_code error, std::size_t by
     if (cancelled()) {
         LOGD("Operation was interrupted");
         setError(sys::errc::make_error_code(sys::errc::operation_canceled));
-        return;
+    } else {
+        LOGD("Writing of last chunk was successful: {} bytes", bytesTransferred);
+        read();
     }
-
-    LOGD("Writing of last chunk was successful: {} bytes", bytesTransferred);
-
-    read();
 }
 
 void
@@ -329,8 +327,8 @@ WitSpeechRecognition::read()
 
     http::async_read(
         _stream,
-        _buffer,
-        _response,
+        _buf,
+        _res,
         io::bind_cancellation_slot(
             onCancel(),
             beast::bind_front_handler(&WitSpeechRecognition::onReadDone, shared_from_this())));
@@ -346,20 +344,22 @@ WitSpeechRecognition::onReadDone(sys::error_code error, std::size_t bytesTransfe
         return;
     }
 
+    LOGD("Reading was successful: <{}> bytes", bytesTransferred);
+    submit(_res.body());
+
     if (cancelled()) {
         LOGD("Operation was interrupted");
         setError(sys::errc::make_error_code(sys::errc::operation_canceled));
-        return;
+    } else {
+        shutdown();
     }
-
-    LOGD("Reading was successful: <{}> bytes", bytesTransferred);
-
-    shutdown();
 }
 
 void
 WitSpeechRecognition::shutdown()
 {
+    LOGD("Shutdown connection with host");
+
     net::resetTimeout(_stream);
 
     _stream.async_shutdown(io::bind_cancellation_slot(
@@ -374,15 +374,20 @@ WitSpeechRecognition::onShutdownDone(sys::error_code error)
         error = {};
     }
 
+    if (error == ssl::error::stream_truncated) {
+        LOGD("Stream was truncated");
+        error = {};
+    }
+
     if (error) {
         LOGE("Failed to shutdown connection: <{}>", error.what());
     } else {
         LOGD("Shutdown of connection was successful");
     }
 
-    submit(_response.body());
-
-    beast::get_lowest_layer(_stream).close();
+    _req.clear();
+    _res.clear();
+    _buf.clear();
 }
 
 } // namespace jar

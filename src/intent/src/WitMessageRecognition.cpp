@@ -1,10 +1,10 @@
 #include "intent/WitMessageRecognition.hpp"
 
 #include "common/Config.hpp"
-#include "jarvis/Logger.hpp"
 #include "intent/Constants.hpp"
 #include "intent/Utils.hpp"
 #include "intent/WitIntentParser.hpp"
+#include "jarvis/Logger.hpp"
 
 namespace jar {
 
@@ -64,12 +64,12 @@ WitMessageRecognition::run(std::string_view host, std::uint16_t port, std::strin
         return;
     }
 
-    _request.version(kHttpVersion11);
-    _request.method(http::verb::get);
-    _request.set(http::field::host, host);
-    _request.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-    _request.set(http::field::authorization, auth);
-    _request.set(http::field::content_type, "application/json");
+    _req.version(kHttpVersion11);
+    _req.method(http::verb::get);
+    _req.set(http::field::host, host);
+    _req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+    _req.set(http::field::authorization, auth);
+    _req.set(http::field::content_type, "application/json");
 
     resolve(host, port);
 }
@@ -82,7 +82,7 @@ WitMessageRecognition::feed(std::string_view message)
     }
 
     assert(!message.empty());
-    _request.target(format::messageTargetWithDate(message));
+    _req.target(format::messageTargetWithDate(message));
 
     _stream.get_executor().execute([this]() {
         starving(false);
@@ -132,7 +132,7 @@ WitMessageRecognition::onResolveDone(sys::error_code error,
 void
 WitMessageRecognition::connect(const tcp::resolver::results_type& addresses)
 {
-    LOGD("Connect to host addresses");
+    LOGD("Connect to host endpoints");
 
     net::resetTimeout(_stream);
 
@@ -156,12 +156,10 @@ WitMessageRecognition::onConnectDone(sys::error_code error,
     if (cancelled()) {
         LOGD("Operation was interrupted");
         setError(sys::errc::make_error_code(sys::errc::operation_canceled));
-        return;
+    } else {
+        LOGD("Connecting to host <{}> address was done", endpoint.address().to_string());
+        handshake();
     }
-
-    LOGD("Connecting to host <{}> address was done", endpoint.address().to_string());
-
-    handshake();
 }
 
 void
@@ -183,7 +181,6 @@ WitMessageRecognition::onHandshakeDone(sys::error_code error)
 {
     if (error) {
         LOGE("Failed to handshake: <{}>", error.what());
-        beast::get_lowest_layer(_stream).close();
         setError(error);
         return;
     }
@@ -192,7 +189,7 @@ WitMessageRecognition::onHandshakeDone(sys::error_code error)
         LOGD("Operation was interrupted");
         setError(sys::errc::make_error_code(sys::errc::operation_canceled));
     } else {
-        LOGD("Ready to provide message data");
+        LOGD("Handshaking was successful");
         starving(true);
     }
 }
@@ -206,7 +203,7 @@ WitMessageRecognition::write()
 
     http::async_write(
         _stream,
-        _request,
+        _req,
         io::bind_cancellation_slot(
             onCancel(),
             beast::bind_front_handler(&WitMessageRecognition::onWriteDone, shared_from_this())));
@@ -217,7 +214,6 @@ WitMessageRecognition::onWriteDone(sys::error_code error, std::size_t bytesTrans
 {
     if (error) {
         LOGE("Failed to write request: <{}>", error.what());
-        beast::get_lowest_layer(_stream).close();
         setError(error);
         return;
     }
@@ -225,12 +221,10 @@ WitMessageRecognition::onWriteDone(sys::error_code error, std::size_t bytesTrans
     if (cancelled()) {
         LOGD("Operation was interrupted");
         setError(sys::errc::make_error_code(sys::errc::operation_canceled));
-        return;
+    } else {
+        LOGD("Writing of request was successful: <{}> bytes", bytesTransferred);
+        read();
     }
-
-    LOGD("Writing of request was successful: <{}> bytes", bytesTransferred);
-
-    read();
 }
 
 void
@@ -242,8 +236,8 @@ WitMessageRecognition::read()
 
     http::async_read(
         _stream,
-        _buffer,
-        _response,
+        _buf,
+        _res,
         io::bind_cancellation_slot(
             onCancel(),
             beast::bind_front_handler(&WitMessageRecognition::onReadDone, shared_from_this())));
@@ -254,20 +248,19 @@ WitMessageRecognition::onReadDone(sys::error_code error, std::size_t bytesTransf
 {
     if (error) {
         LOGE("Failed to read response: <{}>", error.what());
-        beast::get_lowest_layer(_stream).close();
         setError(error);
         return;
     }
 
+    LOGD("Reading of response was successful: <{}> bytes", bytesTransferred);
+    submit(_res.body());
+
     if (cancelled()) {
         LOGD("Operation was interrupted");
         setError(sys::errc::make_error_code(sys::errc::operation_canceled));
-        return;
+    } else {
+        shutdown();
     }
-
-    LOGD("Reading of response was successful: <{}> bytes", bytesTransferred);
-
-    shutdown();
 }
 
 void
@@ -289,15 +282,20 @@ WitMessageRecognition::onShutdownDone(sys::error_code error)
         error = {};
     }
 
+    if (error == ssl::error::stream_truncated) {
+        LOGD("Stream was truncated");
+        error = {};
+    }
+
     if (error) {
         LOGE("Failed to shutdown connection: <{}>", error.what());
     } else {
         LOGD("Shutdown of connection was successful");
     }
 
-    submit(_response.body());
-
-    beast::get_lowest_layer(_stream).close();
+    _req.clear();
+    _res.clear();
+    _buf.clear();
 }
 
 } // namespace jar

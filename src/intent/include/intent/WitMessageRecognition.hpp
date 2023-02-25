@@ -72,9 +72,9 @@ private:
     io::any_io_executor _executor;
     tcp::resolver _resolver;
     beast::ssl_stream<beast::tcp_stream> _stream;
-    beast::flat_buffer _buffer;
-    http::request<http::empty_body> _request;
-    http::response<http::string_body> _response;
+    beast::flat_buffer _buf;
+    http::request<http::empty_body> _req;
+    http::response<http::string_body> _res;
 };
 
 } // namespace jar
