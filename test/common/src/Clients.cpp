@@ -42,7 +42,7 @@ getResult(const std::string& input)
 
 template<typename EndpointSequence>
 static Result
-recognizeMessage(net::io_context& context,
+recognizeMessage(io::io_context& context,
                  const EndpointSequence& endpoints,
                  std::string_view message)
 {
@@ -71,7 +71,7 @@ recognizeMessage(net::io_context& context,
 
 template<typename EndpointSequence>
 Result
-recognizeSpeech(net::io_context& context, const EndpointSequence& endpoints, fs::path speechFile)
+recognizeSpeech(io::io_context& context, const EndpointSequence& endpoints, fs::path speechFile)
 {
     beast::tcp_stream stream{context};
     LOGD("Client: Connect to the given host");
@@ -115,11 +115,11 @@ recognizeSpeech(net::io_context& context, const EndpointSequence& endpoints, fs:
     fs.read(reinterpret_cast<char*>(fileData.get()), fileSize);
 
     {
-        const auto buffer = net::const_buffer(fileData.get(), fileSize);
+        const auto buffer = io::const_buffer(fileData.get(), fileSize);
         LOGD("Client: Write <{}> bytes of speech data to socket", fileSize);
-        net::write(stream, http::make_chunk(buffer));
+        io::write(stream, http::make_chunk(buffer));
         LOGD("Client: Finalize writing of speech fata");
-        net::write(stream, http::make_chunk_last());
+        io::write(stream, http::make_chunk_last());
     }
 
     http::response<http::string_body> res;
@@ -136,14 +136,14 @@ recognizeSpeech(net::io_context& context, const EndpointSequence& endpoints, fs:
 }
 
 Result
-recognizeMessage(net::io_context& context, std::uint16_t port, std::string_view message)
+recognizeMessage(io::io_context& context, std::uint16_t port, std::string_view message)
 {
-    tcp::endpoint endpoint{net::ip::make_address_v4("127.0.0.1"), port};
+    tcp::endpoint endpoint{io::ip::make_address_v4("127.0.0.1"), port};
     return recognizeMessage(context, std::vector{endpoint}, message);
 }
 
 Result
-recognizeMessage(net::io_context& context,
+recognizeMessage(io::io_context& context,
                  std::string_view host,
                  std::string_view port,
                  std::string_view message)
@@ -158,14 +158,14 @@ recognizeMessage(net::io_context& context,
 }
 
 Result
-recognizeSpeech(net::io_context& context, std::uint16_t port, fs::path speechFile)
+recognizeSpeech(io::io_context& context, std::uint16_t port, fs::path speechFile)
 {
-    tcp::endpoint endpoint{net::ip::make_address_v4("127.0.0.1"), port};
+    tcp::endpoint endpoint{io::ip::make_address_v4("127.0.0.1"), port};
     return recognizeSpeech(context, std::vector{endpoint}, speechFile);
 }
 
 Result
-recognizeSpeech(net::io_context& context,
+recognizeSpeech(io::io_context& context,
                 std::string_view host,
                 std::string_view port,
                 fs::path speechFile)

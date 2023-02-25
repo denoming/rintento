@@ -87,7 +87,7 @@ TEST_F(WitSpeechRecognitionTest, RecognizeSpeech1)
     ASSERT_TRUE(guard);
     guard = false;
 
-    recognition->feed(net::buffer(fileData.get(), fileSize));
+    recognition->feed(io::buffer(fileData.get(), fileSize));
 
     waiter.wait([&guard]() { return guard; });
     ASSERT_TRUE(guard);
@@ -123,7 +123,7 @@ TEST_F(WitSpeechRecognitionTest, RecognizeSpeech2)
     ASSERT_TRUE(guard);
     guard = false;
 
-    recognition->feed(net::buffer(fileData.get(), fileSize));
+    recognition->feed(io::buffer(fileData.get(), fileSize));
 
     waiter.wait([&guard]() { return guard; });
     ASSERT_TRUE(guard);

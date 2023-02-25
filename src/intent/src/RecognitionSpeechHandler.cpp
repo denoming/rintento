@@ -71,13 +71,13 @@ RecognitionSpeechHandler::createRecognition()
     recognition->onReady(
         [weakSelf = weak_from_this(), executor = connection().executor()](auto result, auto error) {
             if (error) {
-                net::post(executor, [weakSelf, error]() {
+                io::post(executor, [weakSelf, error]() {
                     if (auto self = weakSelf.lock()) {
                         self->onRecognitionError(error);
                     }
                 });
             } else {
-                net::post(executor, [weakSelf, result = std::move(result)]() {
+                io::post(executor, [weakSelf, result = std::move(result)]() {
                     if (auto self = weakSelf.lock()) {
                         self->onRecognitionSuccess(std::move(result));
                     }

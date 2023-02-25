@@ -1,6 +1,6 @@
 #pragma once
 
-#include "intent/Http.hpp"
+#include "jarvis/Network.hpp"
 
 #include <memory>
 #include <queue>
@@ -58,7 +58,7 @@ public:
         return _stream;
     }
 
-    net::any_io_executor
+    io::any_io_executor
     executor()
     {
         return _stream.get_executor();
@@ -69,7 +69,7 @@ public:
     read(OnReady<Body> callback)
     {
         using Action = TypedReadingAction<Body>;
-        net::dispatch(executor(), [self = shared_from_this(), c = std::move(callback)]() {
+        io::dispatch(executor(), [self = shared_from_this(), c = std::move(callback)]() {
             self->pushAction(std::make_unique<Action>(*self, std::move(c)));
         });
     }
@@ -79,7 +79,7 @@ public:
     readHeader(OnReadyHeader<Body> callback)
     {
         using Action = TypedReadingHeaderAction<Body>;
-        net::dispatch(executor(), [self = shared_from_this(), c = std::move(callback)]() {
+        io::dispatch(executor(), [self = shared_from_this(), c = std::move(callback)]() {
             self->pushAction(std::make_unique<Action>(*self, std::move(c)));
         });
     }
@@ -89,7 +89,7 @@ public:
     write(http::response<Body> response, WritingCallback callback = nullptr)
     {
         using Action = TypedWritingAction<Body>;
-        net::dispatch(
+        io::dispatch(
             executor(),
             [self = shared_from_this(), r = std::move(response), c = std::move(callback)]() {
                 self->pushAction(std::make_unique<Action>(*self, std::move(r), std::move(c)));
@@ -101,7 +101,7 @@ public:
     writeHeader(http::response_header<Fields>, WritingHeaderCallback callback = nullptr)
     {
         using Action = TypedWritingHeaderAction<Body, Fields>;
-        net::dispatch(executor(), [self = shared_from_this(), c = std::move(callback)]() {
+        io::dispatch(executor(), [self = shared_from_this(), c = std::move(callback)]() {
             self->pushAction(std::make_unique<Action>(*self, std::move(c)));
         });
     }

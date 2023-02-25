@@ -1,7 +1,7 @@
 #pragma once
 
-#include "intent/Http.hpp"
 #include "intent/WitRecognition.hpp"
+#include "jarvis/Network.hpp"
 
 #include <memory>
 #include <string_view>
@@ -14,7 +14,7 @@ class WitMessageRecognition : public WitRecognition,
                               public std::enable_shared_from_this<WitMessageRecognition> {
 public:
     static std::shared_ptr<WitMessageRecognition>
-    create(std::shared_ptr<Config> config, ssl::context& context, net::any_io_executor executor);
+    create(std::shared_ptr<Config> config, ssl::context& context, io::any_io_executor executor);
 
     void
     run();
@@ -28,7 +28,7 @@ public:
 private:
     explicit WitMessageRecognition(std::shared_ptr<Config> config,
                                    ssl::context& context,
-                                   net::any_io_executor executor);
+                                   io::any_io_executor executor);
 
     void
     resolve(std::string_view host, std::uint16_t port);
@@ -69,7 +69,7 @@ private:
 
 private:
     std::shared_ptr<Config> _config;
-    net::any_io_executor _executor;
+    io::any_io_executor _executor;
     tcp::resolver _resolver;
     beast::ssl_stream<beast::tcp_stream> _stream;
     beast::flat_buffer _buffer;

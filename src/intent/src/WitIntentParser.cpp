@@ -1,7 +1,7 @@
 #include "intent/WitIntentParser.hpp"
 
 #include "jarvis/Logger.hpp"
-#include "intent/Http.hpp"
+#include "jarvis/Network.hpp"
 
 #include <optional>
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "common/Constants.hpp"
-#include "intent/Http.hpp"
+#include "jarvis/Network.hpp"
 
 #include <condition_variable>
 #include <map>
@@ -18,12 +18,12 @@ class RecognitionDispatcher;
 class RecognitionServer : public std::enable_shared_from_this<RecognitionServer> {
 public:
     [[nodiscard]] static std::shared_ptr<RecognitionServer>
-    create(net::any_io_executor executor,
+    create(io::any_io_executor executor,
            std::shared_ptr<IntentPerformer> performer,
            std::shared_ptr<WitRecognitionFactory> factory);
 
     bool
-    listen(net::ip::port_type port = kDefaultProxyServerPort);
+    listen(io::ip::port_type port = kDefaultProxyServerPort);
 
     bool
     listen(tcp::endpoint endpoint);
@@ -32,7 +32,7 @@ public:
     shutdown();
 
 private:
-    RecognitionServer(net::any_io_executor executor,
+    RecognitionServer(io::any_io_executor executor,
                       std::shared_ptr<IntentPerformer> performer,
                       std::shared_ptr<WitRecognitionFactory> factory);
 
@@ -58,7 +58,7 @@ private:
     dispatch(std::shared_ptr<RecognitionConnection> connection);
 
 private:
-    net::any_io_executor _executor;
+    io::any_io_executor _executor;
     std::shared_ptr<IntentPerformer> _performer;
     std::shared_ptr<WitRecognitionFactory> _factory;
     mutable std::mutex _shutdownGuard;

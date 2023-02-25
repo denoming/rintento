@@ -48,11 +48,11 @@ SpeechDataBuffer::write(std::string_view data)
     _buffer.insert(_buffer.end(), data.begin(), data.end());
 }
 
-net::const_buffer
+io::const_buffer
 SpeechDataBuffer::extract()
 {
     std::lock_guard lock{_guard};
-    auto buffer = net::buffer(_buffer.linearize() + _offset, _buffer.size() - _offset);
+    auto buffer = io::buffer(_buffer.linearize() + _offset, _buffer.size() - _offset);
     _offset = _buffer.size();
     return buffer;
 }

@@ -13,7 +13,7 @@ namespace jar {
 std::shared_ptr<WitSpeechRecognition>
 WitSpeechRecognition::create(std::shared_ptr<Config> config,
                              ssl::context& context,
-                             net::any_io_executor executor)
+                             io::any_io_executor executor)
 {
     // clang-format off
     return std::shared_ptr<WitSpeechRecognition>(
@@ -24,7 +24,7 @@ WitSpeechRecognition::create(std::shared_ptr<Config> config,
 
 WitSpeechRecognition::WitSpeechRecognition(std::shared_ptr<Config> config,
                                            ssl::context& context,
-                                           net::any_io_executor executor)
+                                           io::any_io_executor executor)
     : _config{std::move(config)}
     , _executor{std::move(executor)}
     , _resolver{_executor}
@@ -44,7 +44,7 @@ WitSpeechRecognition::run()
              !host.empty(),
              (port > 0),
              !auth.empty());
-        net::post(_executor, [self = shared_from_this()]() {
+        io::post(_executor, [self = shared_from_this()]() {
             self->setError(sys::errc::make_error_code(sys::errc::invalid_argument));
         });
     } else {
@@ -60,7 +60,7 @@ WitSpeechRecognition::run(std::string_view host, std::uint16_t port, std::string
     assert(!auth.empty());
 
     sys::error_code error;
-    if (!setTlsHostName(_stream, host, error)) {
+    if (!net::setTlsHostName(_stream, host, error)) {
         LOGE("Failed to set TLS hostname: ", error.message());
         setError(error);
         return;
@@ -81,7 +81,7 @@ WitSpeechRecognition::run(std::string_view host, std::uint16_t port, std::string
 }
 
 void
-WitSpeechRecognition::feed(net::const_buffer buffer)
+WitSpeechRecognition::feed(io::const_buffer buffer)
 {
     if (!starving()) {
         throw std::logic_error{"Inappropriate call to feed-up by data"};
@@ -117,7 +117,7 @@ WitSpeechRecognition::resolve(std::string_view host, std::uint16_t port)
     _resolver.async_resolve(
         host,
         portStr,
-        net::bind_cancellation_slot(
+        io::bind_cancellation_slot(
             onCancel(),
             beast::bind_front_handler(&WitSpeechRecognition::onResolveDone, shared_from_this())));
 }
@@ -144,11 +144,11 @@ WitSpeechRecognition::onResolveDone(sys::error_code error,
 void
 WitSpeechRecognition::connect(const tcp::resolver::results_type& addresses)
 {
-    resetTimeout(_stream);
+    net::resetTimeout(_stream);
 
     beast::get_lowest_layer(_stream).async_connect(
         addresses,
-        net::bind_cancellation_slot(
+        io::bind_cancellation_slot(
             onCancel(),
             beast::bind_front_handler(&WitSpeechRecognition::onConnectDone, shared_from_this())));
 }
@@ -177,11 +177,11 @@ WitSpeechRecognition::handshake()
 {
     LOGD("Handshake with host");
 
-    resetTimeout(_stream);
+    net::resetTimeout(_stream);
 
     _stream.async_handshake(
         ssl::stream_base::client,
-        net::bind_cancellation_slot(
+        io::bind_cancellation_slot(
             onCancel(),
             beast::bind_front_handler(&WitSpeechRecognition::onHandshakeDone, shared_from_this())));
 }
@@ -208,7 +208,7 @@ WitSpeechRecognition::onHandshakeDone(sys::error_code error)
 void
 WitSpeechRecognition::readContinue()
 {
-    resetTimeout(_stream);
+    net::resetTimeout(_stream);
 
     sys::error_code error;
     http::request_serializer<http::empty_body, http::fields> hs{_request};
@@ -221,7 +221,7 @@ WitSpeechRecognition::readContinue()
         http::async_read(_stream,
                          _buffer,
                          _response,
-                         net::bind_cancellation_slot(
+                         io::bind_cancellation_slot(
                              onCancel(),
                              beast::bind_front_handler(&WitSpeechRecognition::onReadContinueDone,
                                                        shared_from_this())));
@@ -255,16 +255,16 @@ WitSpeechRecognition::onReadContinueDone(sys::error_code error, std::size_t byte
 }
 
 void
-WitSpeechRecognition::writeNextChunk(net::const_buffer buffer)
+WitSpeechRecognition::writeNextChunk(io::const_buffer buffer)
 {
-    resetTimeout(_stream);
+    net::resetTimeout(_stream);
 
-    net::async_write(_stream,
-                     http::make_chunk(buffer),
-                     net::bind_cancellation_slot(
-                         onCancel(),
-                         beast::bind_front_handler(&WitSpeechRecognition::onWriteNextChunkDone,
-                                                   shared_from_this())));
+    io::async_write(_stream,
+                    http::make_chunk(buffer),
+                    io::bind_cancellation_slot(
+                        onCancel(),
+                        beast::bind_front_handler(&WitSpeechRecognition::onWriteNextChunkDone,
+                                                  shared_from_this())));
 }
 
 void
@@ -291,14 +291,14 @@ WitSpeechRecognition::onWriteNextChunkDone(sys::error_code error, std::size_t by
 void
 WitSpeechRecognition::writeLastChunk()
 {
-    resetTimeout(_stream);
+    net::resetTimeout(_stream);
 
-    net::async_write(_stream,
-                     http::make_chunk_last(),
-                     net::bind_cancellation_slot(
-                         onCancel(),
-                         beast::bind_front_handler(&WitSpeechRecognition::onWriteLastChunkDone,
-                                                   shared_from_this())));
+    io::async_write(_stream,
+                    http::make_chunk_last(),
+                    io::bind_cancellation_slot(
+                        onCancel(),
+                        beast::bind_front_handler(&WitSpeechRecognition::onWriteLastChunkDone,
+                                                  shared_from_this())));
 }
 
 void
@@ -325,13 +325,13 @@ WitSpeechRecognition::onWriteLastChunkDone(sys::error_code error, std::size_t by
 void
 WitSpeechRecognition::read()
 {
-    resetTimeout(_stream);
+    net::resetTimeout(_stream);
 
     http::async_read(
         _stream,
         _buffer,
         _response,
-        net::bind_cancellation_slot(
+        io::bind_cancellation_slot(
             onCancel(),
             beast::bind_front_handler(&WitSpeechRecognition::onReadDone, shared_from_this())));
 }
@@ -360,9 +360,9 @@ WitSpeechRecognition::onReadDone(sys::error_code error, std::size_t bytesTransfe
 void
 WitSpeechRecognition::shutdown()
 {
-    resetTimeout(_stream);
+    net::resetTimeout(_stream);
 
-    _stream.async_shutdown(net::bind_cancellation_slot(
+    _stream.async_shutdown(io::bind_cancellation_slot(
         onCancel(),
         beast::bind_front_handler(&WitSpeechRecognition::onShutdownDone, shared_from_this())));
 }
@@ -370,7 +370,7 @@ WitSpeechRecognition::shutdown()
 void
 WitSpeechRecognition::onShutdownDone(sys::error_code error)
 {
-    if (error == net::error::eof || error == sys::errc::operation_canceled) {
+    if (error == io::error::eof || error == sys::errc::operation_canceled) {
         error = {};
     }
 

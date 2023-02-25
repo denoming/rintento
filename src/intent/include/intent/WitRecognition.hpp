@@ -1,7 +1,7 @@
 #pragma once
 
-#include "intent/Http.hpp"
 #include "intent/Recognition.hpp"
+#include "jarvis/Network.hpp"
 
 #include <atomic>
 #include <string>
@@ -43,12 +43,12 @@ protected:
     void
     submit(const std::string& result);
 
-    [[nodiscard]] net::cancellation_slot
+    [[nodiscard]] io::cancellation_slot
     onCancel();
 
 private:
     std::function<OnDataSignature> _dataCallback;
-    net::cancellation_signal _cancelSig;
+    io::cancellation_signal _cancelSig;
     std::atomic<bool> _cancelled;
     std::atomic<bool> _starving;
 };

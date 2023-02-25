@@ -31,7 +31,7 @@ WitRecognition::cancel()
         setError(sys::errc::make_error_code(sys::errc::operation_canceled));
     }
 
-    _cancelSig.emit(net::cancellation_type::terminal);
+    _cancelSig.emit(io::cancellation_type::terminal);
 }
 
 void
@@ -55,7 +55,7 @@ WitRecognition::submit(const std::string& result)
     }
 }
 
-net::cancellation_slot
+io::cancellation_slot
 WitRecognition::onCancel()
 {
     return _cancelSig.slot();

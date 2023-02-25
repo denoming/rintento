@@ -6,7 +6,7 @@
 namespace jar {
 
 WitRecognitionFactory::WitRecognitionFactory(std::shared_ptr<Config> config,
-                                             net::any_io_executor executor)
+                                             io::any_io_executor executor)
     : _config{std::move(config)}
     , _context{ssl::context::tlsv12_client}
     , _executor{std::move(executor)}

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "jarvis/Network.hpp"
 #include "intent/Types.hpp"
 
 #include <functional>

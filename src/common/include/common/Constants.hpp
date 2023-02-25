@@ -1,6 +1,6 @@
 #pragma once
 
-#include <typeindex>
+#include <cstdint>
 
 namespace jar {
 

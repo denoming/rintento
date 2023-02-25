@@ -11,7 +11,7 @@ namespace jar {
 std::shared_ptr<WitMessageRecognition>
 WitMessageRecognition::create(std::shared_ptr<Config> config,
                               ssl::context& context,
-                              net::any_io_executor executor)
+                              io::any_io_executor executor)
 {
     // clang-format off
     return std::shared_ptr<WitMessageRecognition>(
@@ -22,7 +22,7 @@ WitMessageRecognition::create(std::shared_ptr<Config> config,
 
 WitMessageRecognition::WitMessageRecognition(std::shared_ptr<Config> config,
                                              ssl::context& context,
-                                             net::any_io_executor executor)
+                                             io::any_io_executor executor)
     : _config{std::move(config)}
     , _executor{std::move(executor)}
     , _resolver{_executor}
@@ -42,7 +42,7 @@ WitMessageRecognition::run()
              !host.empty(),
              (port > 0),
              !auth.empty());
-        net::post(_executor, [self = shared_from_this()]() {
+        io::post(_executor, [self = shared_from_this()]() {
             self->setError(sys::errc::make_error_code(sys::errc::invalid_argument));
         });
     } else {
@@ -58,7 +58,7 @@ WitMessageRecognition::run(std::string_view host, std::uint16_t port, std::strin
     assert(!auth.empty());
 
     sys::error_code error;
-    if (!setTlsHostName(_stream, host, error)) {
+    if (!net::setTlsHostName(_stream, host, error)) {
         LOGE("Failed to set TLS hostname: ", error.message());
         setError(error);
         return;
@@ -99,7 +99,7 @@ WitMessageRecognition::resolve(std::string_view host, std::uint16_t port)
     _resolver.async_resolve(
         host,
         portStr,
-        net::bind_cancellation_slot(
+        io::bind_cancellation_slot(
             onCancel(),
             beast::bind_front_handler(&WitMessageRecognition::onResolveDone, shared_from_this())));
 }
@@ -134,11 +134,11 @@ WitMessageRecognition::connect(const tcp::resolver::results_type& addresses)
 {
     LOGD("Connect to host addresses");
 
-    resetTimeout(_stream);
+    net::resetTimeout(_stream);
 
     beast::get_lowest_layer(_stream).async_connect(
         addresses,
-        net::bind_cancellation_slot(
+        io::bind_cancellation_slot(
             onCancel(),
             beast::bind_front_handler(&WitMessageRecognition::onConnectDone, shared_from_this())));
 }
@@ -169,10 +169,10 @@ WitMessageRecognition::handshake()
 {
     LOGD("Handshake with host");
 
-    resetTimeout(_stream);
+    net::resetTimeout(_stream);
 
     _stream.async_handshake(ssl::stream_base::client,
-                            net::bind_cancellation_slot(
+                            io::bind_cancellation_slot(
                                 onCancel(),
                                 beast::bind_front_handler(&WitMessageRecognition::onHandshakeDone,
                                                           shared_from_this())));
@@ -202,12 +202,12 @@ WitMessageRecognition::write()
 {
     LOGD("Write request to stream");
 
-    resetTimeout(_stream);
+    net::resetTimeout(_stream);
 
     http::async_write(
         _stream,
         _request,
-        net::bind_cancellation_slot(
+        io::bind_cancellation_slot(
             onCancel(),
             beast::bind_front_handler(&WitMessageRecognition::onWriteDone, shared_from_this())));
 }
@@ -238,13 +238,13 @@ WitMessageRecognition::read()
 {
     LOGD("Read response from stream");
 
-    resetTimeout(_stream);
+    net::resetTimeout(_stream);
 
     http::async_read(
         _stream,
         _buffer,
         _response,
-        net::bind_cancellation_slot(
+        io::bind_cancellation_slot(
             onCancel(),
             beast::bind_front_handler(&WitMessageRecognition::onReadDone, shared_from_this())));
 }
@@ -275,9 +275,9 @@ WitMessageRecognition::shutdown()
 {
     LOGD("Shutdown connection with host");
 
-    resetTimeout(_stream);
+    net::resetTimeout(_stream);
 
-    _stream.async_shutdown(net::bind_cancellation_slot(
+    _stream.async_shutdown(io::bind_cancellation_slot(
         onCancel(),
         beast::bind_front_handler(&WitMessageRecognition::onShutdownDone, shared_from_this())));
 }
@@ -285,7 +285,7 @@ WitMessageRecognition::shutdown()
 void
 WitMessageRecognition::onShutdownDone(sys::error_code error)
 {
-    if (error == net::error::eof || error == sys::errc::operation_canceled) {
+    if (error == io::error::eof || error == sys::errc::operation_canceled) {
         error = {};
     }
 

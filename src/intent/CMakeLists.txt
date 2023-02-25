@@ -19,7 +19,6 @@ target_link_libraries(${TARGET}
 
 target_sources(${TARGET}
     PRIVATE src/Types.cpp
-            src/Http.cpp
             src/Recognition.cpp
             src/WitRecognition.cpp
             src/WitMessageRecognition.cpp
@@ -39,7 +38,3 @@ target_sources(${TARGET}
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_20)
-
-target_precompile_headers(${TARGET}
-    PRIVATE include/intent/Http.hpp
-)

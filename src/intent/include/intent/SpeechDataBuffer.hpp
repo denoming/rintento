@@ -1,6 +1,6 @@
 #pragma once
 
-#include "intent/Http.hpp"
+#include "jarvis/Network.hpp"
 
 #include <boost/circular_buffer.hpp>
 
@@ -31,7 +31,7 @@ public:
     void
     write(std::string_view data);
 
-    [[nodiscard]] net::const_buffer
+    [[nodiscard]] io::const_buffer
     extract();
 
     void

@@ -1,14 +1,14 @@
 #include "intent/RecognitionServer.hpp"
 
-#include "jarvis/Logger.hpp"
 #include "intent/RecognitionConnection.hpp"
 #include "intent/RecognitionDispatcher.hpp"
 #include "intent/WitRecognitionFactory.hpp"
+#include "jarvis/Logger.hpp"
 
 namespace jar {
 
 std::shared_ptr<RecognitionServer>
-RecognitionServer::create(net::any_io_executor executor,
+RecognitionServer::create(io::any_io_executor executor,
                           std::shared_ptr<IntentPerformer> performer,
                           std::shared_ptr<WitRecognitionFactory> factory)
 {
@@ -19,12 +19,12 @@ RecognitionServer::create(net::any_io_executor executor,
     // clang-format on
 }
 
-RecognitionServer::RecognitionServer(net::any_io_executor executor,
+RecognitionServer::RecognitionServer(io::any_io_executor executor,
                                      std::shared_ptr<IntentPerformer> performer,
                                      std::shared_ptr<WitRecognitionFactory> factory)
     : _executor{std::move(executor)}
     , _performer{std::move(performer)}
-    , _acceptor{net::make_strand(_executor)}
+    , _acceptor{io::make_strand(_executor)}
     , _factory{factory}
     , _shutdownReady{false}
     , _acceptorReady{false}
@@ -32,9 +32,9 @@ RecognitionServer::RecognitionServer(net::any_io_executor executor,
 }
 
 bool
-RecognitionServer::listen(net::ip::port_type port)
+RecognitionServer::listen(io::ip::port_type port)
 {
-    tcp::endpoint endpoint{net::ip::address_v4::any(), port};
+    tcp::endpoint endpoint{io::ip::address_v4::any(), port};
     return listen(endpoint);
 }
 
@@ -50,7 +50,7 @@ RecognitionServer::listen(tcp::endpoint endpoint)
         return false;
     }
 
-    _acceptor.set_option(net::socket_base::reuse_address(true), error);
+    _acceptor.set_option(io::socket_base::reuse_address(true), error);
     if (error) {
         LOGE("Failed to set option: <{}>", error.what());
         return false;
@@ -62,14 +62,14 @@ RecognitionServer::listen(tcp::endpoint endpoint)
         return false;
     }
 
-    _acceptor.listen(net::socket_base::max_listen_connections, error);
+    _acceptor.listen(io::socket_base::max_listen_connections, error);
     if (error) {
         LOGE("Failed to listen: <{}>", error.what());
         return false;
     }
 
-    net::dispatch(_acceptor.get_executor(),
-                  beast::bind_front_handler(&RecognitionServer::accept, shared_from_this()));
+    io::dispatch(_acceptor.get_executor(),
+                 beast::bind_front_handler(&RecognitionServer::accept, shared_from_this()));
 
     return true;
 }
@@ -77,7 +77,7 @@ RecognitionServer::listen(tcp::endpoint endpoint)
 void
 RecognitionServer::shutdown()
 {
-    net::dispatch(net::bind_executor(_acceptor.get_executor(), [self = shared_from_this()]() {
+    io::dispatch(io::bind_executor(_acceptor.get_executor(), [self = shared_from_this()]() {
         self->close();
         if (self->readyToShutdown()) {
             LOGD("Server is ready to shutdown");
@@ -92,7 +92,7 @@ void
 RecognitionServer::accept()
 {
     _acceptor.async_accept(
-        net::make_strand(_executor),
+        io::make_strand(_executor),
         beast::bind_front_handler(&RecognitionServer::onAcceptDone, shared_from_this()));
 }
 
