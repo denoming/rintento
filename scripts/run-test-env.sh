@@ -41,7 +41,7 @@ run_image() {
   --volume="$HOME/.local/share/jarvis:$HOME/.local/share/jarvis" \
   --network=bridge \
   --workdir="${PROJECT_DIR}" \
-  --env JARVIS_EXECUTOR_CONFIG="$HOME/.local/share/jarvis/intent-config.json" \
+  --env JARVIS_EXECUTOR_CONFIG="$HOME/.local/share/jarvis/jarvis-executor-config.json" \
   "${DOCKER_IMAGE_NAME}")
 
   if [ -n "$(docker images -q ${DOCKER_IMAGE_NAME})" ]; then
