@@ -1,9 +1,13 @@
 #include "intent/WitIntentParser.hpp"
 
 #include "jarvis/Logger.hpp"
-#include "jarvis/Network.hpp"
+
+#include <boost/assert.hpp>
+#include <boost/json/stream_parser.hpp>
 
 #include <optional>
+
+namespace json = boost::json;
 
 namespace jar {
 
@@ -38,60 +42,82 @@ toIntents(const json::array& jsonIntents)
 std::optional<Utterance>
 toUtterance(const json::object& object)
 {
-    auto intentsObject = object.if_contains("intents");
-    if (!intentsObject) {
-        return std::nullopt;
-    }
     Intents intents;
-    if (auto intentsArray = intentsObject->if_array(); intentsArray) {
-        intents = toIntents(*intentsArray);
-    }
-    if (intents.empty()) {
-        return std::nullopt;
+    if (auto intentsValue = object.if_contains("intents"); intentsValue) {
+        if (auto intentsArray = intentsValue->if_array(); intentsArray) {
+            intents = toIntents(*intentsArray);
+        }
     }
 
-    auto textObject = object.if_contains("text");
-    if (!textObject) {
-        return std::nullopt;
+    bool isFinal{false};
+    if (auto finalValue = object.if_contains("is_final"); finalValue) {
+        if (auto finalPtr = finalValue->if_bool(); finalPtr) {
+            isFinal = *finalPtr;
+        }
     }
-    std::string text{textObject->as_string().begin(), textObject->as_string().end()};
-    return Utterance{std::move(text), std::move(intents)};
+
+    std::string text;
+    if (auto textValue = object.if_contains("text"); textValue) {
+        if (auto textPtr = textValue->if_string(); textPtr) {
+            text.assign(textPtr->cbegin(), textPtr->cend());
+        }
+    }
+
+    return Utterance{std::move(text), std::move(intents), isFinal};
 }
 
 } // namespace
 
+class WitIntentParser::Impl {
+public:
+    std::optional<Utterances>
+    parse(std::string_view input)
+    {
+        _parser.reset();
+
+        if (input.empty()) {
+            LOGE("Input value is empty");
+            return std::nullopt;
+        }
+
+        Utterances utterances;
+        std::size_t nextRoot{0};
+        do {
+            std::error_code error;
+            if (nextRoot = _parser.write_some(input, error); error) {
+                LOGE("Failed to parse: {}", error.message());
+                return std::nullopt;
+            }
+            if (nextRoot > 0) {
+                input = input.substr(nextRoot);
+                auto value = _parser.release();
+                if (auto utteranceObject = value.if_object(); utteranceObject) {
+                    if (auto utteranceOpt = toUtterance(*utteranceObject); utteranceOpt) {
+                        utterances.push_back(std::move(*utteranceOpt));
+                    }
+                }
+            }
+        }
+        while (nextRoot > 0);
+        return utterances;
+    }
+
+private:
+    json::stream_parser _parser;
+};
+
+WitIntentParser::WitIntentParser()
+    : _impl{std::make_unique<Impl>()}
+{
+}
+
+WitIntentParser::~WitIntentParser() = default;
+
 std::optional<Utterances>
 WitIntentParser::parse(std::string_view input)
 {
-    _parser.reset();
-
-    if (input.empty()) {
-        LOGE("Input value is empty");
-        return std::nullopt;
-    }
-
-    Utterances utterances;
-    std::size_t nextRoot{0};
-    do {
-        sys::error_code error;
-        nextRoot = _parser.write_some(input, error);
-        if (error) {
-            LOGE("Failed to parse: {}", error.message());
-            return std::nullopt;
-        }
-        if (!nextRoot) {
-            break;
-        }
-        input = input.substr(nextRoot);
-        auto value = _parser.release();
-        if (auto utteranceObject = value.if_object(); utteranceObject) {
-            if (auto utteranceOpt = toUtterance(*utteranceObject); utteranceOpt) {
-                utterances.push_back(std::move(*utteranceOpt));
-            }
-        }
-    }
-    while (nextRoot > 0);
-    return utterances;
+    BOOST_ASSERT(_impl);
+    return _impl->parse(input);
 }
 
 } // namespace jar

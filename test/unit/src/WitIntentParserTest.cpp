@@ -26,8 +26,8 @@ TEST(WitIntentParserTest, Parse1)
 
     WitIntentParser parser;
     EXPECT_THAT(parser.parse(kInput),
-                Optional(Contains(isUtterance("turn off the light",
-                                              Contains(isConfidentIntent("light_off", 0.9f))))));
+                Optional(Contains(isUtterance(
+                    "turn off the light", Contains(isConfidentIntent("light_off", 0.9f)), false))));
 }
 
 TEST(WitIntentParserTest, Parse2)
@@ -40,30 +40,149 @@ TEST(WitIntentParserTest, Parse2)
           "entities": {},
           "intents": [
             {
-              "confidence": 0.9166,
+              "confidence": 0.9709199975944066,
               "id": "695468701564151",
               "name": "light_on"
             }
           ],
           "speech": {
-            "confidence": 0.7675,
+            "confidence": 0,
             "tokens": [
               {
-                "end": 720,
+                "confidence": 0.0274,
+                "end": 300,
                 "start": 0,
                 "token": "Turn"
               }
             ]
           },
-          "text": "Turn on the light",
+          "text": "Turn",
+          "traits": {}
+        }
+        {
+          "text": "Turn off"
+        }
+        {
+          "text": "Turn off the light"
+        }
+        {
+          "entities": {},
+          "intents": [
+            {
+              "confidence": 0.7909212514264985,
+              "id": "554903196208362",
+              "name": "light_off"
+            }
+          ],
+          "speech": {
+            "confidence": 0,
+            "tokens": [
+              {
+                "confidence": 0.4736,
+                "end": 420,
+                "start": 0,
+                "token": "Turn"
+              },
+              {
+                "confidence": 0.3409,
+                "end": 720,
+                "start": 420,
+                "token": "off"
+              }
+            ]
+          },
+          "text": "Turn off",
+          "traits": {}
+        }
+        {
+          "entities": {},
+          "intents": [
+            {
+              "confidence": 0.9395968580694023,
+              "id": "554903196208362",
+              "name": "light_off"
+            }
+          ],
+          "speech": {
+            "confidence": 0.9486,
+            "tokens": [
+              {
+                "confidence": 0.9269,
+                "end": 420,
+                "start": 0,
+                "token": "Turn"
+              },
+              {
+                "confidence": 0.9663,
+                "end": 720,
+                "start": 420,
+                "token": "off"
+              },
+              {
+                "confidence": 0.9306,
+                "end": 1080,
+                "start": 720,
+                "token": "the"
+              },
+              {
+                "confidence": 0.9706,
+                "end": 1140,
+                "start": 1080,
+                "token": "light"
+              }
+            ]
+          },
+          "text": "Turn off the light",
+          "traits": {}
+        }
+        {
+          "entities": {},
+          "intents": [
+            {
+              "confidence": 0.9395968580694023,
+              "id": "554903196208362",
+              "name": "light_off"
+            }
+          ],
+          "is_final": true,
+          "speech": {
+            "confidence": 0.9486,
+            "tokens": [
+              {
+                "confidence": 0.9269,
+                "end": 420,
+                "start": 720,
+                "token": "Turn"
+              },
+              {
+                "confidence": 0.9663,
+                "end": 720,
+                "start": 420,
+                "token": "off"
+              },
+              {
+                "confidence": 0.9306,
+                "end": 1080,
+                "start": 720,
+                "token": "the"
+              },
+              {
+                "confidence": 0.9706,
+                "end": 1140,
+                "start": 1080,
+                "token": "light"
+              }
+            ]
+          },
+          "text": "Turn off the light",
           "traits": {}
         }
     )"};
 
     WitIntentParser parser;
     EXPECT_THAT(parser.parse(kInput),
-                Optional(Contains(isUtterance("Turn on the light",
-                                              Contains(isConfidentIntent("light_on", 0.9f))))));
+                Optional(Contains(isUtterance("Turn off the light",
+                                              Contains(isConfidentIntent("light_off", 0.9f))))));
 }
 
 TEST(WitIntentParserTest, ErrorParse)

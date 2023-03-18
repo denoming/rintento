@@ -2,19 +2,22 @@
 
 #include "intent/IntentParser.hpp"
 
-#include <boost/json/stream_parser.hpp>
-
-namespace json = boost::json;
+#include <memory>
 
 namespace jar {
 
 class WitIntentParser final : public IntentParser {
 public:
+    WitIntentParser();
+
+    ~WitIntentParser() final;
+
     [[nodiscard]] std::optional<Utterances>
     parse(std::string_view input) final;
 
 private:
-    json::stream_parser _parser;
+    class Impl;
+    std::unique_ptr<Impl> _impl;
 };
 
 } // namespace jar

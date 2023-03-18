@@ -10,7 +10,7 @@ struct fmt::formatter<jar::Intent> : fmt::formatter<std::string_view> {
     auto
     format(const jar::Intent& i, FormatContext& c) const
     {
-        constexpr const std::string_view kFormat{"name=<{}>, confidence=<{:.3f}>"};
+        constexpr const std::string_view kFormat{"name<{}>, confidence<{:.3f}>"};
         return fmt::format_to(c.out(), kFormat, i.name, i.confidence);
     }
 };
@@ -31,8 +31,8 @@ struct fmt::formatter<jar::Utterance> : fmt::formatter<jar::Intent> {
     auto
     format(const jar::Utterance& u, FormatContext& c) const
     {
-        constexpr const std::string_view kFormat{"text=<{}>, intents=<({})>"};
-        return fmt::format_to(c.out(), kFormat, u.text, fmt::join(u.intents, "), ("));
+        constexpr const std::string_view kFormat{"text<{}>, intents<({})>, final<{}>"};
+        return fmt::format_to(c.out(), kFormat, u.text, fmt::join(u.intents, "), ("), u.final);
     }
 };
 

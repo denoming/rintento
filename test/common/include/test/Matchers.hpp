@@ -27,10 +27,11 @@ isConfidentIntent(std::string_view name, float threshold)
 }
 
 inline Matcher<jar::Utterance>
-isUtterance(std::string_view text, const Matcher<jar::Intents>& intent)
+isUtterance(std::string_view text, const Matcher<jar::Intents>& intent, const bool isFinal = true)
 {
     return AllOf(Field(&jar::Utterance::text, StrCaseEq(text)),
-                 Field(&jar::Utterance::intents, intent));
+                 Field(&jar::Utterance::intents, intent),
+                 Field(&jar::Utterance::final, isFinal));
 }
 
 inline Matcher<jar::Utterance>

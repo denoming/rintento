@@ -24,6 +24,7 @@ using Intents = std::vector<Intent>;
 struct Utterance {
     std::string text;
     Intents intents;
+    bool final{false};
 };
 
 /** The bunch of utterances */
