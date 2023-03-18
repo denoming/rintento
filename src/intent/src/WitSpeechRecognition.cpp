@@ -59,11 +59,15 @@ WitSpeechRecognition::run(std::string_view host, std::uint16_t port, std::string
     assert(port > 0);
     assert(!auth.empty());
 
-    sys::error_code error;
-    if (!net::setTlsHostName(_stream, host, error)) {
-        LOGE("Failed to set TLS hostname: ", error.message());
-        setError(error);
-        return;
+    std::error_code error;
+    net::setServerHostname(_stream, host, error);
+    if (error) {
+        LOGW("Unable to set server to use in verification process");
+        error = {};
+    }
+    net::setSniHostname(_stream, host, error);
+    if (error) {
+        LOGW("Unable to set SNI hostname");
     }
 
     _req.version(kHttpVersion11);

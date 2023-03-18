@@ -2,7 +2,6 @@
 
 #include "common/Config.hpp"
 #include "jarvis/Logger.hpp"
-#include "jarvis/LoggerInitializer.hpp"
 
 #include "intent/IntentSubsystem.hpp"
 
@@ -14,6 +13,18 @@ const char*
 ExecutorApplication::name() const
 {
     return "Executor";
+}
+
+const char*
+ExecutorApplication::contextId()
+{
+    return "EXEC";
+}
+
+const char*
+ExecutorApplication::contextDesc()
+{
+    return "J.A.R.V.I.S Executor Context";
 }
 
 void
@@ -47,14 +58,6 @@ ExecutorApplication::initialize(Application& application)
     addSubsystem(std::make_unique<IntentSubsystem>(_config));
 
     Application::initialize(application);
-}
-
-void
-ExecutorApplication::proceed()
-{
-    if (!waitForTermination()) {
-        LOGE("Waiting for termination has failed");
-    }
 }
 
 } // namespace jar
