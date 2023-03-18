@@ -18,7 +18,3 @@ target_sources(${TARGET}
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_20)
-
-target_compile_definitions(${TARGET}
-    PUBLIC SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG
-)
