@@ -6,6 +6,8 @@
 #include "intent/WitIntentParser.hpp"
 #include "jarvis/Logger.hpp"
 
+#include <boost/assert.hpp>
+
 #include <fstream>
 
 namespace jar {
@@ -55,9 +57,9 @@ WitSpeechRecognition::run()
 void
 WitSpeechRecognition::run(std::string_view host, std::uint16_t port, std::string_view auth)
 {
-    assert(!host.empty());
-    assert(port > 0);
-    assert(!auth.empty());
+    BOOST_ASSERT(!host.empty());
+    BOOST_ASSERT(port > 0);
+    BOOST_ASSERT(!auth.empty());
 
     std::error_code error;
     net::setServerHostname(_stream, host, error);
@@ -91,7 +93,7 @@ WitSpeechRecognition::feed(io::const_buffer buffer)
         throw std::logic_error{"Inappropriate call to feed-up by data"};
     }
 
-    assert(buffer.size() > 0);
+    BOOST_ASSERT(buffer.size() > 0);
 
     _stream.get_executor().execute([this, buffer]() {
         starving(false);

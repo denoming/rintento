@@ -9,6 +9,8 @@
 #include "intent/WitRecognitionFactory.hpp"
 #include "jarvis/Logger.hpp"
 
+#include <boost/assert.hpp>
+
 namespace jar {
 
 std::shared_ptr<RecognitionDispatcher>
@@ -33,10 +35,10 @@ RecognitionDispatcher::RecognitionDispatcher(uint16_t identity,
     , _performer{std::move(performer)}
     , _factory{std::move(factory)}
 {
-    assert(_identity);
-    assert(_connection);
-    assert(_performer);
-    assert(_factory);
+    BOOST_ASSERT(_identity);
+    BOOST_ASSERT(_connection);
+    BOOST_ASSERT(_performer);
+    BOOST_ASSERT(_factory);
 }
 
 uint16_t
@@ -79,7 +81,7 @@ RecognitionDispatcher::onReadHeaderDone(beast::flat_buffer& buffer,
     }
 
     _handler = getHandler();
-    assert(_handler);
+    BOOST_ASSERT(_handler);
     _handler->handle(buffer, parser);
 }
 

@@ -6,6 +6,8 @@
 #include "intent/WitIntentParser.hpp"
 #include "jarvis/Logger.hpp"
 
+#include <boost/assert.hpp>
+
 namespace jar {
 
 std::shared_ptr<WitMessageRecognition>
@@ -53,9 +55,9 @@ WitMessageRecognition::run()
 void
 WitMessageRecognition::run(std::string_view host, std::uint16_t port, std::string_view auth)
 {
-    assert(!host.empty());
-    assert(port > 0);
-    assert(!auth.empty());
+    BOOST_ASSERT(!host.empty());
+    BOOST_ASSERT(port > 0);
+    BOOST_ASSERT(!auth.empty());
 
     std::error_code error;
     net::setServerHostname(_stream, host, error);
@@ -85,7 +87,7 @@ WitMessageRecognition::feed(std::string_view message)
         throw std::logic_error{"Inappropriate call to feed-up by data"};
     }
 
-    assert(!message.empty());
+    BOOST_ASSERT(!message.empty());
     _req.target(format::messageTargetWithDate(message));
 
     _stream.get_executor().execute([this]() {

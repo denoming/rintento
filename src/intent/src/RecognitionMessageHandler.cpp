@@ -6,6 +6,8 @@
 #include "intent/WitRecognitionFactory.hpp"
 #include "jarvis/Logger.hpp"
 
+#include <boost/assert.hpp>
+
 namespace jar {
 
 std::shared_ptr<RecognitionMessageHandler>
@@ -25,7 +27,7 @@ RecognitionMessageHandler::RecognitionMessageHandler(
     : RecognitionHandler{std::move(connection)}
     , _factory{std::move(factory)}
 {
-    assert(_factory);
+    BOOST_ASSERT(_factory);
 }
 
 void
@@ -46,7 +48,7 @@ RecognitionMessageHandler::handle(Buffer& buffer, Parser& parser)
     }
 
     _recognition = createRecognition();
-    assert(_recognition);
+    BOOST_ASSERT(_recognition);
     _recognition->run();
 }
 
@@ -60,7 +62,7 @@ std::shared_ptr<WitMessageRecognition>
 RecognitionMessageHandler::createRecognition()
 {
     auto recognition = _factory->message();
-    assert(recognition);
+    BOOST_ASSERT(recognition);
     recognition->onReady(
         [weakSelf = weak_from_this(), executor = connection().executor()](auto result, auto error) {
             if (error) {
@@ -89,7 +91,7 @@ void
 RecognitionMessageHandler::onRecognitionData()
 {
     LOGD("Feed up the recognition using given message: <{}> length", _message.size());
-    assert(_recognition);
+    BOOST_ASSERT(_recognition);
     _recognition->feed(std::move(_message));
 }
 

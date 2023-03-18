@@ -1,11 +1,13 @@
 #include "intent/SpeechDataBuffer.hpp"
 
+#include <boost/assert.hpp>
+
 namespace jar {
 
 SpeechDataBuffer::SpeechDataBuffer(std::size_t capacity)
     : _buffer{capacity}
 {
-    assert(_buffer.is_linearized());
+    BOOST_ASSERT(_buffer.is_linearized());
 }
 
 bool

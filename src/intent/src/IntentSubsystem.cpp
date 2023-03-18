@@ -8,6 +8,8 @@
 #include "jarvis/Application.hpp"
 #include "jarvis/Logger.hpp"
 
+#include <boost/assert.hpp>
+
 namespace jar {
 
 IntentSubsystem::IntentSubsystem(std::shared_ptr<Config> config)
@@ -42,7 +44,7 @@ IntentSubsystem::setUp(Application& application)
     _recognizeWorker.start();
 
     const auto port = _config->proxyServerPort();
-    assert(_server);
+    BOOST_ASSERT(_server);
     if (_server->listen(port)) {
         LOGI("Starting server on <{}> port was success", port);
     } else {

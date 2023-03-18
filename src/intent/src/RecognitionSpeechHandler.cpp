@@ -7,6 +7,8 @@
 #include "intent/WitRecognitionFactory.hpp"
 #include "intent/WitSpeechRecognition.hpp"
 
+#include <boost/assert.hpp>
+
 static const int SpeechBufferCapacity = 1024 * 1024;
 
 namespace jar {
@@ -29,7 +31,7 @@ RecognitionSpeechHandler::RecognitionSpeechHandler(
     , _factory{std::move(factory)}
     , _speechData{SpeechBufferCapacity}
 {
-    assert(_factory);
+    BOOST_ASSERT(_factory);
 }
 
 void
@@ -51,7 +53,7 @@ RecognitionSpeechHandler::handle(Buffer& buffer, Parser& parser)
     http::write(connection().stream(), res);
 
     _recognition = createRecognition();
-    assert(_recognition);
+    BOOST_ASSERT(_recognition);
     _recognition->run();
 
     handleSpeechData(buffer, parser);
@@ -67,7 +69,7 @@ std::shared_ptr<WitSpeechRecognition>
 RecognitionSpeechHandler::createRecognition()
 {
     auto recognition = _factory->speech();
-    assert(recognition);
+    BOOST_ASSERT(recognition);
     recognition->onReady(
         [weakSelf = weak_from_this(), executor = connection().executor()](auto result, auto error) {
             if (error) {

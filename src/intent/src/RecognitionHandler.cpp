@@ -4,6 +4,7 @@
 #include "intent/RecognitionConnection.hpp"
 
 #include <boost/json.hpp>
+#include <boost/assert.hpp>
 
 namespace json = boost::json;
 
@@ -47,13 +48,13 @@ getResponse(std::string payload)
 RecognitionHandler::RecognitionHandler(std::shared_ptr<RecognitionConnection> connection)
     : _connection{std::move(connection)}
 {
-    assert(_connection);
+    BOOST_ASSERT(_connection);
 }
 
 void
 RecognitionHandler::setNext(std::shared_ptr<RecognitionHandler> handler)
 {
-    assert(!_next);
+    BOOST_ASSERT(!_next);
     _next = std::move(handler);
 }
 
@@ -80,14 +81,14 @@ RecognitionHandler::connection() const
 void
 RecognitionHandler::submit(Utterances result)
 {
-    assert(_doneCallback);
+    BOOST_ASSERT(_doneCallback);
     _doneCallback(std::move(result), {});
 }
 
 void
 RecognitionHandler::submit(sys::error_code error)
 {
-    assert(_doneCallback);
+    BOOST_ASSERT(_doneCallback);
     _doneCallback({}, error);
 }
 

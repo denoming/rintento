@@ -1,5 +1,7 @@
 #include "intent/Recognition.hpp"
 
+#include <boost/assert.hpp>
+
 namespace jar {
 
 Recognition::Recognition()
@@ -25,7 +27,7 @@ Recognition::wait()
 void
 Recognition::setResult(Utterances value)
 {
-    assert(!_ready);
+    BOOST_ASSERT(!_ready);
     std::unique_lock lock{_readyGuard};
     _ready = true;
     if (_readyCallback) {
@@ -38,7 +40,7 @@ Recognition::setResult(Utterances value)
 void
 Recognition::setError(sys::error_code value)
 {
-    assert(!_ready);
+    BOOST_ASSERT(!_ready);
     std::unique_lock lock{_readyGuard};
     _ready = true;
     if (_readyCallback) {
