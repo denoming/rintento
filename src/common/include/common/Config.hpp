@@ -13,10 +13,11 @@ class Config final : public IConfig {
 public:
     Config();
 
-    ~Config() final;
-
     [[nodiscard]] bool
     load();
+
+    [[nodiscard]] bool
+    load(std::string_view str);
 
     [[nodiscard]] bool
     load(fs::path filePath);
@@ -40,8 +41,16 @@ public:
     recognizeThreads() const final;
 
 private:
-    struct Options;
-    std::unique_ptr<Options> _options;
+    bool
+    doLoad(std::istream& stream);
+
+private:
+    std::uint16_t _proxyServerPort;
+    std::size_t _proxyServerThreads;
+    std::string _recognizeServerHost;
+    std::uint16_t _recognizeServerPort;
+    std::string _recognizeServerAuth;
+    std::size_t _recognizeServerThreads;
 };
 
 } // namespace jar

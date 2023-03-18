@@ -6,7 +6,6 @@
 
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
-#include <fmt/std.h>
 
 #include <fstream>
 
@@ -14,68 +13,50 @@ namespace pt = boost::property_tree;
 
 namespace jar {
 
-struct Config::Options {
-    Options()
-        : proxyServerPort{kDefaultProxyServerPort}
-        , proxyServerThreads{kDefaultProxyServerThreads}
-        , recognizeServerHost{}
-        , recognizeServerPort{}
-        , recognizeServerAuth{}
-        , recognizeServerThreads{kDefaultRecognizeServerThreads}
-    {
-    }
-
-    std::uint16_t proxyServerPort;
-    std::size_t proxyServerThreads;
-    std::string recognizeServerHost;
-    std::uint16_t recognizeServerPort;
-    std::string recognizeServerAuth;
-    std::size_t recognizeServerThreads;
-};
-
 Config::Config()
-    : _options{std::make_unique<Options>()}
-{
-}
-
-Config::~Config()
+    : _proxyServerPort{kDefaultProxyServerPort}
+    , _proxyServerThreads{kDefaultProxyServerThreads}
+    , _recognizeServerHost{}
+    , _recognizeServerPort{}
+    , _recognizeServerAuth{}
+    , _recognizeServerThreads{kDefaultRecognizeServerThreads}
 {
 }
 
 std::uint16_t
 Config::proxyServerPort() const
 {
-    return _options->proxyServerPort;
+    return _proxyServerPort;
 }
 
 std::size_t
 Config::proxyServerThreads() const
 {
-    return _options->proxyServerThreads;
+    return _proxyServerThreads;
 }
 
 std::string_view
 Config::recognizeServerHost() const
 {
-    return _options->recognizeServerHost;
+    return _recognizeServerHost;
 }
 
 std::uint16_t
 Config::recognizeServerPort() const
 {
-    return _options->recognizeServerPort;
+    return _recognizeServerPort;
 }
 
 std::string_view
 Config::recognizeServerAuth() const
 {
-    return _options->recognizeServerAuth;
+    return _recognizeServerAuth;
 }
 
 std::size_t
 Config::recognizeThreads() const
 {
-    return _options->recognizeServerThreads;
+    return _recognizeServerThreads;
 }
 
 bool
@@ -83,11 +64,23 @@ Config::load()
 {
     bool rv{false};
     if (const auto filePathOpt = getEnvVar("JARVIS_EXECUTOR_CONFIG"); filePathOpt) {
-        rv = load(*filePathOpt);
+        fs::path filePath{*filePathOpt};
+        rv = load(filePath);
     } else {
-        LOGE("Set config file by JARVIS_EXECUTOR_CONFIG environment variable");
+        LOGE("Set the path to config file using JARVIS_EXECUTOR_CONFIG env variable");
     }
     return rv;
+}
+
+bool
+Config::load(std::string_view str)
+{
+    if (str.empty()) {
+        LOGE("Config is empty");
+        return false;
+    }
+    std::istringstream stream{std::string{str}, std::ios::in};
+    return doLoad(stream);
 }
 
 bool
@@ -105,6 +98,12 @@ Config::load(fs::path filePath)
         return false;
     }
 
+    return doLoad(stream);
+}
+
+bool
+Config::doLoad(std::istream& stream)
+{
     pt::ptree tree;
     try {
         pt::read_json(stream, tree);
@@ -118,14 +117,14 @@ Config::load(fs::path filePath)
 
     if (auto portOpt = tree.get_optional<int>("proxy.port"); portOpt) {
         if (*portOpt > 0) {
-            _options->proxyServerPort = static_cast<std::uint16_t>(*portOpt);
+            _proxyServerPort = static_cast<std::uint16_t>(*portOpt);
         } else {
             LOGW("Invalid proxy port option value: {}", *portOpt);
         }
     }
     if (auto threadsOpt = tree.get_optional<int>("proxy.threads"); threadsOpt) {
         if (*threadsOpt > 0) {
-            _options->proxyServerThreads = static_cast<std::size_t>(*threadsOpt);
+            _proxyServerThreads = static_cast<std::size_t>(*threadsOpt);
         } else {
             LOGW("Invalid proxy threads count option value: {}", *threadsOpt);
         }
@@ -134,12 +133,12 @@ Config::load(fs::path filePath)
         if (hostOpt->empty()) {
             LOGW("Invalid recognize host option value");
         } else {
-            _options->recognizeServerHost = std::move(*hostOpt);
+            _recognizeServerHost = std::move(*hostOpt);
         }
     }
     if (auto portOpt = tree.get_optional<int>("recognize.port"); portOpt) {
         if (*portOpt > 0) {
-            _options->recognizeServerPort = static_cast<std::uint16_t>(*portOpt);
+            _recognizeServerPort = static_cast<std::uint16_t>(*portOpt);
         } else {
             LOGW("Invalid recognize port option value: {}", *portOpt);
         }
@@ -148,14 +147,14 @@ Config::load(fs::path filePath)
         if (authOpt->empty()) {
             LOGW("Invalid recognize auth option value");
         } else {
-            _options->recognizeServerAuth = std::move(*authOpt);
+            _recognizeServerAuth = std::move(*authOpt);
         }
     } else {
         LOGW("Mandatory recognize auth option value is absent");
     }
     if (auto threadsOpt = tree.get_optional<int>("recognize.threads"); threadsOpt) {
         if (*threadsOpt > 0) {
-            _options->recognizeServerThreads = static_cast<std::size_t>(*threadsOpt);
+            _recognizeServerThreads = static_cast<std::size_t>(*threadsOpt);
         } else {
             LOGW("Invalid recognize threads count option value: {}", *threadsOpt);
         }

@@ -23,9 +23,6 @@ private:
     contextDesc() final;
 
     void
-    defineOptions(po::options_description& description) override;
-
-    void
     initialize(Application& application) override;
 
 private:
