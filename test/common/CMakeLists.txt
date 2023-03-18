@@ -20,4 +20,4 @@ target_link_libraries(${TARGET}
            Jarvis::Executor::Intent
 )
 
-target_compile_features(${TARGET} PUBLIC cxx_std_20)
+target_compile_features(${TARGET} PUBLIC cxx_std_23)
