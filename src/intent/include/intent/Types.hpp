@@ -4,7 +4,6 @@
 
 #include <string>
 #include <vector>
-#include <system_error>
 
 namespace jar {
 
@@ -32,8 +31,5 @@ using Utterances = std::vector<Utterance>;
 
 bool
 operator==(const Intent& lhs, const Intent& rhs);
-
-std::ostream&
-operator<<(std::ostream& s, const Intent& input);
 
 } // namespace jar

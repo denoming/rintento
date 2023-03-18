@@ -1,7 +1,5 @@
 #include "intent/Types.hpp"
 
-#include <spdlog/fmt/fmt.h>
-
 namespace jar {
 
 bool
@@ -11,14 +9,6 @@ operator==(const Intent& lhs, const Intent& rhs)
         return (lhs.name == rhs.name);
     }
     return true;
-}
-
-std::ostream&
-operator<<(std::ostream& s, const Intent& input)
-{
-    constexpr std::string_view kFormat{"name=<{}>, confidence=<{:.3f}>"};
-    s << fmt::format(fmt::runtime(kFormat), input.name, input.confidence);
-    return s;
 }
 
 } // namespace jar
