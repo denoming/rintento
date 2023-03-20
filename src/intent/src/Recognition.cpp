@@ -25,7 +25,7 @@ Recognition::wait()
 }
 
 void
-Recognition::setResult(Utterances value)
+Recognition::setResult(UtteranceSpecs value)
 {
     BOOST_ASSERT(!_ready);
     std::unique_lock lock{_readyGuard};

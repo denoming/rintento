@@ -13,22 +13,22 @@ namespace jar {
 
 namespace {
 
-std::optional<Intent>
+std::optional<IntentSpec>
 toIntent(const json::object& jsonObject)
 {
     const auto nameValue = jsonObject.if_contains("name");
     const auto confValue = jsonObject.if_contains("confidence");
     if ((nameValue && nameValue->is_string()) && (confValue && confValue->is_double())) {
         std::string name{nameValue->as_string().begin(), nameValue->as_string().end()};
-        return Intent{std::move(name), static_cast<float>(confValue->as_double())};
+        return IntentSpec{std::move(name), static_cast<float>(confValue->as_double())};
     }
     return std::nullopt;
 }
 
-Intents
+IntentSpecs
 toIntents(const json::array& jsonIntents)
 {
-    Intents intents;
+    IntentSpecs intents;
     for (auto jsonIntent : jsonIntents) {
         if (const auto intentObject = jsonIntent.if_object(); intentObject) {
             if (auto intentOpt = toIntent(*intentObject); intentOpt) {
@@ -39,10 +39,10 @@ toIntents(const json::array& jsonIntents)
     return intents;
 }
 
-std::optional<Utterance>
+std::optional<UtteranceSpec>
 toUtterance(const json::object& object)
 {
-    Intents intents;
+    IntentSpecs intents;
     if (auto intentsValue = object.if_contains("intents"); intentsValue) {
         if (auto intentsArray = intentsValue->if_array(); intentsArray) {
             intents = toIntents(*intentsArray);
@@ -63,14 +63,14 @@ toUtterance(const json::object& object)
         }
     }
 
-    return Utterance{std::move(text), std::move(intents), isFinal};
+    return UtteranceSpec{std::move(text), std::move(intents), isFinal};
 }
 
 } // namespace
 
 class WitIntentParser::Impl {
 public:
-    std::optional<Utterances>
+    std::optional<UtteranceSpecs>
     parse(std::string_view input)
     {
         _parser.reset();
@@ -80,7 +80,7 @@ public:
             return std::nullopt;
         }
 
-        Utterances utterances;
+        UtteranceSpecs utterances;
         std::size_t nextRoot{0};
         do {
             std::error_code error;
@@ -113,7 +113,7 @@ WitIntentParser::WitIntentParser()
 
 WitIntentParser::~WitIntentParser() = default;
 
-std::optional<Utterances>
+std::optional<UtteranceSpecs>
 WitIntentParser::parse(std::string_view input)
 {
     BOOST_ASSERT(_impl);

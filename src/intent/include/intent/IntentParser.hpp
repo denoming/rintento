@@ -11,7 +11,7 @@ class IntentParser {
 public:
     virtual ~IntentParser() = default;
 
-    [[nodiscard]] virtual std::optional<Utterances>
+    [[nodiscard]] virtual std::optional<UtteranceSpecs>
     parse(std::string_view input) = 0;
 };
 

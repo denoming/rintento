@@ -13,7 +13,7 @@ namespace jar {
 
 class Recognition {
 public:
-    using OnReady = void(Utterances result, sys::error_code error);
+    using OnReady = void(UtteranceSpecs result, sys::error_code error);
 
     Recognition();
 
@@ -29,7 +29,7 @@ public:
     cancel()
         = 0;
 
-    template<std::invocable<Utterances, sys::error_code> Callback>
+    template<std::invocable<UtteranceSpecs, sys::error_code> Callback>
     void
     onReady(Callback&& callback)
     {
@@ -38,7 +38,7 @@ public:
 
 protected:
     void
-    setResult(Utterances value);
+    setResult(UtteranceSpecs value);
 
     void
     setError(sys::error_code value);

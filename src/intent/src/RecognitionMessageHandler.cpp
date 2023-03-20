@@ -104,7 +104,7 @@ RecognitionMessageHandler::onRecognitionError(sys::error_code error)
 }
 
 void
-RecognitionMessageHandler::onRecognitionSuccess(Utterances result)
+RecognitionMessageHandler::onRecognitionSuccess(UtteranceSpecs result)
 {
     LOGD("Submit recognition success: <{}> size", result.size());
     sendResponse(result);

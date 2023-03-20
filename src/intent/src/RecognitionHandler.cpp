@@ -13,7 +13,7 @@ namespace jar {
 namespace {
 
 std::string
-getPayload(const Utterances& result)
+getPayload(const UtteranceSpecs& result)
 {
     json::value value;
     auto& object = value.emplace_object();
@@ -79,7 +79,7 @@ RecognitionHandler::connection() const
 }
 
 void
-RecognitionHandler::submit(Utterances result)
+RecognitionHandler::submit(UtteranceSpecs result)
 {
     BOOST_ASSERT(_doneCallback);
     _doneCallback(std::move(result), {});
@@ -93,7 +93,7 @@ RecognitionHandler::submit(sys::error_code error)
 }
 
 void
-RecognitionHandler::sendResponse(const Utterances& result)
+RecognitionHandler::sendResponse(const UtteranceSpecs& result)
 {
     _connection->write(getResponse(getPayload(result)));
 }

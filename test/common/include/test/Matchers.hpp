@@ -6,38 +6,40 @@
 
 namespace testing {
 
-inline Matcher<jar::Intent>
+inline Matcher<jar::IntentSpec>
 isIntent(std::string_view name)
 {
-    return Field(&jar::Intent::name, StrCaseEq(name));
+    return Field(&jar::IntentSpec::name, StrCaseEq(name));
 }
 
-inline Matcher<jar::Intent>
+inline Matcher<jar::IntentSpec>
 isIntent(std::string_view name, float confidence)
 {
-    return AllOf(Field(&jar::Intent::name, StrCaseEq(name)),
-                 Field(&jar::Intent::confidence, FloatEq(confidence)));
+    return AllOf(Field(&jar::IntentSpec::name, StrCaseEq(name)),
+                 Field(&jar::IntentSpec::confidence, FloatEq(confidence)));
 }
 
-inline Matcher<jar::Intent>
+inline Matcher<jar::IntentSpec>
 isConfidentIntent(std::string_view name, float threshold)
 {
-    return AllOf(Field(&jar::Intent::name, StrCaseEq(name)),
-                 Field(&jar::Intent::confidence, Gt(threshold)));
+    return AllOf(Field(&jar::IntentSpec::name, StrCaseEq(name)),
+                 Field(&jar::IntentSpec::confidence, Gt(threshold)));
 }
 
-inline Matcher<jar::Utterance>
-isUtterance(std::string_view text, const Matcher<jar::Intents>& intent, const bool isFinal = true)
+inline Matcher<jar::UtteranceSpec>
+isUtterance(std::string_view text,
+            const Matcher<jar::IntentSpecs>& intents,
+            const bool isFinal = true)
 {
-    return AllOf(Field(&jar::Utterance::text, StrCaseEq(text)),
-                 Field(&jar::Utterance::intents, intent),
-                 Field(&jar::Utterance::final, isFinal));
+    return AllOf(Field(&jar::UtteranceSpec::text, StrCaseEq(text)),
+                 Field(&jar::UtteranceSpec::intents, intents),
+                 Field(&jar::UtteranceSpec::final, isFinal));
 }
 
-inline Matcher<jar::Utterance>
+inline Matcher<jar::UtteranceSpec>
 isUtterance(std::string_view text)
 {
-    return Field(&jar::Utterance::text, StrCaseEq(text));
+    return Field(&jar::UtteranceSpec::text, StrCaseEq(text));
 }
 
 } // namespace testing

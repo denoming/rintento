@@ -8,11 +8,13 @@ namespace jar {
 
 class IntentPerformer {
 public:
+    using Ptr = std::shared_ptr<IntentPerformer>;
+
     static std::shared_ptr<IntentPerformer>
     create();
 
     void
-    perform(Utterances utterances);
+    perform(UtteranceSpecs utterances);
 
 private:
     IntentPerformer() = default;

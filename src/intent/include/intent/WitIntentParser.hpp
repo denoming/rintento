@@ -12,7 +12,7 @@ public:
 
     ~WitIntentParser() final;
 
-    [[nodiscard]] std::optional<Utterances>
+    [[nodiscard]] std::optional<UtteranceSpecs>
     parse(std::string_view input) final;
 
 private:

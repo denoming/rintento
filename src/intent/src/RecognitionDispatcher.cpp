@@ -86,7 +86,7 @@ RecognitionDispatcher::onReadHeaderDone(beast::flat_buffer& buffer,
 }
 
 void
-RecognitionDispatcher::onComplete(Utterances utterances, sys::error_code error)
+RecognitionDispatcher::onComplete(UtteranceSpecs utterances, sys::error_code error)
 {
     if (error) {
         LOGE("The <{}> dispatcher has failed: <{}> error", _identity, error.message());

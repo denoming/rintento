@@ -8,29 +8,29 @@
 namespace jar {
 
 /**
- * The intent class representation
+ * The intent spec class representation
  */
-struct Intent {
+struct IntentSpec {
     std::string name;
     float confidence{0.0f};
 };
 
-/** The bunch of intents */
-using Intents = std::vector<Intent>;
+/** The bunch of intent specs */
+using IntentSpecs = std::vector<IntentSpec>;
 
 /**
- * The utterance class representation
+ * The utterance spec class representation
  */
-struct Utterance {
+struct UtteranceSpec {
     std::string text;
-    Intents intents;
+    IntentSpecs intents;
     bool final{false};
 };
 
-/** The bunch of utterances */
-using Utterances = std::vector<Utterance>;
+/** The bunch of utterances specs */
+using UtteranceSpecs = std::vector<UtteranceSpec>;
 
 bool
-operator==(const Intent& lhs, const Intent& rhs);
+operator==(const IntentSpec& lhs, const IntentSpec& rhs);
 
 } // namespace jar

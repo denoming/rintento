@@ -9,7 +9,7 @@ IntentPerformer::create()
 }
 
 void
-IntentPerformer::perform(Utterances utterances)
+IntentPerformer::perform(UtteranceSpecs utterances)
 {
 }
 
