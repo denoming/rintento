@@ -6,7 +6,7 @@
 
 namespace jar {
 
-class IntentPerformer {
+class IntentPerformer : public std::enable_shared_from_this<IntentPerformer> {
 public:
     using Ptr = std::shared_ptr<IntentPerformer>;
 
