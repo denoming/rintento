@@ -35,12 +35,20 @@ Source #3
     Description: Built-in Audio Analog Stereo
 ```
 
-Recording audio file:
+Writing RAW audio file:
 ```shell
-$ gst-launch-1.0 -e pulsesrc device=alsa_input.pci-0000_00_1f.3.analog-stereo \
+$ gst-launch-1.0 -e pulsesrc device=<device-name-from-pactl-output> \
 ! queue \
 ! audioresample ! audioconvert \
 ! audio/x-raw,format=S16LE,rate=16000,channels=1,quality=10 \
 ! filesink location=audio.raw
 ```
     
+Reading RAW audio file:
+```shell
+$ gst-launch-1.0 -e filesrc location = "audio.raw" \
+! rawaudioparse use-sink-caps=false format=pcm pcm-format=s16le sample-rate=16000 num-channels=1 \
+! audioconvert \
+! audioresample \
+! autoaudiosink
+```
