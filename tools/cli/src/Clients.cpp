@@ -1,4 +1,4 @@
-#include "test/Clients.hpp"
+#include "cli/Clients.hpp"
 
 #include "intent/Constants.hpp"
 #include "intent/Utils.hpp"
@@ -51,7 +51,7 @@ recognizeMessage(io::any_io_executor executor,
     stream.connect(endpoints);
 
     const auto target = format::messageTarget(message);
-    http::request<http::empty_body> req{http::verb::get, target, kHttpVersion11};
+    http::request<http::empty_body> req{http::verb::get, target, net::kHttpVersion11};
     req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     LOGD("Client: Write recognize request");
     http::write(stream, req);
@@ -80,7 +80,7 @@ recognizeSpeech(io::any_io_executor executor,
     stream.connect(endpoints);
 
     const auto target = format::speechTarget();
-    http::request<http::empty_body> req{http::verb::post, target, kHttpVersion11};
+    http::request<http::empty_body> req{http::verb::post, target, net::kHttpVersion11};
     req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     req.set(http::field::transfer_encoding, "chunked");
     req.set(http::field::expect, "100-continue");

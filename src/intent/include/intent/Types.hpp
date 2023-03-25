@@ -7,6 +7,16 @@
 
 namespace jar {
 
+struct GeoLocation {
+    auto
+    operator<=>(const GeoLocation& other) const
+        = default;
+
+    double lat{};
+    double lon{};
+    double alt{};
+};
+
 /**
  * The intent spec class representation
  */

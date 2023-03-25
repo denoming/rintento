@@ -2,8 +2,10 @@
 #include <gtest/gtest.h>
 
 #include "common/Config.hpp"
+#include "intent/Formatters.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 #include "intent/WitSpeechRecognition.hpp"
+#include "jarvis/Logger.hpp"
 #include "jarvis/Worker.hpp"
 #include "test/Matchers.hpp"
 #include "test/TestWaiter.hpp"
@@ -11,6 +13,7 @@
 
 #include <fstream>
 #include <thread>
+#include <iostream>
 
 using namespace testing;
 using namespace jar;
@@ -114,6 +117,43 @@ TEST_F(WitSpeechRecognitionTest, RecognizeSpeech2)
 
     std::size_t fileSize{0};
     auto fileData = readFile(AssetAudioPath / "turn-on-the-light.raw", fileSize);
+    ASSERT_TRUE(fileData);
+    ASSERT_THAT(fileSize, Gt(0));
+
+    recognition->run();
+
+    waiter.wait([&guard]() { return guard; });
+    ASSERT_TRUE(guard);
+    guard = false;
+
+    recognition->feed(io::buffer(fileData.get(), fileSize));
+
+    waiter.wait([&guard]() { return guard; });
+    ASSERT_TRUE(guard);
+    guard = false;
+
+    recognition->finalize();
+    recognition->wait();
+}
+
+TEST_F(WitSpeechRecognitionTest, RecognizeSpeech3)
+{
+    recognition->onReady([](UtteranceSpecs result, sys::error_code error) {
+        if (error) {
+            LOGI("Error occurred");
+        } else {
+            fmt::print("{}", result);
+        }
+    });
+
+    bool guard{false};
+    recognition->onData([this, &guard]() {
+        guard = true;
+        waiter.notify();
+    });
+
+    std::size_t fileSize{0};
+    auto fileData = readFile(AssetAudioPath / "will-it-be-rainy-today.raw", fileSize);
     ASSERT_TRUE(fileData);
     ASSERT_THAT(fileSize, Gt(0));
 

@@ -6,13 +6,19 @@ target_sources(${TARGET}
     PRIVATE src/WitIntentParserTest.cpp
             src/WitMessageRecognitionTest.cpp
             src/WitSpeechRecognitionTest.cpp
-            src/RecognitionServerTest.cpp
             src/UtilsTest.cpp
+            src/IntentRegistryTest.cpp
+            src/registry/GetTodayRainyStatusIntentTest.cpp
 )
 
 target_link_libraries(${TARGET}
     PRIVATE Jarvis::Executor::Intent
             Jarvis::Executor::Test
+)
+
+install(
+    TARGETS ${TARGET}
+    COMPONENT JarvisExecutorRuntime
 )
 
 if (NOT CMAKE_CROSSCOMPILING)

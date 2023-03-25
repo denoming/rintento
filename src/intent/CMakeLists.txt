@@ -9,8 +9,10 @@ target_include_directories(${TARGET}
 
 target_link_libraries(${TARGET}
     PUBLIC Jarvis::Common
+           Jarvis::Speaker
+           Jarvis::Weather
            Jarvis::Executor::Common
-    PUBLIC Boost::headers
+           Boost::headers
            Boost::json
     PRIVATE OpenSSL::SSL
             OpenSSL::Crypto
@@ -35,6 +37,10 @@ target_sources(${TARGET}
             src/RecognitionTerminalHandler.cpp
             src/SpeechDataBuffer.cpp
             src/Utils.cpp
+            src/Intent.cpp
+            src/IntentRegistry.cpp
+            src/PositioningClient.cpp
+            src/registry/GetRainyStatusIntent.cpp
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_23)

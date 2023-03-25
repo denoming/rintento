@@ -3,15 +3,57 @@
 #include "common/Config.hpp"
 #include "intent/Constants.hpp"
 #include "intent/IntentPerformer.hpp"
+#include "intent/IntentRegistry.hpp"
+#include "intent/PositioningClient.hpp"
 #include "intent/RecognitionServer.hpp"
 #include "intent/WitRecognitionFactory.hpp"
+#include "intent/registry/GetRainyStatusIntent.hpp"
 #include "jarvis/Application.hpp"
 #include "jarvis/Logger.hpp"
 #include "jarvis/Worker.hpp"
+#include "jarvis/speaker/SpeakerClient.hpp"
+#include "jarvis/weather/WeatherClient.hpp"
 
 #include <boost/assert.hpp>
 
 namespace jar {
+
+namespace {
+
+std::unique_ptr<SpeakerClient>
+getSpeakerClient()
+{
+    try {
+        return std::make_unique<SpeakerClient>();
+    } catch (const std::exception& e) {
+        LOGE("Error on create speaker client: {}", e.what());
+        return {};
+    }
+}
+
+std::unique_ptr<WeatherClient>
+getWeatherClient()
+{
+    try {
+        return std::make_unique<WeatherClient>();
+    } catch (const std::exception& e) {
+        LOGE("Error on create weather client: {}", e.what());
+        return {};
+    }
+}
+
+std::unique_ptr<PositioningClient>
+getPositioningClient()
+{
+    try {
+        return std::make_unique<PositioningClient>();
+    } catch (const std::exception& e) {
+        LOGE("Error on create positioning client: {}", e.what());
+        return {};
+    }
+}
+
+} // namespace
 
 class IntentSubsystem::Impl {
 public:
@@ -26,8 +68,13 @@ public:
     initialize(Application& /*application*/)
     {
         _factory = std::make_unique<WitRecognitionFactory>(_config, _recognizeWorker.executor());
-        _performer = IntentPerformer::create();
+        _registry = std::make_unique<IntentRegistry>();
+        _performer = IntentPerformer::create(*_registry);
         _server = RecognitionServer::create(_proxyWorker.executor(), _performer, _factory);
+
+        _positioningClient = getPositioningClient();
+        _speakerClient = getSpeakerClient();
+        _weatherClient = getWeatherClient();
     }
 
     void
@@ -35,6 +82,10 @@ public:
     {
         _proxyWorker.start();
         _recognizeWorker.start();
+
+        if (isSpeakerServiceAvailable()) {
+            registerIntents();
+        }
 
         const auto port = _config->proxyServerPort();
         BOOST_ASSERT(_server);
@@ -59,18 +110,54 @@ public:
     void
     finalize()
     {
+        _speakerClient.reset();
+        _weatherClient.reset();
+        _positioningClient.reset();
         _server.reset();
         _performer.reset();
+        _registry.reset();
         _factory.reset();
+    }
+
+private:
+    [[nodiscard]] bool
+    isSpeakerServiceAvailable() const
+    {
+        return bool(_speakerClient);
+    }
+
+    [[nodiscard]] bool
+    isWeatherServiceAvailable() const
+    {
+        return bool(_weatherClient);
+    }
+
+    [[nodiscard]] bool
+    isPositioningServiceAvailable() const
+    {
+        return bool(_positioningClient);
+    }
+
+    void
+    registerIntents()
+    {
+        if (isWeatherServiceAvailable() && isPositioningServiceAvailable()) {
+            _registry->add(GetRainyStatusIntent::create(
+                "get_today_rainy_status", *_positioningClient, *_speakerClient, *_weatherClient));
+        }
     }
 
 private:
     Worker _proxyWorker;
     Worker _recognizeWorker;
     Config::Ptr _config;
+    IntentRegistry::Ptr _registry;
     WitRecognitionFactory::Ptr _factory;
     IntentPerformer::Ptr _performer;
     RecognitionServer::Ptr _server;
+    std::unique_ptr<PositioningClient> _positioningClient;
+    std::unique_ptr<SpeakerClient> _speakerClient;
+    std::unique_ptr<WeatherClient> _weatherClient;
 };
 
 IntentSubsystem::IntentSubsystem(std::shared_ptr<Config> config)
