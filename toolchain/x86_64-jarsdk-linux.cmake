@@ -4,8 +4,8 @@ else()
     set(SDK_ROOT "/opt/poky/3.3.1")
 endif()
 
-set(TARGET_SYSROOT "${SDK_ROOT}/sysroots/core2-64-poky-linux")
-set(NATIVE_SYSROOT "${SDK_ROOT}/sysroots/x86_64-pokysdk-linux")
+set(TARGET_SYSROOT "${SDK_ROOT}/sysroots/core2-64-jarvis-linux")
+set(NATIVE_SYSROOT "${SDK_ROOT}/sysroots/x86_64-jarsdk-linux")
 
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSROOT ${TARGET_SYSROOT})
@@ -16,7 +16,7 @@ set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
-set(NATIVE_PREFIX "${NATIVE_SYSROOT}/usr/bin/x86_64-poky-linux/x86_64-poky-linux-")
+set(NATIVE_PREFIX "${NATIVE_SYSROOT}/usr/bin/x86_64-jarvis-linux/x86_64-jarvis-linux-")
 
 set(CMAKE_C_COMPILER
     ${NATIVE_PREFIX}gcc
