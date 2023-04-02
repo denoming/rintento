@@ -20,7 +20,7 @@ public:
     run();
 
     void
-    run(std::string_view host, std::uint16_t port, std::string_view auth);
+    run(std::string_view host, std::string_view port, std::string_view auth);
 
     void
     feed(std::string_view message);
@@ -31,7 +31,7 @@ private:
                                    io::any_io_executor executor);
 
     void
-    resolve(std::string_view host, std::uint16_t port);
+    resolve(std::string_view host, std::string_view port);
 
     void
     onResolveDone(sys::error_code error, const tcp::resolver::results_type& result);

@@ -41,7 +41,7 @@ Config::recognizeServerHost() const
     return _recognizeServerHost;
 }
 
-std::uint16_t
+std::string_view
 Config::recognizeServerPort() const
 {
     return _recognizeServerPort;
@@ -136,11 +136,11 @@ Config::doLoad(std::istream& stream)
             _recognizeServerHost = std::move(*hostOpt);
         }
     }
-    if (auto portOpt = tree.get_optional<int>("recognize.port"); portOpt) {
-        if (*portOpt > 0) {
-            _recognizeServerPort = static_cast<std::uint16_t>(*portOpt);
-        } else {
+    if (auto portOpt = tree.get_optional<std::string>("recognize.port"); portOpt) {
+        if (portOpt->empty()) {
             LOGW("Invalid recognize port option value: {}", *portOpt);
+        } else {
+            _recognizeServerPort = std::move(*portOpt);
         }
     }
     if (auto authOpt = tree.get_optional<std::string>("recognize.auth"); authOpt) {

@@ -40,10 +40,10 @@ WitSpeechRecognition::run()
     const auto port = _config->recognizeServerPort();
     const auto auth = _config->recognizeServerAuth();
 
-    if (host.empty() || (port == 0) || auth.empty()) {
+    if (host.empty() || (port.empty()) || auth.empty()) {
         LOGE("Invalid server config options: host<{}>, port<{}>, auth<{}>",
              !host.empty(),
-             (port > 0),
+             !port.empty(),
              !auth.empty());
         setError(sys::errc::make_error_code(sys::errc::invalid_argument));
     } else {
@@ -52,10 +52,10 @@ WitSpeechRecognition::run()
 }
 
 void
-WitSpeechRecognition::run(std::string_view host, std::uint16_t port, std::string_view auth)
+WitSpeechRecognition::run(std::string_view host, std::string_view port, std::string_view auth)
 {
     BOOST_ASSERT(!host.empty());
-    BOOST_ASSERT(port > 0);
+    BOOST_ASSERT(!port.empty());
     BOOST_ASSERT(!auth.empty());
 
     std::error_code error;
@@ -115,14 +115,13 @@ WitSpeechRecognition::finalize()
 }
 
 void
-WitSpeechRecognition::resolve(std::string_view host, std::uint16_t port)
+WitSpeechRecognition::resolve(std::string_view host, std::string_view port)
 {
-    LOGD("Resolve given host address: <{}:{}>", host, port);
+    LOGD("Resolve backend address: <{}>", host);
 
-    auto portStr = std::to_string(port);
     _resolver.async_resolve(
         host,
-        portStr,
+        port,
         io::bind_cancellation_slot(
             onCancel(),
             beast::bind_front_handler(&WitSpeechRecognition::onResolveDone, shared_from_this())));

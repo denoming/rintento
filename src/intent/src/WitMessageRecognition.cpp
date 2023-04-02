@@ -39,10 +39,10 @@ WitMessageRecognition::run()
     const auto port = _config->recognizeServerPort();
     const auto auth = _config->recognizeServerAuth();
 
-    if (host.empty() || (port == 0) || auth.empty()) {
+    if (host.empty() || port.empty() || auth.empty()) {
         LOGE("Recognize server options are invalid: host<{}>, port<{}>, auth<{}>",
              !host.empty(),
-             (port > 0),
+             !port.empty(),
              !auth.empty());
         io::post(_executor, [self = shared_from_this()]() {
             self->setError(sys::errc::make_error_code(sys::errc::invalid_argument));
@@ -53,17 +53,16 @@ WitMessageRecognition::run()
 }
 
 void
-WitMessageRecognition::run(std::string_view host, std::uint16_t port, std::string_view auth)
+WitMessageRecognition::run(std::string_view host, std::string_view port, std::string_view auth)
 {
     BOOST_ASSERT(!host.empty());
-    BOOST_ASSERT(port > 0);
+    BOOST_ASSERT(!port.empty());
     BOOST_ASSERT(!auth.empty());
 
     std::error_code error;
     net::setServerHostname(_stream, host, error);
     if (error) {
         LOGW("Unable to set server to use in verification process");
-        error = {};
     }
     net::setSniHostname(_stream, host, error);
     if (error) {
@@ -97,14 +96,13 @@ WitMessageRecognition::feed(std::string_view message)
 }
 
 void
-WitMessageRecognition::resolve(std::string_view host, std::uint16_t port)
+WitMessageRecognition::resolve(std::string_view host, std::string_view port)
 {
-    LOGD("Resolve given host address: <{}:{}>", host, port);
+    LOGD("Resolve given host address: <{}>", host);
 
-    auto portStr = std::to_string(port);
     _resolver.async_resolve(
         host,
-        portStr,
+        port,
         io::bind_cancellation_slot(
             onCancel(),
             beast::bind_front_handler(&WitMessageRecognition::onResolveDone, shared_from_this())));

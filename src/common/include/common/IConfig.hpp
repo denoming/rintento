@@ -20,7 +20,7 @@ public:
     recognizeServerHost() const
         = 0;
 
-    [[nodiscard]] virtual std::uint16_t
+    [[nodiscard]] virtual std::string_view
     recognizeServerPort() const
         = 0;
 

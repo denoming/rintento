@@ -33,7 +33,7 @@ public:
     [[nodiscard]] std::string_view
     recognizeServerHost() const final;
 
-    [[nodiscard]] std::uint16_t
+    [[nodiscard]] std::string_view
     recognizeServerPort() const final;
 
     [[nodiscard]] std::string_view
@@ -50,7 +50,7 @@ private:
     std::uint16_t _proxyServerPort;
     std::size_t _proxyServerThreads;
     std::string _recognizeServerHost;
-    std::uint16_t _recognizeServerPort;
+    std::string _recognizeServerPort;
     std::string _recognizeServerAuth;
     std::size_t _recognizeServerThreads;
 };
