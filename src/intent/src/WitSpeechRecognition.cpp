@@ -93,7 +93,7 @@ WitSpeechRecognition::feed(io::const_buffer buffer)
     starving(false);
 
     BOOST_ASSERT(buffer.size() > 0);
-    io::dispatch(_executor, [weakSelf = weak_from_this(), buffer]() {
+    io::post(_executor, [weakSelf = weak_from_this(), buffer]() {
         if (auto self = weakSelf.lock()) {
             self->writeNextChunk(buffer);
         }
@@ -110,7 +110,7 @@ WitSpeechRecognition::finalize()
     LOGD("Finalizing feeding by speech data");
     starving(false);
 
-    io::dispatch(_executor, [weakSelf = weak_from_this()]() {
+    io::post(_executor, [weakSelf = weak_from_this()]() {
         if (auto self = weakSelf.lock()) {
             self->writeLastChunk();
         }

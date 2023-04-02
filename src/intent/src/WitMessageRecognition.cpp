@@ -88,12 +88,12 @@ WitMessageRecognition::feed(std::string_view message)
     starving(false);
 
     BOOST_ASSERT(!message.empty());
-    _stream.get_executor().execute(
-        [weakSelf = weak_from_this(), target = format::messageTargetWithDate(message)]() {
-            if (auto self = weakSelf.lock()) {
-                self->write(target);
-            }
-        });
+    io::post(_executor,
+             [weakSelf = weak_from_this(), target = format::messageTargetWithDate(message)]() {
+                 if (auto self = weakSelf.lock()) {
+                     self->write(target);
+                 }
+             });
 }
 
 void
