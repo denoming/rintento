@@ -47,23 +47,23 @@ recognizeMessage(io::any_io_executor executor,
                  std::string_view message)
 {
     beast::tcp_stream stream{executor};
-    LOGD("Client: Connect to the given host");
+    LOGD("Connect to the given host");
     stream.connect(endpoints);
 
     const auto target = format::messageTarget(message);
     http::request<http::empty_body> req{http::verb::get, target, net::kHttpVersion11};
     req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-    LOGD("Client: Write recognize request");
+    LOGD("Write recognize request");
     http::write(stream, req);
 
     http::response<http::string_body> res;
     {
         beast::flat_buffer buffer;
-        LOGD("Client: Read response to recognize request");
+        LOGD("Read response to recognize request");
         http::read(stream, buffer, res);
     }
 
-    LOGD("Client: Close connection to host");
+    LOGD("Close connection to host");
     stream.close();
 
     return getResult(res.body());
@@ -76,7 +76,7 @@ recognizeSpeech(io::any_io_executor executor,
                 fs::path speechFile)
 {
     beast::tcp_stream stream{executor};
-    LOGD("Client: Connect to the given host");
+    LOGD("Connect to the given host");
     stream.connect(endpoints);
 
     const auto target = format::speechTarget();
@@ -85,7 +85,7 @@ recognizeSpeech(io::any_io_executor executor,
     req.set(http::field::transfer_encoding, "chunked");
     req.set(http::field::expect, "100-continue");
     {
-        LOGD("Client: Write recognize request");
+        LOGD("Write recognize request");
         http::request_serializer<http::empty_body> reqSer{req};
         http::write_header(stream, reqSer);
     }
@@ -93,10 +93,10 @@ recognizeSpeech(io::any_io_executor executor,
     {
         beast::flat_buffer buffer;
         http::response<http::empty_body> res;
-        LOGD("Client: Read response to recognize request");
+        LOGD("Read response to recognize request");
         http::read(stream, buffer, res);
         if (res.result() != http::status::continue_) {
-            LOGE("Client: 100 continue expected");
+            LOGE("100 continue expected");
             stream.close();
             return {};
         }
@@ -104,34 +104,34 @@ recognizeSpeech(io::any_io_executor executor,
 
     auto fileSize = fs::file_size(speechFile);
     if (fileSize == 0) {
-        LOGE("Client: Failed to get speech data file size");
+        LOGE("Failed to get speech data file size");
         return {};
     }
     std::fstream fs{speechFile, std::ios::in | std::ios::binary};
     if (!fs.is_open()) {
-        LOGE("Client: Failed to open speech data file");
+        LOGE("Failed to open speech data file");
         return {};
     }
     auto fileData = std::make_unique<char[]>(fileSize);
-    LOGD("Client: Read speech data file");
+    LOGD("Read speech data file");
     fs.read(reinterpret_cast<char*>(fileData.get()), fileSize);
 
     {
         const auto buffer = io::const_buffer(fileData.get(), fileSize);
-        LOGD("Client: Write <{}> bytes of speech data to socket", fileSize);
+        LOGD("Write <{}> bytes of speech data to socket", fileSize);
         io::write(stream, http::make_chunk(buffer));
-        LOGD("Client: Finalize writing of speech fata");
+        LOGD("Finalize writing of speech fata");
         io::write(stream, http::make_chunk_last());
     }
 
     http::response<http::string_body> res;
     {
         beast::flat_buffer buffer;
-        LOGD("Client: Read result of recognizing of speech");
+        LOGD("Read result of recognizing of speech");
         http::read(stream, buffer, res);
     }
 
-    LOGD("Client: Close connection to host");
+    LOGD("Close connection to host");
     stream.close();
 
     return getResult(res.body());
@@ -153,7 +153,7 @@ recognizeMessage(io::any_io_executor executor,
     tcp::resolver resolver{executor};
     auto const results = resolver.resolve(host, port);
     if (results.empty()) {
-        LOGE("Client: Failed to resolve given host");
+        LOGE("Failed to resolve given host");
         return {};
     }
     return recognizeMessage(executor, results, message);
@@ -175,7 +175,7 @@ recognizeSpeech(io::any_io_executor executor,
     tcp::resolver resolver{executor};
     auto const results = resolver.resolve(host, port);
     if (results.empty()) {
-        LOGE("Client: Failed to resolve given host");
+        LOGE("Failed to resolve given host");
         return {};
     }
     return recognizeSpeech(executor, results, speechFile);
