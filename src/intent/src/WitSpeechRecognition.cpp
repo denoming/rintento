@@ -3,12 +3,9 @@
 #include "common/Config.hpp"
 #include "intent/Constants.hpp"
 #include "intent/Utils.hpp"
-#include "intent/WitIntentParser.hpp"
 #include "jarvis/Logger.hpp"
 
 #include <boost/assert.hpp>
-
-#include <fstream>
 
 namespace jar {
 
@@ -37,18 +34,18 @@ WitSpeechRecognition::WitSpeechRecognition(std::shared_ptr<Config> config,
 void
 WitSpeechRecognition::run()
 {
+    BOOST_ASSERT(_config);
+
     const auto host = _config->recognizeServerHost();
     const auto port = _config->recognizeServerPort();
     const auto auth = _config->recognizeServerAuth();
 
     if (host.empty() || (port == 0) || auth.empty()) {
-        LOGE("Recognize server options are invalid: host<{}>, port<{}>, auth<{}>",
+        LOGE("Invalid server config options: host<{}>, port<{}>, auth<{}>",
              !host.empty(),
              (port > 0),
              !auth.empty());
-        io::post(_executor, [self = shared_from_this()]() {
-            self->setError(sys::errc::make_error_code(sys::errc::invalid_argument));
-        });
+        setError(sys::errc::make_error_code(sys::errc::invalid_argument));
     } else {
         run(host, port, auth);
     }
@@ -65,7 +62,6 @@ WitSpeechRecognition::run(std::string_view host, std::uint16_t port, std::string
     net::setServerHostname(_stream, host, error);
     if (error) {
         LOGW("Unable to set server to use in verification process");
-        error = {};
     }
     net::setSniHostname(_stream, host, error);
     if (error) {
@@ -94,10 +90,11 @@ WitSpeechRecognition::feed(io::const_buffer buffer)
     }
 
     BOOST_ASSERT(buffer.size() > 0);
-
-    _stream.get_executor().execute([this, buffer]() {
-        starving(false);
-        writeNextChunk(buffer);
+    starving(false);
+    io::dispatch(_executor, [weakSelf = weak_from_this(), buffer]() {
+        if (auto self = weakSelf.lock()) {
+            self->writeNextChunk(buffer);
+        }
     });
 }
 
@@ -108,9 +105,12 @@ WitSpeechRecognition::finalize()
         throw std::logic_error{"Inappropriate call to feed-up by data"};
     }
 
-    _stream.get_executor().execute([this]() {
-        starving(false);
-        writeLastChunk();
+    starving(false);
+
+    io::dispatch(_executor, [weakSelf = weak_from_this()]() {
+        if (auto self = weakSelf.lock()) {
+            self->writeLastChunk();
+        }
     });
 }
 
