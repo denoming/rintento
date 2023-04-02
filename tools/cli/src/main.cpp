@@ -2,10 +2,10 @@
 
 #include "cli/Clients.hpp"
 #include "common/Constants.hpp"
-#include "jarvis/Network.hpp"
-#include "jarvis/Worker.hpp"
 #include "jarvis/Logger.hpp"
 #include "jarvis/LoggerInitializer.hpp"
+#include "jarvis/Network.hpp"
+#include "jarvis/Worker.hpp"
 
 #include <boost/program_options.hpp>
 
@@ -49,20 +49,26 @@ main(int argn, char* argv[])
     worker.start();
 
     if (vm.contains("message")) {
-        clients::recognizeMessage(worker.executor(), serverPort, message);
+        const auto [ok, error] = clients::recognizeMessage(worker.executor(), serverPort, message);
+        if (!ok) {
+            LOGE("Recognizing of message has failed: {}", error);
+        }
         return EXIT_SUCCESS;
     }
 
     if (vm.contains("speech")) {
-        fs::path audioFilePath{audioFile};
-        if (!fs::exists(audioFilePath)) {
-            LOGE("File <{}> not found", audioFilePath);
+        fs::path filePath{audioFile};
+        if (!fs::exists(filePath)) {
+            LOGE("File <{}> not found", filePath);
             return EXIT_FAILURE;
         }
-        clients::recognizeSpeech(worker.executor(), serverPort, audioFilePath);
+        const auto [ok, error] = clients::recognizeSpeech(worker.executor(), serverPort, filePath);
+        if (!ok) {
+            LOGE("Recognizing of speech has failed: {}", error);
+        }
         return EXIT_SUCCESS;
     }
 
-    LOGI("Nothing to do. Exit.");
+    LOGI("Nothing to do");
     return EXIT_SUCCESS;
 }

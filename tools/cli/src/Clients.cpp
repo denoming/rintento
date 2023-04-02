@@ -46,24 +46,45 @@ recognizeMessage(io::any_io_executor executor,
                  const EndpointSequence& endpoints,
                  std::string_view message)
 {
-    beast::tcp_stream stream{executor};
-    LOGD("Connect to the given host");
-    stream.connect(endpoints);
+    sys::error_code error;
 
-    const auto target = format::messageTarget(message);
-    http::request<http::empty_body> req{http::verb::get, target, net::kHttpVersion11};
-    req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-    LOGD("Write recognize request");
-    http::write(stream, req);
+    beast::tcp_stream stream{executor};
+    LOGD("Connecting to the given endpoints");
+    tcp::endpoint endpoint = stream.connect(endpoints, error);
+    if (error) {
+        LOGE("Connecting to the given endpoint has failed: {}", error.what());
+    } else {
+        LOGD("Connected to <{}> endpoint", endpoint.address().to_string());
+    }
+
+    {
+        const auto target = format::messageTarget(message);
+        http::request<http::empty_body> req{http::verb::get, target, net::kHttpVersion11};
+        req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+        LOGD("Writing recognize message request upon <{}{}> target",
+             endpoint.address().to_string(),
+             target);
+        std::size_t bytesTransferred = http::write(stream, req, error);
+        if (error) {
+            LOGE("Writing has failed: {}", error.what());
+        } else {
+            LOGD("The <{}> bytes has been written", bytesTransferred);
+        }
+    }
 
     http::response<http::string_body> res;
     {
         beast::flat_buffer buffer;
-        LOGD("Read response to recognize request");
-        http::read(stream, buffer, res);
+        LOGD("Reading recognize message response");
+        std::size_t bytesTransferred = http::read(stream, buffer, res, error);
+        if (error) {
+            LOGE("Reading has failed: {}", error.what());
+        } else {
+            LOGD("The <{}> bytes has been read", bytesTransferred);
+        }
     }
 
-    LOGD("Close connection to host");
+    LOGD("Close connection to <{}> endpoint", endpoint.address().to_string());
     stream.close();
 
     return getResult(res.body());
@@ -75,60 +96,106 @@ recognizeSpeech(io::any_io_executor executor,
                 const EndpointSequence& endpoints,
                 fs::path speechFile)
 {
-    beast::tcp_stream stream{executor};
-    LOGD("Connect to the given host");
-    stream.connect(endpoints);
+    sys::error_code error;
 
-    const auto target = format::speechTarget();
-    http::request<http::empty_body> req{http::verb::post, target, net::kHttpVersion11};
-    req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-    req.set(http::field::transfer_encoding, "chunked");
-    req.set(http::field::expect, "100-continue");
+    beast::tcp_stream stream{executor};
+    LOGD("Connecting to the given endpoints");
+    tcp::endpoint endpoint = stream.connect(endpoints, error);
+    if (error) {
+        LOGE("Connecting to the given endpoint has failed: {}", error.what());
+        return {false, "Connecting has failed"};
+    } else {
+        LOGD("Connected to <{}> endpoint", endpoint.address().to_string());
+    }
+
     {
-        LOGD("Write recognize request");
+        const auto target = format::speechTarget();
+        http::request<http::empty_body> req{http::verb::post, target, net::kHttpVersion11};
+        req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+        req.set(http::field::transfer_encoding, "chunked");
+        req.set(http::field::expect, "100-continue");
+
+        LOGD("Writing recognize speech request header upon <{}{}> target",
+             endpoint.address().to_string(),
+             target);
         http::request_serializer<http::empty_body> reqSer{req};
-        http::write_header(stream, reqSer);
+        std::size_t bytesTransferred = http::write_header(stream, reqSer, error);
+        if (error) {
+            LOGE("Writing request header has failed: {}", error.what());
+            return {false, "Writing request has failed"};
+        } else {
+            LOGD("The <{}> bytes has been written", bytesTransferred);
+        }
     }
 
     {
         beast::flat_buffer buffer;
         http::response<http::empty_body> res;
-        LOGD("Read response to recognize request");
-        http::read(stream, buffer, res);
+        LOGD("Reading recognize speech response header");
+        std::size_t bytesTransferred = http::read(stream, buffer, res, error);
+        if (error) {
+            LOGE("Reading response header has failed: {}", error.what());
+            return {false, "Reading response header has failed"};
+        } else {
+            LOGD("The <{}> bytes has been read", bytesTransferred);
+        }
+
         if (res.result() != http::status::continue_) {
-            LOGE("100 continue expected");
-            stream.close();
-            return {};
+            LOGE("Invalid response header status");
+            return {false, "100 continue expected"};
         }
     }
 
-    auto fileSize = fs::file_size(speechFile);
-    if (fileSize == 0) {
-        LOGE("Failed to get speech data file size");
-        return {};
-    }
-    std::fstream fs{speechFile, std::ios::in | std::ios::binary};
-    if (!fs.is_open()) {
-        LOGE("Failed to open speech data file");
-        return {};
-    }
-    auto fileData = std::make_unique<char[]>(fileSize);
-    LOGD("Read speech data file");
-    fs.read(reinterpret_cast<char*>(fileData.get()), fileSize);
-
     {
-        const auto buffer = io::const_buffer(fileData.get(), fileSize);
-        LOGD("Write <{}> bytes of speech data to socket", fileSize);
-        io::write(stream, http::make_chunk(buffer));
-        LOGD("Finalize writing of speech fata");
-        io::write(stream, http::make_chunk_last());
+        std::ifstream is{speechFile, std::ios::binary | std::ios::in | std::ios::ate};
+        if (!is) {
+            LOGE("Unable to open <{}> speech file", speechFile);
+            return {false, "Unable to open speech file"};
+        }
+
+        constexpr const std::size_t kBufferSize{5 * 1024};
+        std::array<char, kBufferSize> buffer = {0};
+
+        auto totalSize = is.tellg();
+        LOGD("The size of <{}> speech file is <{}> bytes", speechFile, totalSize);
+        is.seekg(0);
+
+        while (!is.eof()) {
+            is.read(buffer.data(), kBufferSize);
+            if (auto bytesRead = is.gcount(); bytesRead > 0) {
+                const auto chunk = http::make_chunk(io::const_buffer(buffer.data(), bytesRead));
+                LOGD("Writing <{}> bytes of speech data", bytesRead);
+                std::size_t bytesTransferred = io::write(stream, chunk, error);
+                if (error) {
+                    LOGE("Writing has failed: {}", error.what());
+                    return {false, "Writing speech data chunk has failed"};
+                } else {
+                    LOGD("The <{}> bytes has been written", bytesTransferred);
+                }
+            }
+        }
+
+        LOGD("Finalizing writing of speech fata");
+        std::size_t bytesTransferred = io::write(stream, http::make_chunk_last(), error);
+        if (error) {
+            LOGE("Finalizing writing of speech data has failed: {}", error.what());
+            return {false, "Finalizing writing of speech data has failed"};
+        } else {
+            LOGD("The <{}> bytes has been written", bytesTransferred);
+        }
     }
 
     http::response<http::string_body> res;
     {
         beast::flat_buffer buffer;
-        LOGD("Read result of recognizing of speech");
-        http::read(stream, buffer, res);
+        LOGD("Reading result of speech recognizing");
+        std::size_t bytesTransferred = http::read(stream, buffer, res, error);
+        if (error) {
+            LOGE("Reading speech recognizing result has failed: {}", error.what());
+            return {false, "Reading speech recognizing result has failed"};
+        } else {
+            LOGD("The <{}> bytes has been written", bytesTransferred);
+        }
     }
 
     LOGD("Close connection to host");
@@ -150,12 +217,18 @@ recognizeMessage(io::any_io_executor executor,
                  std::string_view port,
                  std::string_view message)
 {
+    sys::error_code error;
+
     tcp::resolver resolver{executor};
-    auto const results = resolver.resolve(host, port);
-    if (results.empty()) {
-        LOGE("Failed to resolve given host");
-        return {};
+    LOGD("Resolving address of <{}> host", host);
+    auto const results = resolver.resolve(host, port, error);
+    if (error) {
+        LOGE("Resolving address has failed: {}", error.what());
+        return {false, "Resolving address has failed"};
+    } else {
+        LOGD("The <{}> endpoints has been resolved", results.size());
     }
+
     return recognizeMessage(executor, results, message);
 }
 
@@ -172,12 +245,18 @@ recognizeSpeech(io::any_io_executor executor,
                 std::string_view port,
                 fs::path speechFile)
 {
+    sys::error_code error;
+
     tcp::resolver resolver{executor};
-    auto const results = resolver.resolve(host, port);
-    if (results.empty()) {
-        LOGE("Failed to resolve given host");
-        return {};
+    LOGD("Resolving address of <{}> host", host);
+    auto const results = resolver.resolve(host, port, error);
+    if (error) {
+        LOGE("Resolving address has failed: {}", error.what());
+        return {false, "Resolving address has failed"};
+    } else {
+        LOGD("The <{}> endpoints has been resolved", results.size());
     }
+
     return recognizeSpeech(executor, results, speechFile);
 }
 
