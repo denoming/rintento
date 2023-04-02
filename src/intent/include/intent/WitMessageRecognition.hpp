@@ -50,7 +50,7 @@ private:
     onHandshakeDone(sys::error_code error);
 
     void
-    write();
+    write(const std::string& target);
 
     void
     onWriteDone(sys::error_code error, std::size_t bytesTransferred);

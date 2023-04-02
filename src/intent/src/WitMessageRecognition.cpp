@@ -40,13 +40,11 @@ WitMessageRecognition::run()
     const auto auth = _config->recognizeServerAuth();
 
     if (host.empty() || port.empty() || auth.empty()) {
-        LOGE("Recognize server options are invalid: host<{}>, port<{}>, auth<{}>",
+        LOGE("Invalid server config options: host<{}>, port<{}>, auth<{}>",
              !host.empty(),
              !port.empty(),
              !auth.empty());
-        io::post(_executor, [self = shared_from_this()]() {
-            self->setError(sys::errc::make_error_code(sys::errc::invalid_argument));
-        });
+        setError(sys::errc::make_error_code(sys::errc::invalid_argument));
     } else {
         run(host, port, auth);
     }
@@ -83,22 +81,25 @@ void
 WitMessageRecognition::feed(std::string_view message)
 {
     if (!starving()) {
-        throw std::logic_error{"Inappropriate call to feed-up by data"};
+        throw std::logic_error{"Inappropriate call to feed-up by message data"};
     }
 
-    BOOST_ASSERT(!message.empty());
-    _req.target(format::messageTargetWithDate(message));
+    LOGD("Feeding recognition by <{}> bytes message data", message.size());
+    starving(false);
 
-    _stream.get_executor().execute([this]() {
-        starving(false);
-        write();
-    });
+    BOOST_ASSERT(!message.empty());
+    _stream.get_executor().execute(
+        [weakSelf = weak_from_this(), target = format::messageTargetWithDate(message)]() {
+            if (auto self = weakSelf.lock()) {
+                self->write(target);
+            }
+        });
 }
 
 void
 WitMessageRecognition::resolve(std::string_view host, std::string_view port)
 {
-    LOGD("Resolve given host address: <{}>", host);
+    LOGD("Resolving backend address: <{}>", host);
 
     _resolver.async_resolve(
         host,
@@ -113,7 +114,7 @@ WitMessageRecognition::onResolveDone(sys::error_code error,
                                      const tcp::resolver::results_type& result)
 {
     if (error) {
-        LOGE("Failed to resolve address: <{}>", error.what());
+        LOGE("Resolving backend address has failed: <{}>", error.what());
         setError(error);
         return;
     }
@@ -125,10 +126,10 @@ WitMessageRecognition::onResolveDone(sys::error_code error,
     }
 
     if (result.empty()) {
-        LOGE("No address of given host available");
+        LOGE("No address has been resolved");
         setError(sys::errc::make_error_code(sys::errc::address_not_available));
     } else {
-        LOGD("Resolve address was successful: <{}>", result.size());
+        LOGD("The <{}> endpoints was resolved", result.size());
         connect(result);
     };
 }
@@ -136,7 +137,7 @@ WitMessageRecognition::onResolveDone(sys::error_code error,
 void
 WitMessageRecognition::connect(const tcp::resolver::results_type& addresses)
 {
-    LOGD("Connect to host endpoints");
+    LOGD("Connecting to endpoints: {}", addresses.size());
 
     net::resetTimeout(_stream);
 
@@ -152,7 +153,7 @@ WitMessageRecognition::onConnectDone(sys::error_code error,
                                      const tcp::resolver::results_type::endpoint_type& endpoint)
 {
     if (error) {
-        LOGE("Failed to connect: <{}>", error.what());
+        LOGE("Connecting to endpoints has failed: <{}>", error.what());
         setError(error);
         return;
     }
@@ -161,7 +162,7 @@ WitMessageRecognition::onConnectDone(sys::error_code error,
         LOGD("Operation was interrupted");
         setError(sys::errc::make_error_code(sys::errc::operation_canceled));
     } else {
-        LOGD("Connecting to host <{}> address was done", endpoint.address().to_string());
+        LOGD("Connecting to endpoint <{}> endpoint was done", endpoint.address().to_string());
         handshake();
     }
 }
@@ -169,7 +170,7 @@ WitMessageRecognition::onConnectDone(sys::error_code error,
 void
 WitMessageRecognition::handshake()
 {
-    LOGD("Handshake with host");
+    LOGD("Handshaking with endpoint");
 
     net::resetTimeout(_stream);
 
@@ -184,7 +185,7 @@ void
 WitMessageRecognition::onHandshakeDone(sys::error_code error)
 {
     if (error) {
-        LOGE("Failed to handshake: <{}>", error.what());
+        LOGE("Handshaking with host has failed: <{}>", error.what());
         setError(error);
         return;
     }
@@ -193,17 +194,20 @@ WitMessageRecognition::onHandshakeDone(sys::error_code error)
         LOGD("Operation was interrupted");
         setError(sys::errc::make_error_code(sys::errc::operation_canceled));
     } else {
-        LOGD("Handshaking was successful");
+        LOGD("Handshaking has succeeded");
         starving(true);
     }
 }
 
 void
-WitMessageRecognition::write()
+WitMessageRecognition::write(const std::string& target)
 {
-    LOGD("Write request to stream");
+    LOGD("Writing request to the stream");
 
     net::resetTimeout(_stream);
+
+    BOOST_ASSERT(!target.empty());
+    _req.target(target);
 
     http::async_write(
         _stream,
@@ -217,7 +221,7 @@ void
 WitMessageRecognition::onWriteDone(sys::error_code error, std::size_t bytesTransferred)
 {
     if (error) {
-        LOGE("Failed to write request: <{}>", error.what());
+        LOGE("Writing request to the stream has failed: <{}>", error.what());
         setError(error);
         return;
     }
@@ -226,7 +230,7 @@ WitMessageRecognition::onWriteDone(sys::error_code error, std::size_t bytesTrans
         LOGD("Operation was interrupted");
         setError(sys::errc::make_error_code(sys::errc::operation_canceled));
     } else {
-        LOGD("Writing of request was successful: <{}> bytes", bytesTransferred);
+        LOGD("Writing request to the stream has succeeded: <{}> bytes", bytesTransferred);
         read();
     }
 }
@@ -234,7 +238,7 @@ WitMessageRecognition::onWriteDone(sys::error_code error, std::size_t bytesTrans
 void
 WitMessageRecognition::read()
 {
-    LOGD("Read response from stream");
+    LOGD("Reading response from the stream");
 
     net::resetTimeout(_stream);
 
@@ -251,12 +255,12 @@ void
 WitMessageRecognition::onReadDone(sys::error_code error, std::size_t bytesTransferred)
 {
     if (error) {
-        LOGE("Failed to read response: <{}>", error.what());
+        LOGE("Reading response from the stream has failed: <{}>", error.what());
         setError(error);
         return;
     }
 
-    LOGD("Reading of response was successful: <{}> bytes", bytesTransferred);
+    LOGD("Reading response from the stream has succeeded: <{}> bytes", bytesTransferred);
     submit(_res.body());
 
     if (cancelled()) {
@@ -292,9 +296,9 @@ WitMessageRecognition::onShutdownDone(sys::error_code error)
     }
 
     if (error) {
-        LOGE("Failed to shutdown connection: <{}>", error.what());
+        LOGE("Shutdown connection has failed: <{}>", error.what());
     } else {
-        LOGD("Shutdown of connection was successful");
+        LOGD("Shutdown connection has succeeded");
     }
 
     _req.clear();
