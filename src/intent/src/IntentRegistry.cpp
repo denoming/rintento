@@ -1,5 +1,7 @@
 #include "intent/IntentRegistry.hpp"
 
+#include "intent/Intent.hpp"
+
 #include <boost/assert.hpp>
 
 #include <stdexcept>
@@ -12,19 +14,19 @@ IntentRegistry::has(const std::string& name) const
     return _intents.contains(name);
 }
 
-Intent::Ptr
+std::shared_ptr<Intent>
 IntentRegistry::get(const std::string& name)
 {
     BOOST_ASSERT(!name.empty());
     if (auto intentIt = _intents.find(name); intentIt == _intents.cend()) {
         throw std::runtime_error{"No intent with given name"};
     } else {
-        return std::get<Intent::Ptr>(*intentIt)->clone();
+        return std::get<1>(*intentIt)->clone();
     }
 }
 
 void
-IntentRegistry::add(Intent::Ptr intent)
+IntentRegistry::add(std::shared_ptr<Intent> intent)
 {
     BOOST_ASSERT(intent);
     if (has(intent->name())) {

@@ -11,8 +11,6 @@ namespace jar {
 
 class Config final : public IConfig {
 public:
-    using Ptr = std::shared_ptr<Config>;
-
     Config();
 
     [[nodiscard]] bool

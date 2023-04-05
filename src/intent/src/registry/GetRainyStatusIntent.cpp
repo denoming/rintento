@@ -32,7 +32,7 @@ getTimeBoundaries(std::chrono::days modifier)
 
 } // namespace
 
-GetRainyStatusIntent::Ptr
+std::shared_ptr<GetRainyStatusIntent>
 GetRainyStatusIntent::create(std::string name,
                              IPositioningClient& locationProvider,
                              ISpeakerClient& speakerClient,
@@ -59,7 +59,7 @@ GetRainyStatusIntent::GetRainyStatusIntent(std::string name,
 {
 }
 
-Intent::Ptr
+std::shared_ptr<Intent>
 GetRainyStatusIntent::clone()
 {
     return create(name(), _positioningClient, _speakerClient, _weatherClient, _daysModifies);

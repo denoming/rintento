@@ -12,8 +12,6 @@ class WitSpeechRecognition;
 
 class WitRecognitionFactory {
 public:
-    using Ptr = std::shared_ptr<WitRecognitionFactory>;
-
     WitRecognitionFactory(std::shared_ptr<Config> config, io::any_io_executor executor);
 
     std::shared_ptr<WitMessageRecognition>

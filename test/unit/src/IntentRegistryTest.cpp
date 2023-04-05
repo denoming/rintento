@@ -1,6 +1,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include "intent/Intent.hpp"
 #include "intent/IntentRegistry.hpp"
 
 using namespace testing;
@@ -13,7 +14,7 @@ public:
     {
     }
 
-    Intent::Ptr
+    std::shared_ptr<Intent>
     clone() final
     {
         return std::make_shared<TestIntent>(name());

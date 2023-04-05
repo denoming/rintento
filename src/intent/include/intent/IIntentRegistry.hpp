@@ -1,10 +1,11 @@
 #pragma once
 
-#include "intent/Intent.hpp"
-
-#include <functional>
+#include <memory>
+#include <string>
 
 namespace jar {
+
+class Intent;
 
 class IIntentRegistry {
 public:
@@ -12,12 +13,11 @@ public:
     has(const std::string& name) const
         = 0;
 
-    [[nodiscard]] virtual Intent::Ptr
-    get(const std::string& name)
-        = 0;
+    [[nodiscard]] virtual std::shared_ptr<Intent>
+    get(const std::string& name) = 0;
 
     virtual void
-    add(Intent::Ptr intent)
+    add(std::shared_ptr<Intent> intent)
         = 0;
 
     virtual void

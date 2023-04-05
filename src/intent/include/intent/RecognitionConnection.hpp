@@ -135,8 +135,6 @@ private:
 
     class Action {
     public:
-        using Ptr = std::unique_ptr<Action>;
-
         virtual ~Action() = default;
 
         virtual void
@@ -285,7 +283,7 @@ private:
         }
 
         void
-        push(Action::Ptr action)
+        push(std::unique_ptr<Action> action)
         {
             _actions.push(std::move(action));
         }
@@ -299,7 +297,7 @@ private:
         }
 
     private:
-        std::queue<Action::Ptr> _actions;
+        std::queue<std::unique_ptr<Action>> _actions;
     };
 
 private:
@@ -311,7 +309,7 @@ private:
     }
 
     void
-    pushAction(Action::Ptr action)
+    pushAction(std::unique_ptr<Action> action)
     {
         _queue.push(std::move(action));
         if (_queue.size() == 1) {

@@ -6,7 +6,6 @@
 
 #include <atomic>
 #include <string>
-
 #include <functional>
 
 namespace jar {

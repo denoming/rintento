@@ -1,5 +1,6 @@
 #include "intent/IntentPerformer.hpp"
 
+#include "intent/Intent.hpp"
 #include "intent/IntentRegistry.hpp"
 #include "jarvis/Logger.hpp"
 

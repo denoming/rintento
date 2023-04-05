@@ -149,11 +149,11 @@ private:
 private:
     Worker _proxyWorker;
     Worker _recognizeWorker;
-    Config::Ptr _config;
-    IntentRegistry::Ptr _registry;
-    WitRecognitionFactory::Ptr _factory;
-    IntentPerformer::Ptr _performer;
-    RecognitionServer::Ptr _server;
+    std::shared_ptr<Config> _config;
+    std::unique_ptr<IntentRegistry> _registry;
+    std::shared_ptr<WitRecognitionFactory> _factory;
+    std::shared_ptr<IntentPerformer> _performer;
+    std::shared_ptr<RecognitionServer> _server;
     std::unique_ptr<PositioningClient> _positioningClient;
     std::unique_ptr<SpeakerClient> _speakerClient;
     std::unique_ptr<WeatherClient> _weatherClient;
