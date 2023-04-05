@@ -109,24 +109,24 @@ WitMessageRecognition::resolve(std::string_view host, std::string_view port)
 }
 
 void
-WitMessageRecognition::onResolveDone(sys::error_code error,
+WitMessageRecognition::onResolveDone(std::error_code error,
                                      const tcp::resolver::results_type& result)
 {
     if (error) {
-        LOGE("Resolving backend address has failed: <{}>", error.what());
+        LOGE("Resolving backend address has failed: <{}>", error.message());
         setError(error);
         return;
     }
 
     if (cancelled()) {
         LOGD("Operation was interrupted");
-        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(std::make_error_code(std::errc::operation_canceled));
         return;
     }
 
     if (result.empty()) {
         LOGE("No address has been resolved");
-        setError(sys::errc::make_error_code(sys::errc::address_not_available));
+        setError(std::make_error_code(std::errc::address_not_available));
     } else {
         LOGD("The <{}> endpoints was resolved", result.size());
         connect(result);
@@ -148,18 +148,18 @@ WitMessageRecognition::connect(const tcp::resolver::results_type& addresses)
 }
 
 void
-WitMessageRecognition::onConnectDone(sys::error_code error,
+WitMessageRecognition::onConnectDone(std::error_code error,
                                      const tcp::resolver::results_type::endpoint_type& endpoint)
 {
     if (error) {
-        LOGE("Connecting to endpoints has failed: <{}>", error.what());
+        LOGE("Connecting to endpoints has failed: <{}>", error.message());
         setError(error);
         return;
     }
 
     if (cancelled()) {
         LOGD("Operation was interrupted");
-        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(std::make_error_code(std::errc::operation_canceled));
     } else {
         LOGD("Connecting to endpoint <{}> endpoint was done", endpoint.address().to_string());
         handshake();
@@ -181,21 +181,21 @@ WitMessageRecognition::handshake()
 }
 
 void
-WitMessageRecognition::onHandshakeDone(sys::error_code error)
+WitMessageRecognition::onHandshakeDone(std::error_code error)
 {
     if (error) {
-        LOGE("Handshaking with host has failed: <{}>", error.what());
+        LOGE("Handshaking with host has failed: <{}>", error.message());
         setError(error);
         return;
     }
 
     if (cancelled()) {
         LOGD("Operation was interrupted");
-        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(std::make_error_code(std::errc::operation_canceled));
     } else {
         LOGD("Handshaking has succeeded");
         onCancel().assign([this](io::cancellation_type_t) {
-            setError(sys::errc::make_error_code(sys::errc::operation_canceled));
+            setError(std::make_error_code(std::errc::operation_canceled));
         });
         needData(true);
     }
@@ -220,17 +220,17 @@ WitMessageRecognition::write(const std::string& target)
 }
 
 void
-WitMessageRecognition::onWriteDone(sys::error_code error, std::size_t bytesTransferred)
+WitMessageRecognition::onWriteDone(std::error_code error, std::size_t bytesTransferred)
 {
     if (error) {
-        LOGE("Writing request to the stream has failed: <{}>", error.what());
+        LOGE("Writing request to the stream has failed: <{}>", error.message());
         setError(error);
         return;
     }
 
     if (cancelled()) {
         LOGD("Operation was interrupted");
-        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(std::make_error_code(std::errc::operation_canceled));
     } else {
         LOGD("Writing request to the stream has succeeded: <{}> bytes", bytesTransferred);
         read();
@@ -254,10 +254,10 @@ WitMessageRecognition::read()
 }
 
 void
-WitMessageRecognition::onReadDone(sys::error_code error, std::size_t bytesTransferred)
+WitMessageRecognition::onReadDone(std::error_code error, std::size_t bytesTransferred)
 {
     if (error) {
-        LOGE("Reading response from the stream has failed: <{}>", error.what());
+        LOGE("Reading response from the stream has failed: <{}>", error.message());
         setError(error);
         return;
     }
@@ -267,7 +267,7 @@ WitMessageRecognition::onReadDone(sys::error_code error, std::size_t bytesTransf
 
     if (cancelled()) {
         LOGD("Operation was interrupted");
-        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(std::make_error_code(std::errc::operation_canceled));
     } else {
         shutdown();
     }
@@ -286,19 +286,20 @@ WitMessageRecognition::shutdown()
 }
 
 void
-WitMessageRecognition::onShutdownDone(sys::error_code error)
+WitMessageRecognition::onShutdownDone(std::error_code error)
 {
-    if (error == io::error::eof || error == sys::errc::operation_canceled) {
+    if (error == sys::error_code{io::error::eof}) {
         error = {};
     }
-
-    if (error == ssl::error::stream_truncated) {
-        LOGD("Stream was truncated");
+    if (error == sys::error_code{io::error::operation_aborted}) {
+        error = {};
+    }
+    if (error == sys::error_code(ssl::error::stream_truncated)) {
         error = {};
     }
 
     if (error) {
-        LOGE("Shutdown connection has failed: <{}>", error.what());
+        LOGE("Shutdown connection has failed: <{}>", error.message());
     } else {
         LOGD("Shutdown connection has succeeded");
     }

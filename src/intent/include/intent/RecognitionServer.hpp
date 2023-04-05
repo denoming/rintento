@@ -42,7 +42,7 @@ private:
     accept();
 
     void
-    onAcceptDone(sys::error_code error, tcp::socket socket);
+    onAcceptDone(std::error_code error, tcp::socket socket);
 
     void
     waitForShutdown();

@@ -130,24 +130,24 @@ WitSpeechRecognition::resolve(std::string_view host, std::string_view port)
 }
 
 void
-WitSpeechRecognition::onResolveDone(sys::error_code error,
+WitSpeechRecognition::onResolveDone(std::error_code error,
                                     const tcp::resolver::results_type& result)
 {
     if (error) {
-        LOGE("Resolving backend address has failed: <{}>", error.what());
+        LOGE("Resolving backend address has failed: <{}>", error.message());
         setError(error);
         return;
     }
 
     if (cancelled()) {
         LOGD("Operation was interrupted");
-        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(std::make_error_code(std::errc::operation_canceled));
         return;
     }
 
     if (result.empty()) {
         LOGE("No address has been resolved");
-        setError(sys::errc::make_error_code(sys::errc::address_not_available));
+        setError(std::make_error_code(std::errc::address_not_available));
     } else {
         LOGD("The <{}> endpoints was resolved", result.size());
         connect(result);
@@ -169,18 +169,18 @@ WitSpeechRecognition::connect(const tcp::resolver::results_type& addresses)
 }
 
 void
-WitSpeechRecognition::onConnectDone(sys::error_code error,
+WitSpeechRecognition::onConnectDone(std::error_code error,
                                     const tcp::resolver::results_type::endpoint_type& endpoint)
 {
     if (error) {
-        LOGE("Connecting to endpoints has failed: <{}>", error.what());
+        LOGE("Connecting to endpoints has failed: <{}>", error.message());
         setError(error);
         return;
     }
 
     if (cancelled()) {
         LOGD("Operation was interrupted");
-        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(std::make_error_code(std::errc::operation_canceled));
     } else {
         LOGD("Connecting to endpoint <{}> endpoint was done", endpoint.address().to_string());
         handshake();
@@ -202,17 +202,17 @@ WitSpeechRecognition::handshake()
 }
 
 void
-WitSpeechRecognition::onHandshakeDone(sys::error_code error)
+WitSpeechRecognition::onHandshakeDone(std::error_code error)
 {
     if (error) {
-        LOGE("Handshaking with endpoint has failed: <{}>", error.what());
+        LOGE("Handshaking with endpoint has failed: <{}>", error.message());
         setError(error);
         return;
     }
 
     if (cancelled()) {
         LOGD("Operation was interrupted");
-        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(std::make_error_code(std::errc::operation_canceled));
     } else {
         LOGD("Handshaking has succeeded");
         readContinue();
@@ -245,10 +245,10 @@ WitSpeechRecognition::readContinue()
 }
 
 void
-WitSpeechRecognition::onReadContinueDone(sys::error_code error, std::size_t /*bytesTransferred*/)
+WitSpeechRecognition::onReadContinueDone(std::error_code error, std::size_t /*bytesTransferred*/)
 {
     if (error) {
-        LOGE("Reading response has failed: <{}>", error.what());
+        LOGE("Reading response has failed: <{}>", error.message());
         setError(error);
         return;
     }
@@ -261,7 +261,7 @@ WitSpeechRecognition::onReadContinueDone(sys::error_code error, std::size_t /*by
 
     if (cancelled()) {
         LOGD("Operation was interrupted");
-        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(std::make_error_code(std::errc::operation_canceled));
     } else {
         LOGD("Reading response has succeeded");
         onCancel().assign([this](io::cancellation_type_t) {
@@ -286,17 +286,17 @@ WitSpeechRecognition::writeNextChunk(io::const_buffer buffer)
 }
 
 void
-WitSpeechRecognition::onWriteNextChunkDone(sys::error_code error, std::size_t bytesTransferred)
+WitSpeechRecognition::onWriteNextChunkDone(std::error_code error, std::size_t bytesTransferred)
 {
     if (error) {
-        LOGE("Writing next chunk has failed: <{}>", error.what());
+        LOGE("Writing next chunk has failed: <{}>", error.message());
         setError(error);
         return;
     }
 
     if (cancelled()) {
         LOGD("Operation was interrupted");
-        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(std::make_error_code(std::errc::operation_canceled));
     } else {
         LOGD("Writing next chunk has succeeded: {} bytes", bytesTransferred);
         needData(true);
@@ -318,17 +318,17 @@ WitSpeechRecognition::writeLastChunk()
 }
 
 void
-WitSpeechRecognition::onWriteLastChunkDone(sys::error_code error, std::size_t bytesTransferred)
+WitSpeechRecognition::onWriteLastChunkDone(std::error_code error, std::size_t bytesTransferred)
 {
     if (error) {
-        LOGE("Writing last chunk has failed: <{}>", error.what());
+        LOGE("Writing last chunk has failed: <{}>", error.message());
         setError(error);
         return;
     }
 
     if (cancelled()) {
         LOGD("Operation was interrupted");
-        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(std::make_error_code(std::errc::operation_canceled));
     } else {
         LOGD("Writing last chunk has succeeded: {} bytes", bytesTransferred);
         read();
@@ -351,10 +351,10 @@ WitSpeechRecognition::read()
 }
 
 void
-WitSpeechRecognition::onReadDone(sys::error_code error, std::size_t bytesTransferred)
+WitSpeechRecognition::onReadDone(std::error_code error, std::size_t bytesTransferred)
 {
     if (error) {
-        LOGE("Reading recognition result has failed: <{}>", error.what());
+        LOGE("Reading recognition result has failed: <{}>", error.message());
         beast::get_lowest_layer(_stream).close();
         setError(error);
         return;
@@ -365,7 +365,7 @@ WitSpeechRecognition::onReadDone(sys::error_code error, std::size_t bytesTransfe
 
     if (cancelled()) {
         LOGD("Operation was interrupted");
-        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        setError(std::make_error_code(std::errc::operation_canceled));
     } else {
         shutdown();
     }
@@ -384,19 +384,20 @@ WitSpeechRecognition::shutdown()
 }
 
 void
-WitSpeechRecognition::onShutdownDone(sys::error_code error)
+WitSpeechRecognition::onShutdownDone(std::error_code error)
 {
-    if (error == io::error::eof || error == sys::errc::operation_canceled) {
+    if (error == sys::error_code{io::error::eof}) {
         error = {};
     }
-
-    if (error == ssl::error::stream_truncated) {
-        LOGD("Stream was truncated");
+    if (error == sys::error_code{io::error::operation_aborted}) {
+        error = {};
+    }
+    if (error == sys::error_code(ssl::error::stream_truncated)) {
         error = {};
     }
 
     if (error) {
-        LOGE("Shutdown connection has failed: <{}>", error.what());
+        LOGE("Shutdown connection has failed: <{}>", error.message());
     } else {
         LOGD("Shutdown connection has succeeded");
     }

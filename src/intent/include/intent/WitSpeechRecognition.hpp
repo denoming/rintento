@@ -37,50 +37,50 @@ private:
     resolve(std::string_view host, std::string_view port);
 
     void
-    onResolveDone(sys::error_code error, const tcp::resolver::results_type& result);
+    onResolveDone(std::error_code error, const tcp::resolver::results_type& result);
 
     void
     connect(const tcp::resolver::results_type& addresses);
 
     void
-    onConnectDone(sys::error_code error,
+    onConnectDone(std::error_code error,
                   const tcp::resolver::results_type::endpoint_type& endpoint);
 
     void
     handshake();
 
     void
-    onHandshakeDone(sys::error_code error);
+    onHandshakeDone(std::error_code error);
 
     void
     readContinue();
 
     void
-    onReadContinueDone(sys::error_code error, std::size_t bytesTransferred);
+    onReadContinueDone(std::error_code error, std::size_t bytesTransferred);
 
     void
     writeNextChunk(io::const_buffer buffer);
 
     void
-    onWriteNextChunkDone(sys::error_code error, std::size_t bytesTransferred);
+    onWriteNextChunkDone(std::error_code error, std::size_t bytesTransferred);
 
     void
     writeLastChunk();
 
     void
-    onWriteLastChunkDone(sys::error_code error, std::size_t bytesTransferred);
+    onWriteLastChunkDone(std::error_code error, std::size_t bytesTransferred);
 
     void
     read();
 
     void
-    onReadDone(sys::error_code error, std::size_t bytesTransferred);
+    onReadDone(std::error_code error, std::size_t bytesTransferred);
 
     void
     shutdown();
 
     void
-    onShutdownDone(sys::error_code error);
+    onShutdownDone(std::error_code error);
 
 private:
     std::shared_ptr<Config> _config;

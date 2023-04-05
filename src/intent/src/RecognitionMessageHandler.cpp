@@ -43,7 +43,7 @@ RecognitionMessageHandler::handle(Buffer& buffer, Parser& parser)
         _message = std::move(*messageOpt);
     } else {
         LOGE("Missing message in request target");
-        onRecognitionError(sys::errc::make_error_code(sys::errc::bad_message));
+        onRecognitionError(std::make_error_code(std::errc::bad_message));
         return;
     }
 
@@ -96,7 +96,7 @@ RecognitionMessageHandler::onRecognitionData()
 }
 
 void
-RecognitionMessageHandler::onRecognitionError(sys::error_code error)
+RecognitionMessageHandler::onRecognitionError(std::error_code error)
 {
     LOGD("Submit recognition error: <{}>", error.message());
     sendResponse(error);

@@ -9,7 +9,7 @@ namespace jar {
 
 class TestWaiter {
 public:
-    using Predicate = std::function<bool()>;
+    using Predicate = std::move_only_function<bool()>;
 
     TestWaiter() = default;
 

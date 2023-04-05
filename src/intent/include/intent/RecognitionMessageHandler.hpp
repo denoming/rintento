@@ -36,7 +36,7 @@ private:
     onRecognitionData();
 
     void
-    onRecognitionError(sys::error_code error);
+    onRecognitionError(std::error_code error);
 
     void
     onRecognitionSuccess(UtteranceSpecs result);

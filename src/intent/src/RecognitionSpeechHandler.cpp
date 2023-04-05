@@ -44,7 +44,7 @@ RecognitionSpeechHandler::handle(Buffer& buffer, Parser& parser)
 
     if (auto& request = parser.get(); request[http::field::expect] != "100-continue") {
         LOGD("100-continue expected");
-        onRecognitionError(sys::errc::make_error_code(sys::errc::operation_not_supported));
+        onRecognitionError(std::make_error_code(std::errc::operation_not_supported));
         return;
     }
 
@@ -97,12 +97,12 @@ RecognitionSpeechHandler::createRecognition()
 void
 RecognitionSpeechHandler::handleSpeechData(Buffer& buffer, Parser& parser)
 {
-    auto onHeader = [this](std::uint64_t size, auto extensions, sys::error_code& error) {
+    auto onHeader = [this](std::uint64_t size, auto extensions, std::error_code& error) {
         if (size > _speechData.capacity()) {
-            error = http::error::body_limit;
+            error = sys::error_code{http::error::body_limit};
         }
     };
-    auto onBody = [this](std::uint64_t remain, std::string_view body, sys::error_code& error) {
+    auto onBody = [this](std::uint64_t remain, std::string_view body, std::error_code& error) {
         _speechData.write(body);
         return body.size();
     };
@@ -113,7 +113,7 @@ RecognitionSpeechHandler::handleSpeechData(Buffer& buffer, Parser& parser)
     while (!parser.is_done()) {
         http::read(connection().stream(), buffer, parser, error);
         if (error) {
-            LOGE("Reading chunk error: <{}>", error.what());
+            LOGE("Reading chunk error: <{}>", error.message());
             break;
         }
         if (_recognition->needData()) {
@@ -153,7 +153,7 @@ RecognitionSpeechHandler::onRecognitionData()
 }
 
 void
-RecognitionSpeechHandler::onRecognitionError(sys::error_code error)
+RecognitionSpeechHandler::onRecognitionError(std::error_code error)
 {
     LOGD("Submit recognition error: <{}>", error.message());
     sendResponse(error);

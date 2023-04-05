@@ -3,7 +3,6 @@
 #include "jarvis/Network.hpp"
 #include "intent/Types.hpp"
 
-#include <concepts>
 #include <functional>
 #include <memory>
 
@@ -13,7 +12,7 @@ class RecognitionConnection;
 
 class RecognitionHandler {
 public:
-    using OnDone = void(UtteranceSpecs result, sys::error_code error);
+    using OnDone = void(UtteranceSpecs result, std::error_code error);
 
     using Buffer = beast::flat_buffer;
     using Parser = http::request_parser<http::empty_body>;
@@ -23,17 +22,13 @@ public:
     virtual ~RecognitionHandler() = default;
 
     void
+    onDone(std::move_only_function<OnDone> callback);
+
+    void
     setNext(std::shared_ptr<RecognitionHandler> handler);
 
     virtual void
     handle(Buffer& buffer, Parser& parser);
-
-    template<std::invocable<UtteranceSpecs, sys::error_code> Callback>
-    void
-    onDone(Callback&& callback)
-    {
-        _doneCallback = std::move(callback);
-    }
 
 protected:
     RecognitionConnection&
@@ -46,18 +41,18 @@ protected:
     submit(UtteranceSpecs result);
 
     void
-    submit(sys::error_code error);
+    submit(std::error_code error);
 
     void
     sendResponse(const UtteranceSpecs& result);
 
     void
-    sendResponse(sys::error_code error);
+    sendResponse(std::error_code error);
 
 private:
     std::shared_ptr<RecognitionHandler> _next;
     std::shared_ptr<RecognitionConnection> _connection;
-    std::function<OnDone> _doneCallback;
+    std::move_only_function<OnDone> _onDone;
 };
 
 } // namespace jar

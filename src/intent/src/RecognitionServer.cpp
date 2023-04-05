@@ -46,25 +46,25 @@ RecognitionServer::listen(tcp::endpoint endpoint)
     sys::error_code error;
     _acceptor.open(endpoint.protocol(), error);
     if (error) {
-        LOGE("Failed to open acceptor: <{}>", error.what());
+        LOGE("Failed to open acceptor: <{}>", error.message());
         return false;
     }
 
     _acceptor.set_option(io::socket_base::reuse_address(true), error);
     if (error) {
-        LOGE("Failed to set option: <{}>", error.what());
+        LOGE("Failed to set option: <{}>", error.message());
         return false;
     }
 
     _acceptor.bind(endpoint, error);
     if (error) {
-        LOGE("Failed to bind: <{}>", error.what());
+        LOGE("Failed to bind: <{}>", error.message());
         return false;
     }
 
     _acceptor.listen(io::socket_base::max_listen_connections, error);
     if (error) {
-        LOGE("Failed to listen: <{}>", error.what());
+        LOGE("Failed to listen: <{}>", error.message());
         return false;
     }
 
@@ -97,7 +97,7 @@ RecognitionServer::accept()
 }
 
 void
-RecognitionServer::onAcceptDone(sys::error_code error, tcp::socket socket)
+RecognitionServer::onAcceptDone(std::error_code error, tcp::socket socket)
 {
     if (!error) {
         LOGD("Connection was established");
@@ -148,23 +148,22 @@ RecognitionServer::close()
 bool
 RecognitionServer::dispatch(std::shared_ptr<RecognitionConnection> connection)
 {
-    sys::error_code error;
-    const auto endpoint = connection->endpointRemote(error);
-    if (error) {
-        LOGE("Failed to get dispatcher identity: <{}> error", error.what());
+    const auto endpoint = connection->endpointRemote();
+    if (endpoint) {
+        LOGE("Getting dispatcher id has failed: <{}>", endpoint.error().message());
         return false;
     }
 
-    const auto identity = endpoint.port();
-    if (_dispatchers.contains(identity)) {
-        LOGE("Dispatcher identity already exists");
+    const auto id = endpoint.value().port();
+    if (_dispatchers.contains(id)) {
+        LOGE("Dispatcher with <{}> id already exists", id);
         return false;
     }
 
-    auto dispatcher = RecognitionDispatcher::create(identity, connection, _performer, _factory);
+    auto dispatcher = RecognitionDispatcher::create(id, connection, _performer, _factory);
     {
         std::lock_guard lock{_dispatchersGuard};
-        _dispatchers.emplace(identity, dispatcher);
+        _dispatchers.emplace(id, dispatcher);
     }
     dispatcher->onDone([this](uint16_t identity) {
         LOGD("Dispatcher <{}> has done", identity);
@@ -177,7 +176,7 @@ RecognitionServer::dispatch(std::shared_ptr<RecognitionConnection> connection)
             notifyShutdownReady();
         }
     });
-    LOGD("Dispatcher <{}> is going to start", identity);
+    LOGD("Dispatcher <{}> is going to start", id);
     dispatcher->dispatch();
     return true;
 }

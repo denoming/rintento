@@ -2,6 +2,7 @@
 
 #include "jarvis/Network.hpp"
 
+#include <expected>
 #include <memory>
 #include <queue>
 
@@ -9,15 +10,15 @@ namespace jar {
 
 class RecognitionConnection : public std::enable_shared_from_this<RecognitionConnection> {
 public:
-    template<typename Body>
-    using OnReady = std::function<void(http::request<Body> request, sys::error_code error)>;
-    template<typename Body>
-    using OnReadyHeader = std::function<void(beast::flat_buffer& buffer,
-                                             http::request_parser<Body>& requestParser,
-                                             sys::error_code error)>;
+    template<typename T>
+    using OnDone = std::move_only_function<void(http::request<T> request, std::error_code error)>;
+    template<typename T>
+    using OnDoneHeader = std::move_only_function<void(beast::flat_buffer& dataBuffer,
+                                                      http::request_parser<T>& requestParser,
+                                                      std::error_code error)>;
 
-    using WritingCallback = std::function<void(sys::error_code)>;
-    using WritingHeaderCallback = std::function<void(sys::error_code)>;
+    using WritingCallback = std::move_only_function<void(std::error_code)>;
+    using WritingHeaderCallback = std::move_only_function<void(std::error_code)>;
 
     static std::shared_ptr<RecognitionConnection>
     create(tcp::socket&& socket)
@@ -34,16 +35,28 @@ public:
         _stream.close();
     }
 
-    tcp::endpoint
-    endpointLocal(sys::error_code& error) const
+    std::expected<tcp::endpoint, std::error_code>
+    endpointLocal() const
     {
-        return _stream.socket().local_endpoint(error);
+        sys::error_code error;
+        auto endpoint = _stream.socket().local_endpoint(error);
+        if (error) {
+            return std::unexpected(error);
+        } else {
+            return endpoint;
+        }
     }
 
-    tcp::endpoint
-    endpointRemote(sys::error_code error) const
+    std::expected<tcp::endpoint, std::error_code>
+    endpointRemote() const
     {
-        return _stream.socket().remote_endpoint(error);
+        sys::error_code error;
+        auto endpoint = _stream.socket().remote_endpoint(error);
+        if (error) {
+            return std::unexpected(error);
+        } else {
+            return endpoint;
+        }
     }
 
     beast::tcp_stream&
@@ -66,7 +79,7 @@ public:
 
     template<typename Body>
     void
-    read(OnReady<Body> callback)
+    read(OnDone<Body> callback)
     {
         using Action = TypedReadingAction<Body>;
         io::dispatch(executor(), [self = shared_from_this(), c = std::move(callback)]() {
@@ -76,10 +89,10 @@ public:
 
     template<typename Body>
     void
-    readHeader(OnReadyHeader<Body> callback)
+    readHeader(OnDoneHeader<Body> callback)
     {
         using Action = TypedReadingHeaderAction<Body>;
-        io::dispatch(executor(), [self = shared_from_this(), c = std::move(callback)]() {
+        io::dispatch(executor(), [self = shared_from_this(), c = std::move(callback)]() mutable {
             self->pushAction(std::make_unique<Action>(*self, std::move(c)));
         });
     }
@@ -89,11 +102,13 @@ public:
     write(http::response<Body> response, WritingCallback callback = nullptr)
     {
         using Action = TypedWritingAction<Body>;
-        io::dispatch(
-            executor(),
-            [self = shared_from_this(), r = std::move(response), c = std::move(callback)]() {
-                self->pushAction(std::make_unique<Action>(*self, std::move(r), std::move(c)));
-            });
+        io::dispatch(executor(),
+                     [self = shared_from_this(),
+                      r = std::move(response),
+                      c = std::move(callback)]() mutable {
+                         self->pushAction(
+                             std::make_unique<Action>(*self, std::move(r), std::move(c)));
+                     });
     }
 
     template<typename Body, typename Fields = http::fields>
@@ -132,7 +147,7 @@ private:
     template<typename Body>
     class TypedReadingAction final : public Action {
     public:
-        TypedReadingAction(RecognitionConnection& connection, OnReady<Body> callback)
+        TypedReadingAction(RecognitionConnection& connection, OnDone<Body> callback)
             : _connection{connection}
             , _callback{std::move(callback)}
         {
@@ -153,7 +168,7 @@ private:
 
     private:
         RecognitionConnection& _connection;
-        OnReady<Body> _callback;
+        OnDone<Body> _callback;
         beast::flat_buffer _buffer;
         http::request<Body> _request;
     };
@@ -162,7 +177,7 @@ private:
     class TypedWritingAction final : public Action {
     public:
         using Response = http::response<Body>;
-        using Callback = std::function<void(sys::error_code error)>;
+        using Callback = std::move_only_function<void(std::error_code error)>;
 
         TypedWritingAction(RecognitionConnection& connection,
                            http::response<Body> response,
@@ -195,7 +210,7 @@ private:
     template<typename Body>
     class TypedReadingHeaderAction : public Action {
     public:
-        TypedReadingHeaderAction(RecognitionConnection& connection, OnReadyHeader<Body> callback)
+        TypedReadingHeaderAction(RecognitionConnection& connection, OnDoneHeader<Body> callback)
             : _connection{connection}
             , _callback{std::move(callback)}
         {
@@ -216,7 +231,7 @@ private:
 
     private:
         RecognitionConnection& _connection;
-        OnReadyHeader<Body> _callback;
+        OnDoneHeader<Body> _callback;
         beast::flat_buffer _buffer;
         http::request_parser<Body> _parser;
     };

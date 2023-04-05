@@ -1,7 +1,7 @@
 #pragma once
 
-#include "jarvis/Network.hpp"
 #include "intent/Types.hpp"
+#include "jarvis/Network.hpp"
 
 #include <functional>
 #include <memory>
@@ -18,26 +18,22 @@ public:
     using OnDone = void(std::uint16_t identity);
 
     [[nodiscard]] static std::shared_ptr<RecognitionDispatcher>
-    create(uint16_t identity,
+    create(uint16_t id,
            std::shared_ptr<RecognitionConnection> connection,
            std::shared_ptr<IntentPerformer> executor,
            std::shared_ptr<WitRecognitionFactory> factory);
 
-    [[nodiscard]] uint16_t
-    identity() const;
-
-    template<std::invocable<std::uint16_t> Callback>
     void
-    onDone(Callback&& callback)
-    {
-        _doneCallback = std::move(callback);
-    }
+    onDone(std::move_only_function<OnDone> callback);
+
+    [[nodiscard]] uint16_t
+    id() const;
 
     void
     dispatch();
 
 private:
-    RecognitionDispatcher(uint16_t identity,
+    RecognitionDispatcher(uint16_t id,
                           std::shared_ptr<RecognitionConnection> connection,
                           std::shared_ptr<IntentPerformer> performer,
                           std::shared_ptr<WitRecognitionFactory> factory);
@@ -48,10 +44,10 @@ private:
     void
     onReadHeaderDone(beast::flat_buffer& buffer,
                      http::request_parser<http::empty_body>& parser,
-                     sys::error_code error);
+                     std::error_code error);
 
     void
-    onComplete(UtteranceSpecs utterances, sys::error_code error);
+    onComplete(UtteranceSpecs utterances, std::error_code error);
 
     std::shared_ptr<RecognitionHandler>
     getHandler();
@@ -60,12 +56,12 @@ private:
     finalize();
 
 private:
-    uint16_t _identity;
+    uint16_t _id;
     std::shared_ptr<RecognitionConnection> _connection;
     std::shared_ptr<IntentPerformer> _performer;
     std::shared_ptr<WitRecognitionFactory> _factory;
     std::shared_ptr<RecognitionHandler> _handler;
-    std::function<OnDone> _doneCallback;
+    std::move_only_function<OnDone> _onDone;
 };
 
 } // namespace jar

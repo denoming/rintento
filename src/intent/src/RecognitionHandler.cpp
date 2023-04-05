@@ -1,10 +1,10 @@
 #include "intent/RecognitionHandler.hpp"
 
-#include "jarvis/Logger.hpp"
 #include "intent/RecognitionConnection.hpp"
+#include "jarvis/Logger.hpp"
 
-#include <boost/json.hpp>
 #include <boost/assert.hpp>
+#include <boost/json.hpp>
 
 namespace json = boost::json;
 
@@ -13,7 +13,7 @@ namespace jar {
 namespace {
 
 std::string
-getPayload(const UtteranceSpecs& result)
+getPayload(const UtteranceSpecs& /*result*/)
 {
     json::value value;
     auto& object = value.emplace_object();
@@ -22,12 +22,12 @@ getPayload(const UtteranceSpecs& result)
 }
 
 std::string
-getPayload(sys::error_code error)
+getPayload(std::error_code error)
 {
     json::value value;
     auto& object = value.emplace_object();
     object.emplace("status", false);
-    object.emplace("error", error.to_string());
+    object.emplace("error", error.message());
     return json::serialize(value);
 }
 
@@ -49,6 +49,12 @@ RecognitionHandler::RecognitionHandler(std::shared_ptr<RecognitionConnection> co
     : _connection{std::move(connection)}
 {
     BOOST_ASSERT(_connection);
+}
+
+void
+RecognitionHandler::onDone(std::move_only_function<OnDone> callback)
+{
+    _onDone = std::move(callback);
 }
 
 void
@@ -81,15 +87,15 @@ RecognitionHandler::connection() const
 void
 RecognitionHandler::submit(UtteranceSpecs result)
 {
-    BOOST_ASSERT(_doneCallback);
-    _doneCallback(std::move(result), {});
+    BOOST_ASSERT(_onDone);
+    _onDone(std::move(result), {});
 }
 
 void
-RecognitionHandler::submit(sys::error_code error)
+RecognitionHandler::submit(std::error_code error)
 {
-    BOOST_ASSERT(_doneCallback);
-    _doneCallback({}, error);
+    BOOST_ASSERT(_onDone);
+    _onDone({}, error);
 }
 
 void
@@ -99,7 +105,7 @@ RecognitionHandler::sendResponse(const UtteranceSpecs& result)
 }
 
 void
-RecognitionHandler::sendResponse(sys::error_code error)
+RecognitionHandler::sendResponse(std::error_code error)
 {
     _connection->write(getResponse(getPayload(error)));
 }

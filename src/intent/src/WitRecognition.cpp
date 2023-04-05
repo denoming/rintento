@@ -71,7 +71,7 @@ WitRecognition::setResult(const std::string& value)
 }
 
 void
-WitRecognition::setError(const sys::error_code value)
+WitRecognition::setError(const std::error_code value)
 {
     BOOST_ASSERT(!_done);
     std::unique_lock lock{_doneGuard};
