@@ -34,7 +34,7 @@ getPayload(sys::error_code error)
 http::response<http::string_body>
 getResponse(std::string payload)
 {
-    http::response<http::string_body> response{http::status::ok, kHttpVersion11};
+    http::response<http::string_body> response{http::status::ok, net::kHttpVersion11};
     response.set(http::field::server, BOOST_BEAST_VERSION_STRING);
     response.set(http::field::content_type, "application/json");
     response.keep_alive(false);

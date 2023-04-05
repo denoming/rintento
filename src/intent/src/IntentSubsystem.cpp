@@ -1,7 +1,6 @@
 #include "intent/IntentSubsystem.hpp"
 
 #include "common/Config.hpp"
-#include "intent/Constants.hpp"
 #include "intent/IntentPerformer.hpp"
 #include "intent/IntentRegistry.hpp"
 #include "intent/PositioningClient.hpp"

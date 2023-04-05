@@ -1,7 +1,5 @@
 #pragma once
 
-#include "intent/Constants.hpp"
-
 #include <string>
 #include <vector>
 

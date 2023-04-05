@@ -48,7 +48,7 @@ RecognitionSpeechHandler::handle(Buffer& buffer, Parser& parser)
         return;
     }
 
-    http::response<http::empty_body> res{http::status::continue_, kHttpVersion11};
+    http::response<http::empty_body> res{http::status::continue_, net::kHttpVersion11};
     res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
     http::write(connection().stream(), res);
 

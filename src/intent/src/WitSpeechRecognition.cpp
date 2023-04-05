@@ -1,7 +1,6 @@
 #include "intent/WitSpeechRecognition.hpp"
 
 #include "common/Config.hpp"
-#include "intent/Constants.hpp"
 #include "intent/Utils.hpp"
 #include "jarvis/Logger.hpp"
 
@@ -68,7 +67,7 @@ WitSpeechRecognition::run(std::string_view host, std::string_view port, std::str
         LOGW("Unable to set SNI hostname");
     }
 
-    _req.version(kHttpVersion11);
+    _req.version(net::kHttpVersion11);
     _req.target(format::speechTargetWithDate());
     _req.method(http::verb::post);
     _req.set(http::field::host, host);

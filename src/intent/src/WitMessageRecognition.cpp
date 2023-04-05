@@ -1,7 +1,6 @@
 #include "intent/WitMessageRecognition.hpp"
 
 #include "common/Config.hpp"
-#include "intent/Constants.hpp"
 #include "intent/Utils.hpp"
 #include "intent/WitIntentParser.hpp"
 #include "jarvis/Logger.hpp"
@@ -67,7 +66,7 @@ WitMessageRecognition::run(std::string_view host, std::string_view port, std::st
         LOGW("Unable to set SNI hostname");
     }
 
-    _req.version(kHttpVersion11);
+    _req.version(net::kHttpVersion11);
     _req.method(http::verb::get);
     _req.set(http::field::host, host);
     _req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
