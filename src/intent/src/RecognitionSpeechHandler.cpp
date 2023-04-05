@@ -70,7 +70,7 @@ RecognitionSpeechHandler::createRecognition()
 {
     auto recognition = _factory->speech();
     BOOST_ASSERT(recognition);
-    recognition->onReady(
+    recognition->onDone(
         [weakSelf = weak_from_this(), executor = connection().executor()](auto result, auto error) {
             if (error) {
                 io::post(executor, [weakSelf, error]() {
@@ -116,7 +116,7 @@ RecognitionSpeechHandler::handleSpeechData(Buffer& buffer, Parser& parser)
             LOGE("Reading chunk error: <{}>", error.what());
             break;
         }
-        if (_recognition->starving()) {
+        if (_recognition->needData()) {
             onRecognitionData();
         }
     }
@@ -124,7 +124,7 @@ RecognitionSpeechHandler::handleSpeechData(Buffer& buffer, Parser& parser)
     if (!error) {
         LOGD("Receiving of chunks has been done: <{}> bytes", _speechData.available());
         _speechData.complete();
-        if (_recognition->starving()) {
+        if (_recognition->needData()) {
             onRecognitionData();
         }
     }

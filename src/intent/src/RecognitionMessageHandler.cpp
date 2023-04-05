@@ -63,7 +63,7 @@ RecognitionMessageHandler::createRecognition()
 {
     auto recognition = _factory->message();
     BOOST_ASSERT(recognition);
-    recognition->onReady(
+    recognition->onDone(
         [weakSelf = weak_from_this(), executor = connection().executor()](auto result, auto error) {
             if (error) {
                 io::post(executor, [weakSelf, error]() {

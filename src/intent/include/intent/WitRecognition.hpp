@@ -1,56 +1,55 @@
 #pragma once
 
-#include "intent/Recognition.hpp"
+#include "intent/Types.hpp"
+#include "jarvis/Cancellable.hpp"
 #include "jarvis/Network.hpp"
 
 #include <atomic>
 #include <string>
 
-#include <concepts>
 #include <functional>
 
 namespace jar {
 
-class WitRecognition : public Recognition {
+class WitRecognition : public Cancellable {
 public:
-    using OnDataSignature = void();
+    using OnDone = void(UtteranceSpecs result, sys::error_code error);
+    using OnData = void();
 
     WitRecognition();
 
     [[nodiscard]] bool
-    cancelled() const;
+    needData() const;
 
     [[nodiscard]] bool
-    starving() const;
+    done() const;
 
     void
-    cancel() final;
+    wait();
 
-    template<std::invocable Callback>
     void
-    onData(Callback&& callback)
-    {
-        _dataCallback = std::move(callback);
-    }
+    onDone(std::move_only_function<OnDone> callback);
+
+    void
+    onData(std::move_only_function<OnData> callback);
 
 protected:
     void
-    starving(bool value);
+    needData(bool value);
 
     void
-    notifyData();
+    setResult(const std::string& value);
 
     void
-    submit(const std::string& result);
-
-    [[nodiscard]] io::cancellation_slot
-    onCancel();
+    setError(sys::error_code value);
 
 private:
-    std::function<OnDataSignature> _dataCallback;
-    io::cancellation_signal _cancelSig;
-    std::atomic<bool> _cancelled;
-    std::atomic<bool> _starving;
+    std::move_only_function<OnDone> _doneCallback;
+    std::move_only_function<OnData> _dataCallback;
+    std::atomic<bool> _needData;
+    std::atomic<bool> _done;
+    std::mutex _doneGuard;
+    std::condition_variable _whenDone;
 };
 
 } // namespace jar

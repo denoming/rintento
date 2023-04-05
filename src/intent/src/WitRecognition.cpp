@@ -5,60 +5,82 @@
 namespace jar {
 
 WitRecognition::WitRecognition()
-    : _cancelled{false}
-    , _starving{false}
+    : _needData{false}
 {
 }
 
 bool
-WitRecognition::cancelled() const
+WitRecognition::needData() const
 {
-    return _cancelled;
+    return _needData;
 }
 
 bool
-WitRecognition::starving() const
+WitRecognition::done() const
 {
-    return _starving;
+    return _done;
 }
 
 void
-WitRecognition::cancel()
+WitRecognition::wait()
 {
-    _cancelled = true;
-
-    if (starving()) {
-        setError(sys::errc::make_error_code(sys::errc::operation_canceled));
+    std::unique_lock lock{_doneGuard};
+    if (!_done) {
+        _whenDone.wait(lock, [this]() { return done(); });
     }
-
-    _cancelSig.emit(io::cancellation_type::terminal);
 }
 
 void
-WitRecognition::starving(bool value)
+WitRecognition::onDone(std::move_only_function<OnDone> callback)
 {
-    _starving = value;
+    _doneCallback = std::move(callback);
+}
 
-    if (_starving && _dataCallback) {
+void
+WitRecognition::onData(std::move_only_function<OnData> callback)
+{
+    _dataCallback = std::move(callback);
+}
+
+void
+WitRecognition::needData(bool status)
+{
+    _needData = status;
+
+    if (_needData && _dataCallback) {
         _dataCallback();
     }
 }
 
 void
-WitRecognition::submit(const std::string& result)
+WitRecognition::setResult(const std::string& value)
 {
+    BOOST_ASSERT(!_done);
+    std::unique_lock lock{_doneGuard};
+    _done = true;
     WitIntentParser parser;
-    if (auto utterances = parser.parse(result); utterances) {
-        setResult(std::move(utterances.value()));
+    if (auto parsedValue = parser.parse(value); parsedValue) {
+        if (_doneCallback) {
+            _doneCallback(std::move(*parsedValue), {});
+        }
     } else {
         setError(sys::errc::make_error_code(sys::errc::bad_message));
     }
+    lock.unlock();
+    _whenDone.notify_all();
 }
 
-io::cancellation_slot
-WitRecognition::onCancel()
+void
+WitRecognition::setError(const sys::error_code value)
 {
-    return _cancelSig.slot();
+    BOOST_ASSERT(!_done);
+    std::unique_lock lock{_doneGuard};
+    _done = true;
+    if (_doneCallback) {
+        _doneCallback({}, value);
+    }
+    lock.unlock();
+    _whenDone.notify_all();
 }
 
 } // namespace jar

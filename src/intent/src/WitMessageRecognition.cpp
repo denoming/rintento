@@ -80,12 +80,12 @@ WitMessageRecognition::run(std::string_view host, std::string_view port, std::st
 void
 WitMessageRecognition::feed(std::string_view message)
 {
-    if (!starving()) {
+    if (!needData()) {
         throw std::logic_error{"Inappropriate call to feed-up by message data"};
     }
 
     LOGD("Feeding recognition by <{}> bytes message data", message.size());
-    starving(false);
+    needData(false);
 
     BOOST_ASSERT(!message.empty());
     io::post(_executor,
@@ -195,7 +195,10 @@ WitMessageRecognition::onHandshakeDone(sys::error_code error)
         setError(sys::errc::make_error_code(sys::errc::operation_canceled));
     } else {
         LOGD("Handshaking has succeeded");
-        starving(true);
+        onCancel().assign([this](io::cancellation_type_t) {
+            setError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        });
+        needData(true);
     }
 }
 
@@ -261,7 +264,7 @@ WitMessageRecognition::onReadDone(sys::error_code error, std::size_t bytesTransf
     }
 
     LOGD("Reading response from the stream has succeeded: <{}> bytes", bytesTransferred);
-    submit(_res.body());
+    setResult(_res.body());
 
     if (cancelled()) {
         LOGD("Operation was interrupted");

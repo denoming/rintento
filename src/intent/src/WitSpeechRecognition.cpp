@@ -85,12 +85,12 @@ WitSpeechRecognition::run(std::string_view host, std::string_view port, std::str
 void
 WitSpeechRecognition::feed(io::const_buffer buffer)
 {
-    if (!starving()) {
+    if (!needData()) {
         throw std::logic_error{"Inappropriate call to feed-up by speech data"};
     }
 
     LOGD("Feeding by <{}> bytes of speech data", buffer.size());
-    starving(false);
+    needData(false);
 
     BOOST_ASSERT(buffer.size() > 0);
     io::post(_executor, [weakSelf = weak_from_this(), buffer]() {
@@ -103,12 +103,12 @@ WitSpeechRecognition::feed(io::const_buffer buffer)
 void
 WitSpeechRecognition::finalize()
 {
-    if (!starving()) {
+    if (!needData()) {
         throw std::logic_error{"Inappropriate call to feed-up by speech data"};
     }
 
     LOGD("Finalizing feeding by speech data");
-    starving(false);
+    needData(false);
 
     io::post(_executor, [weakSelf = weak_from_this()]() {
         if (auto self = weakSelf.lock()) {
@@ -265,7 +265,10 @@ WitSpeechRecognition::onReadContinueDone(sys::error_code error, std::size_t /*by
         setError(sys::errc::make_error_code(sys::errc::operation_canceled));
     } else {
         LOGD("Reading response has succeeded");
-        starving(true);
+        onCancel().assign([this](io::cancellation_type_t) {
+            setError(sys::errc::make_error_code(sys::errc::operation_canceled));
+        });
+        needData(true);
     }
 }
 
@@ -297,7 +300,7 @@ WitSpeechRecognition::onWriteNextChunkDone(sys::error_code error, std::size_t by
         setError(sys::errc::make_error_code(sys::errc::operation_canceled));
     } else {
         LOGD("Writing next chunk has succeeded: {} bytes", bytesTransferred);
-        starving(true);
+        needData(true);
     }
 }
 
@@ -359,7 +362,7 @@ WitSpeechRecognition::onReadDone(sys::error_code error, std::size_t bytesTransfe
     }
 
     LOGD("Reading recognition result has succeeded: <{}> bytes", bytesTransferred);
-    submit(_res.body());
+    setResult(_res.body());
 
     if (cancelled()) {
         LOGD("Operation was interrupted");

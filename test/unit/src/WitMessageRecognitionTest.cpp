@@ -60,11 +60,12 @@ TEST_F(WitMessageRecognitionTest, RecognizeMessage)
 {
     const std::string_view Message{"turn off the light"};
 
-    MockFunction<Recognition::OnReady> callback;
-    EXPECT_CALL(callback,
-                Call(Contains(isUtterance(Message, Contains(isConfidentIntent("light_off", 0.9f)))),
-                     IsFalse()));
-    recognition->onReady(callback.AsStdFunction());
+    MockFunction<WitRecognition::OnDone> callback;
+    EXPECT_CALL(
+        callback,
+        Call(Contains(isUtterance(Message, Contains(isConfidentIntent("light_off", 0.9f)), false)),
+             IsFalse()));
+    recognition->onDone(callback.AsStdFunction());
 
     bool guard{false};
     recognition->onData([this, &guard]() {
@@ -73,7 +74,7 @@ TEST_F(WitMessageRecognitionTest, RecognizeMessage)
     });
 
     recognition->run();
-    EXPECT_FALSE(recognition->ready());
+    EXPECT_FALSE(recognition->needData());
 
     waiter.wait([&guard]() { return guard; });
     ASSERT_TRUE(guard);
@@ -84,9 +85,9 @@ TEST_F(WitMessageRecognitionTest, RecognizeMessage)
 
 TEST_F(WitMessageRecognitionTest, CancelRecognizeMessage)
 {
-    MockFunction<Recognition::OnReady> callback;
+    MockFunction<WitRecognition::OnDone> callback;
     EXPECT_CALL(callback, Call(IsEmpty(), IsTrue()));
-    recognition->onReady(callback.AsStdFunction());
+    recognition->onDone(callback.AsStdFunction());
     recognition->run();
 
     // Waiting some time to simulate real situation
