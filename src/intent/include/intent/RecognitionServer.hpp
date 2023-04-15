@@ -57,6 +57,9 @@ private:
     bool
     dispatch(std::shared_ptr<RecognitionConnection> connection);
 
+    void
+    onDispatchDone(uint16_t id);
+
 private:
     io::any_io_executor _executor;
     std::shared_ptr<IntentPerformer> _performer;

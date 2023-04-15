@@ -165,20 +165,24 @@ RecognitionServer::dispatch(std::shared_ptr<RecognitionConnection> connection)
         std::lock_guard lock{_dispatchersGuard};
         _dispatchers.emplace(id, dispatcher);
     }
-    dispatcher->onDone([this](uint16_t identity) {
-        LOGD("Dispatcher <{}> has done", identity);
-        {
-            std::lock_guard lock{_dispatchersGuard};
-            _dispatchers.erase(identity);
-        }
-        if (readyToShutdown()) {
-            LOGD("Server is ready to shutdown");
-            notifyShutdownReady();
-        }
-    });
+    dispatcher->onDone(std::bind_front(&RecognitionServer::onDispatchDone, this));
     LOGD("Dispatcher <{}> is going to start", id);
     dispatcher->dispatch();
     return true;
+}
+
+void
+RecognitionServer::onDispatchDone(uint16_t id)
+{
+    LOGD("Dispatcher <{}> has done", id);
+    {
+        std::lock_guard lock{_dispatchersGuard};
+        _dispatchers.erase(id);
+    }
+    if (readyToShutdown()) {
+        LOGD("Server is ready to shutdown");
+        notifyShutdownReady();
+    }
 }
 
 } // namespace jar
