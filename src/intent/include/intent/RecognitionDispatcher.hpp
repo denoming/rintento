@@ -47,7 +47,7 @@ private:
                      std::error_code error);
 
     void
-    onComplete(UtteranceSpecs utterances, std::error_code error);
+    onDone(UtteranceSpecs utterances, std::error_code error);
 
     std::shared_ptr<RecognitionHandler>
     getHandler();
