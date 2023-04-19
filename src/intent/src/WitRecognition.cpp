@@ -1,6 +1,6 @@
 #include "intent/WitRecognition.hpp"
 
-#include "intent/WitIntentParser.hpp"
+#include <boost/assert.hpp>
 
 namespace jar {
 
@@ -53,18 +53,13 @@ WitRecognition::needData(bool status)
 }
 
 void
-WitRecognition::setResult(const std::string& value)
+WitRecognition::setResult(UtteranceSpecs result)
 {
     BOOST_ASSERT(!_done);
     std::unique_lock lock{_doneGuard};
     _done = true;
-    WitIntentParser parser;
-    if (auto parsedValue = parser.parse(value); parsedValue) {
-        if (_doneCallback) {
-            _doneCallback(std::move(*parsedValue), {});
-        }
-    } else {
-        setError(sys::errc::make_error_code(sys::errc::bad_message));
+    if (_doneCallback) {
+        _doneCallback(std::move(result), {});
     }
     lock.unlock();
     _whenDone.notify_all();

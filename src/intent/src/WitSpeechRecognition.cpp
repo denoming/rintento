@@ -2,6 +2,7 @@
 
 #include "common/Config.hpp"
 #include "intent/Utils.hpp"
+#include "intent/WitIntentParser.hpp"
 #include "jarvis/Logger.hpp"
 
 #include <boost/assert.hpp>
@@ -361,7 +362,13 @@ WitSpeechRecognition::onReadDone(std::error_code error, std::size_t bytesTransfe
     }
 
     LOGD("Reading recognition result has succeeded: <{}> bytes", bytesTransferred);
-    setResult(_res.body());
+
+    WitIntentParser parser;
+    if (auto result = parser.parseSpeechResult(_res.body()); result) {
+        setResult(std::move(result.value()));
+    } else {
+        setError(result.error());
+    }
 
     if (cancelled()) {
         LOGD("Operation was interrupted");

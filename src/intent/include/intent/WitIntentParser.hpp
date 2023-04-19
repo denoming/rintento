@@ -1,23 +1,20 @@
 #pragma once
 
-#include "intent/IntentParser.hpp"
+#include "intent/Types.hpp"
 
-#include <memory>
+#include <expected>
+#include <optional>
+#include <system_error>
 
 namespace jar {
 
-class WitIntentParser final : public IntentParser {
+class WitIntentParser {
 public:
-    WitIntentParser();
+    [[nodiscard]] static std::expected<UtteranceSpecs, std::error_code>
+    parseMessageResult(std::string_view input);
 
-    ~WitIntentParser() final;
-
-    [[nodiscard]] std::optional<UtteranceSpecs>
-    parse(std::string_view input) final;
-
-private:
-    class Impl;
-    std::unique_ptr<Impl> _impl;
+    [[nodiscard]] static std::expected<UtteranceSpecs, std::error_code>
+    parseSpeechResult(std::string_view input);
 };
 
 } // namespace jar

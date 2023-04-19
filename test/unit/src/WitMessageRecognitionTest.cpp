@@ -61,10 +61,9 @@ TEST_F(WitMessageRecognitionTest, RecognizeMessage)
     const std::string_view Message{"turn off the light"};
 
     MockFunction<WitRecognition::OnDone> callback;
-    EXPECT_CALL(
-        callback,
-        Call(Contains(isUtterance(Message, Contains(isConfidentIntent("light_off", 0.9f)), false)),
-             IsFalse()));
+    EXPECT_CALL(callback,
+                Call(Contains(isUtterance(Message, Contains(isConfidentIntent("light_off", 0.9f)))),
+                     IsFalse()));
     recognition->onDone(callback.AsStdFunction());
 
     bool guard{false};

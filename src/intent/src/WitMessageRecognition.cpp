@@ -263,7 +263,13 @@ WitMessageRecognition::onReadDone(std::error_code error, std::size_t bytesTransf
     }
 
     LOGD("Reading response from the stream has succeeded: <{}> bytes", bytesTransferred);
-    setResult(_res.body());
+
+    WitIntentParser parser;
+    if (auto result = parser.parseMessageResult(_res.body()); result) {
+        setResult(std::move(result.value()));
+    } else {
+        setError(result.error());
+    }
 
     if (cancelled()) {
         LOGD("Operation was interrupted");

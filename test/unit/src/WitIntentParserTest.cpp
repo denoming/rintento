@@ -7,9 +7,7 @@
 using namespace testing;
 using namespace jar;
 
-TEST(WitIntentParserTest, Parse1)
-{
-    static const std::string_view kInput{R"(
+static const std::string_view kMessageResult{R"(
         {
           "text": "turn off the light",
           "intents": [
@@ -24,15 +22,7 @@ TEST(WitIntentParserTest, Parse1)
         }
     )"};
 
-    WitIntentParser parser;
-    EXPECT_THAT(parser.parse(kInput),
-                Optional(Contains(isUtterance(
-                    "turn off the light", Contains(isConfidentIntent("light_off", 0.9f)), false))));
-}
-
-TEST(WitIntentParserTest, Parse2)
-{
-    static const std::string_view kInput{R"(
+static const std::string_view kSpeechInput{R"(
         {
           "text": "Turn"
         }
@@ -179,15 +169,23 @@ TEST(WitIntentParserTest, Parse2)
         }
     )"};
 
-    WitIntentParser parser;
-    EXPECT_THAT(parser.parse(kInput),
+TEST(WitIntentParserTest, ParseMessageResult)
+{
+    EXPECT_THAT(WitIntentParser::parseMessageResult(kMessageResult),
+                Optional(Contains(isUtterance("turn off the light",
+                                              Contains(isConfidentIntent("light_off", 0.9f))))));
+}
+
+TEST(WitIntentParserTest, ParseSpeechResult)
+{
+    EXPECT_THAT(WitIntentParser::parseSpeechResult(kSpeechInput),
                 Optional(Contains(isUtterance("Turn off the light",
                                               Contains(isConfidentIntent("light_off", 0.9f))))));
 }
 
 TEST(WitIntentParserTest, ErrorParse)
 {
-    static const std::string_view kInput{R"(
+    static const std::string_view kInvalidResult{R"(
         {
             "text": "Turn"
         }
@@ -195,12 +193,12 @@ TEST(WitIntentParserTest, ErrorParse)
             "entities:
     )"};
 
-    WitIntentParser parser;
-    EXPECT_EQ(parser.parse(kInput), std::nullopt);
+    EXPECT_FALSE(WitIntentParser::parseMessageResult(kInvalidResult));
+    EXPECT_FALSE(WitIntentParser::parseSpeechResult(kInvalidResult));
 }
 
 TEST(WitIntentParserTest, ParseEmpty)
 {
-    WitIntentParser parser;
-    EXPECT_EQ(parser.parse(""), std::nullopt);
+    EXPECT_FALSE(WitIntentParser::parseMessageResult(""));
+    EXPECT_FALSE(WitIntentParser::parseSpeechResult(""));
 }

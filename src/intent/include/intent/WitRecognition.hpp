@@ -2,11 +2,11 @@
 
 #include "intent/Types.hpp"
 #include "jarvis/Cancellable.hpp"
-#include "jarvis/Network.hpp"
 
 #include <atomic>
-#include <string>
+#include <condition_variable>
 #include <functional>
+#include <mutex>
 
 namespace jar {
 
@@ -37,7 +37,7 @@ protected:
     needData(bool value);
 
     void
-    setResult(const std::string& value);
+    setResult(UtteranceSpecs result);
 
     void
     setError(std::error_code value);
