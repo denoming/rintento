@@ -52,6 +52,7 @@ recognizeMessage(io::any_io_executor executor,
     tcp::endpoint endpoint = stream.connect(endpoints, error);
     if (error) {
         LOGE("Connecting to the given endpoint has failed: {}", error.what());
+        return {false, "Connecting has failed"};
     } else {
         LOGD("Connected to <{}> endpoint", endpoint.address().to_string());
     }
@@ -66,6 +67,7 @@ recognizeMessage(io::any_io_executor executor,
         std::size_t bytesTransferred = http::write(stream, req, error);
         if (error) {
             LOGE("Writing has failed: {}", error.what());
+            return {false, "Writing has failed"};
         } else {
             LOGD("The <{}> bytes has been written", bytesTransferred);
         }
@@ -78,6 +80,7 @@ recognizeMessage(io::any_io_executor executor,
         std::size_t bytesTransferred = http::read(stream, buffer, res, error);
         if (error) {
             LOGE("Reading has failed: {}", error.what());
+            return {false, "Reading has failed"};
         } else {
             LOGD("The <{}> bytes has been read", bytesTransferred);
         }
