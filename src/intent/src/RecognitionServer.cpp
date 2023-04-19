@@ -149,7 +149,7 @@ bool
 RecognitionServer::dispatch(std::shared_ptr<RecognitionConnection> connection)
 {
     const auto endpoint = connection->endpointRemote();
-    if (endpoint) {
+    if (!endpoint) {
         LOGE("Getting dispatcher id has failed: <{}>", endpoint.error().message());
         return false;
     }
