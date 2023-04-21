@@ -8,7 +8,7 @@ target_sources(${TARGET}
             src/WitSpeechRecognitionTest.cpp
             src/UtilsTest.cpp
             src/IntentRegistryTest.cpp
-            src/registry/GetTodayRainyStatusIntentTest.cpp
+            src/registry/GetRainyStatusIntentTest.cpp
 )
 
 target_link_libraries(${TARGET}

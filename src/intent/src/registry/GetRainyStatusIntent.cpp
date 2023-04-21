@@ -19,11 +19,11 @@ std::pair<int64_t, int64_t>
 getTimeBoundaries(std::chrono::days modifier)
 {
     namespace krn = std::chrono;
-    krn::time_point p1 = krn::system_clock::now();
-    krn::time_point p2 = krn::ceil<krn::days>(p1);
+    krn::time_point p1 = krn::system_clock::now(); // Now
+    krn::time_point p2 = krn::ceil<krn::days>(p1); // The end of current day
     if (modifier != krn::days::zero()) {
-        p1 = krn::floor<krn::days>(p1) + modifier;
-        p2 += modifier;
+        p1 = krn::floor<krn::days>(p1) + modifier; // The start of current day + modifier
+        p2 += modifier;                            // The end of current day + modifier
     }
     const auto s1 = krn::duration_cast<krn::seconds>(p1.time_since_epoch());
     const auto s2 = krn::duration_cast<krn::seconds>(p2.time_since_epoch());
@@ -59,6 +59,12 @@ GetRainyStatusIntent::GetRainyStatusIntent(std::string name,
 {
 }
 
+const GetRainyStatusIntent::Result&
+GetRainyStatusIntent::result() const
+{
+    return _result;
+}
+
 std::shared_ptr<Intent>
 GetRainyStatusIntent::clone()
 {
@@ -66,47 +72,31 @@ GetRainyStatusIntent::clone()
 }
 
 void
-GetRainyStatusIntent::perform(OnDone onDone)
+GetRainyStatusIntent::perform()
 {
-    BOOST_ASSERT(onDone);
-    _onDone = std::move(onDone);
-
     const auto location{_positioningClient.location()};
-    LOGD("Get forecast weather for <{}> location", location);
+    LOGD("[{}]: Getting forecast weather for <{}> location", name(), location);
 
     _weatherClient.getForecastWeather(
         location.lat,
         location.lon,
         [weakSelf = weak_from_this()](ForecastWeatherData weatherData) {
-            LOGD("Getting forecast weather data was succeed");
             if (auto self = weakSelf.lock()) {
                 self->onWeatherDataReady(std::move(weatherData));
             }
         },
         [weakSelf = weak_from_this()](const std::runtime_error& error) {
-            LOGE("Getting forecast weather has failed: error<{}>", error.what());
             if (auto self = weakSelf.lock()) {
-                self->onWeatherDataError(std::make_error_code(std::errc::no_message_available));
+                self->onWeatherDataError(error);
             }
         });
-}
-
-void
-GetRainyStatusIntent::onReady(std::move_only_function<OnReady> callback)
-{
-    _onReady = std::move(callback);
-}
-
-void
-GetRainyStatusIntent::onError(std::move_only_function<OnError> callback)
-{
-    _onError = std::move(callback);
 }
 
 bool
 GetRainyStatusIntent::getRainyStatus(const ForecastWeatherData& weather)
 {
-    const auto [b1, b2] = getTimeBoundaries(_daysModifies);
+    const auto [tb1, tb2] = getTimeBoundaries(_daysModifies);
+
     bool isRainy{false};
     for (const auto& d : weather.data) {
         const auto dt = d.peek<int64_t>("dt");
@@ -114,12 +104,12 @@ GetRainyStatusIntent::getRainyStatus(const ForecastWeatherData& weather)
         if (!dt or !id) {
             continue;
         }
-        if (dt < b1) {
+        if (dt < tb1) {
             /* DT is earlier than [b1, b2] time boundaries */
             continue;
         }
-        if (dt > b2) {
-            /* DT is later than [b1, b2] time boundaries */
+        if (dt > tb2) {
+            /* DT is later than [b1, b2] time boundaries (we assume data is sorted by dt) */
             break;
         }
         if (isRainy = (id >= kRainyStatusCode1 && id <= kRainyStatusCode2); isRainy) {
@@ -132,34 +122,44 @@ GetRainyStatusIntent::getRainyStatus(const ForecastWeatherData& weather)
 void
 GetRainyStatusIntent::onWeatherDataReady(ForecastWeatherData weather)
 {
+    LOGD("[{}]: Getting forecast weather data was succeed", name());
+
     if (cancelled()) {
-        onWeatherDataError(std::make_error_code(std::errc::operation_canceled));
+        setError(std::make_error_code(std::errc::operation_canceled));
         return;
     }
 
     const auto rainyStatus = getRainyStatus(weather);
-    LOGD("Rainy status available: {}", rainyStatus);
+    LOGD("[{}]: Rainy status is available: {}", name(), rainyStatus);
 
     const std::string text{rainyStatus ? "Today will be rainy" : "It won't rain today"};
     _speakerClient.synthesizeText(text, "en-US");
 
-    if (_onReady) {
-        _onReady(rainyStatus ? Tags::isRainy : Tags::notIsRainy);
-    }
-
-    BOOST_ASSERT(_onDone);
-    _onDone({});
+    setResult(rainyStatus ? Tags::isRainy : Tags::notIsRainy);
 }
 
 void
-GetRainyStatusIntent::onWeatherDataError(std::error_code error)
+GetRainyStatusIntent::onWeatherDataError(std::runtime_error error)
 {
-    if (_onError) {
-        _onError(error);
-    }
+    LOGE("[{}]: Getting forecast weather has failed: error<{}>", name(), error.what());
 
-    BOOST_ASSERT(_onDone);
-    _onDone(error);
+    setError(std::make_error_code(std::errc::result_out_of_range));
+}
+
+void
+GetRainyStatusIntent::setResult(Tags tag)
+{
+    _result = tag;
+
+    complete({});
+}
+
+void
+GetRainyStatusIntent::setError(std::error_code errorCode)
+{
+    _result = std::unexpected(errorCode);
+
+    complete(errorCode);
 }
 
 } // namespace jar

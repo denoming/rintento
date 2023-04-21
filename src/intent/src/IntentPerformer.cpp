@@ -29,7 +29,9 @@ IntentPerformer::perform(UtteranceSpecs utterances)
         for (auto&& intent : utterance.intents) {
             if (_registry.has(intent.name)) {
                 LOGI("Add <{}> intent to the pending queue", intent.name);
-                _pendingIntents.push(_registry.get(intent.name));
+                auto action = _registry.get(intent.name);
+                action->onDone(sigc::mem_fun(*this, &IntentPerformer::onIntentComplete));
+                _pendingIntents.push(action);
                 break;
             }
         }
@@ -38,7 +40,7 @@ IntentPerformer::perform(UtteranceSpecs utterances)
     if (!_pendingIntents.empty()) {
         auto& intent = _pendingIntents.front();
         LOGI("Perform <{}> intent", intent->name());
-        intent->perform(std::bind_front(&IntentPerformer::onIntentComplete, this));
+        intent->perform();
     } else {
         LOGE("No pending intents");
     }

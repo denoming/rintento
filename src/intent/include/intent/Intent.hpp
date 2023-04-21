@@ -1,16 +1,21 @@
 #pragma once
 
+#include "jarvis/Cancellable.hpp"
+
+#include <sigc++/signal.h>
+
 #include <functional>
 #include <memory>
 #include <string>
-
-#include "jarvis/Cancellable.hpp"
 
 namespace jar {
 
 class Intent : public Cancellable {
 public:
-    using OnDone = std::move_only_function<void(std::error_code)>;
+    /* Signatures */
+    using OnDone = void(std::error_code);
+    /* Signals */
+    using OnDoneSignal = sigc::signal<OnDone>;
 
     Intent(std::string name);
 
@@ -23,11 +28,19 @@ public:
     clone() = 0;
 
     virtual void
-    perform(OnDone callback)
+    perform()
         = 0;
+
+    [[maybe_unused]] sigc::connection
+    onDone(OnDoneSignal::slot_type&& slot);
+
+protected:
+    void
+    complete(std::error_code errorCode = {});
 
 private:
     std::string _name;
+    OnDoneSignal _onDoneSig;
 };
 
 } // namespace jar

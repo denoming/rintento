@@ -20,12 +20,12 @@ public:
         return std::make_shared<TestIntent>(name());
     }
 
-    MOCK_METHOD(void, perform, (OnDone), (final));
+    MOCK_METHOD(void, perform, (), (final));
 };
 
 class IntentRegistryTest : public Test {
 public:
-    const std::string kIntentName{"get_today_rainy_status"};
+    const std::string kIntentName{"test_intent"};
 
 public:
     IntentRegistry registry;

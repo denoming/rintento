@@ -26,5 +26,6 @@ include(AddSpdLog)
 include(AddJarvisCommon)
 include(AddJarvisSpeaker)
 include(AddJarvisWeather)
+include(AddSigCpp)
 
 include(EnableCcache)

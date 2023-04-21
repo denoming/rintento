@@ -1,11 +1,11 @@
 #pragma once
 
 #include "intent/Intent.hpp"
-#include "jarvis/Cancellable.hpp"
 #include "jarvis/speaker/ISpeakerClient.hpp"
 #include "jarvis/weather/IWeatherClient.hpp"
 
 #include <chrono>
+#include <expected>
 #include <memory>
 
 namespace jar {
@@ -17,8 +17,7 @@ class GetRainyStatusIntent final : public Intent,
 public:
     enum class Tags { isRainy, notIsRainy };
 
-    using OnReady = void(Tags tag);
-    using OnError = void(std::error_code error);
+    using Result = std::expected<Tags, std::error_code>;
 
     static std::shared_ptr<GetRainyStatusIntent>
     create(std::string name,
@@ -27,17 +26,14 @@ public:
            IWeatherClient& weatherClient,
            std::chrono::days daysModifier = {});
 
+    [[nodiscard]] const Result&
+    result() const;
+
     std::shared_ptr<Intent>
     clone() final;
 
     void
-    perform(OnDone callback) final;
-
-    void
-    onReady(std::move_only_function<OnReady> callback);
-
-    void
-    onError(std::move_only_function<OnError> callback);
+    perform() final;
 
 private:
     GetRainyStatusIntent(std::string name,
@@ -53,16 +49,20 @@ private:
     onWeatherDataReady(ForecastWeatherData weather);
 
     void
-    onWeatherDataError(std::error_code error);
+    onWeatherDataError(std::runtime_error error);
+
+    void
+    setResult(Tags tag);
+
+    void
+    setError(std::error_code errorCode);
 
 private:
     IPositioningClient& _positioningClient;
     ISpeakerClient& _speakerClient;
     IWeatherClient& _weatherClient;
     std::chrono::days _daysModifies;
-    std::move_only_function<OnReady> _onReady;
-    std::move_only_function<OnError> _onError;
-    OnDone _onDone;
+    Result _result;
 };
 
 } // namespace jar

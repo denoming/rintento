@@ -2,6 +2,8 @@
 
 #include "intent/Types.hpp"
 
+#include <sigc++/trackable.h>
+
 #include <memory>
 #include <queue>
 
@@ -10,7 +12,8 @@ namespace jar {
 class Intent;
 class IntentRegistry;
 
-class IntentPerformer : public std::enable_shared_from_this<IntentPerformer> {
+class IntentPerformer : public sigc::trackable,
+                        public std::enable_shared_from_this<IntentPerformer> {
 public:
     static std::shared_ptr<IntentPerformer>
     create(IntentRegistry& registry);

@@ -12,6 +12,7 @@ target_link_libraries(${TARGET}
            Jarvis::Speaker
            Jarvis::Weather
            Jarvis::Executor::Common
+           PkgConfig::SigCpp
            Boost::headers
            Boost::json
     PRIVATE OpenSSL::SSL
