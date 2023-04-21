@@ -82,9 +82,7 @@ public:
         _proxyWorker.start();
         _recognizeWorker.start();
 
-        if (isSpeakerServiceAvailable()) {
-            registerIntents();
-        }
+        registerIntents();
 
         const auto port = _config->proxyServerPort();
         BOOST_ASSERT(_server);
@@ -120,19 +118,19 @@ public:
 
 private:
     [[nodiscard]] bool
-    isSpeakerServiceAvailable() const
+    hasSpeakerService() const
     {
         return bool(_speakerClient);
     }
 
     [[nodiscard]] bool
-    isWeatherServiceAvailable() const
+    hasWeatherService() const
     {
         return bool(_weatherClient);
     }
 
     [[nodiscard]] bool
-    isPositioningServiceAvailable() const
+    hasPositioningService() const
     {
         return bool(_positioningClient);
     }
@@ -140,10 +138,30 @@ private:
     void
     registerIntents()
     {
-        if (isWeatherServiceAvailable() && isPositioningServiceAvailable()) {
-            _registry->add(GetRainyStatusIntent::create(
-                "get_today_rainy_status", *_positioningClient, *_speakerClient, *_weatherClient));
+        if (!hasWeatherService()) {
+            LOGE("Weather service is not available");
+            return;
         }
+        if (!hasSpeakerService()) {
+            LOGE("Speaker service is not available");
+            return;
+        }
+        if (!hasPositioningService()) {
+            LOGE("Positioning service is not available");
+            return;
+        }
+
+        _registry->add(GetRainyStatusIntent::create("get_today_rainy_status",
+                                                    *_positioningClient,
+                                                    *_speakerClient,
+                                                    *_weatherClient,
+                                                    std::chrono::days{0}));
+
+        _registry->add(GetRainyStatusIntent::create("get_tomorrow_rainy_status",
+                                                    *_positioningClient,
+                                                    *_speakerClient,
+                                                    *_weatherClient,
+                                                    std::chrono::days{1}));
     }
 
 private:

@@ -59,7 +59,8 @@ TEST_F(GetRainyStatusIntentTest, CheckIfTodayIsRainy)
     EXPECT_CALL(speaker, synthesizeText(Not(IsEmpty()), Not(IsEmpty())));
     EXPECT_CALL(weather, getForecastWeather).WillOnce(InvokeArgument<2>(weatherData));
 
-    auto intent = GetRainyStatusIntent::create(kIntentName, positioning, speaker, weather);
+    auto intent
+        = GetRainyStatusIntent::create(kIntentName, positioning, speaker, weather, krn::days{0});
     ASSERT_TRUE(intent);
 
     MockFunction<void(std::error_code)> onDone;
