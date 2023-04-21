@@ -1,12 +1,12 @@
 #include "intent/IntentSubsystem.hpp"
 
 #include "common/Config.hpp"
-#include "intent/IntentPerformer.hpp"
-#include "intent/IntentRegistry.hpp"
+#include "intent/ActionPerformer.hpp"
+#include "intent/ActionRegistry.hpp"
 #include "intent/PositioningClient.hpp"
 #include "intent/RecognitionServer.hpp"
 #include "intent/WitRecognitionFactory.hpp"
-#include "intent/registry/GetRainyStatusIntent.hpp"
+#include "intent/registry/GetRainyStatusAction.hpp"
 #include "jarvis/Application.hpp"
 #include "jarvis/Logger.hpp"
 #include "jarvis/Worker.hpp"
@@ -67,8 +67,8 @@ public:
     initialize(Application& /*application*/)
     {
         _factory = std::make_unique<WitRecognitionFactory>(_config, _recognizeWorker.executor());
-        _registry = std::make_unique<IntentRegistry>();
-        _performer = IntentPerformer::create(*_registry);
+        _registry = std::make_unique<ActionRegistry>();
+        _performer = ActionPerformer::create(*_registry);
         _server = RecognitionServer::create(_proxyWorker.executor(), _performer, _factory);
 
         _positioningClient = getPositioningClient();
@@ -151,13 +151,13 @@ private:
             return;
         }
 
-        _registry->add(GetRainyStatusIntent::create("get_today_rainy_status",
+        _registry->add(GetRainyStatusAction::create("get_today_rainy_status",
                                                     *_positioningClient,
                                                     *_speakerClient,
                                                     *_weatherClient,
                                                     std::chrono::days{0}));
 
-        _registry->add(GetRainyStatusIntent::create("get_tomorrow_rainy_status",
+        _registry->add(GetRainyStatusAction::create("get_tomorrow_rainy_status",
                                                     *_positioningClient,
                                                     *_speakerClient,
                                                     *_weatherClient,
@@ -168,9 +168,9 @@ private:
     Worker _proxyWorker;
     Worker _recognizeWorker;
     std::shared_ptr<Config> _config;
-    std::unique_ptr<IntentRegistry> _registry;
+    std::unique_ptr<ActionRegistry> _registry;
     std::shared_ptr<WitRecognitionFactory> _factory;
-    std::shared_ptr<IntentPerformer> _performer;
+    std::shared_ptr<ActionPerformer> _performer;
     std::shared_ptr<RecognitionServer> _server;
     std::unique_ptr<PositioningClient> _positioningClient;
     std::unique_ptr<SpeakerClient> _speakerClient;

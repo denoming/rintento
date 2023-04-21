@@ -12,7 +12,7 @@ class RecognitionConnection;
 
 class RecognitionHandler {
 public:
-    using OnDone = void(UtteranceSpecs result, std::error_code error);
+    using OnDone = void(Utterances result, std::error_code error);
 
     using Buffer = beast::flat_buffer;
     using Parser = http::request_parser<http::empty_body>;
@@ -38,13 +38,13 @@ protected:
     connection() const;
 
     void
-    submit(UtteranceSpecs result);
+    submit(Utterances result);
 
     void
     submit(std::error_code error);
 
     void
-    sendResponse(const UtteranceSpecs& result);
+    sendResponse(const Utterances& result);
 
     void
     sendResponse(std::error_code error);

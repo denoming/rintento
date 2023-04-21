@@ -12,7 +12,7 @@ namespace jar {
 
 class WitRecognition : public Cancellable {
 public:
-    using OnDone = void(UtteranceSpecs result, std::error_code error);
+    using OnDone = void(Utterances result, std::error_code error);
     using OnData = void();
 
     WitRecognition();
@@ -37,7 +37,7 @@ protected:
     needData(bool value);
 
     void
-    setResult(UtteranceSpecs result);
+    setResult(Utterances result);
 
     void
     setError(std::error_code value);

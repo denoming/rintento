@@ -1,6 +1,6 @@
 #include "intent/RecognitionDispatcher.hpp"
 
-#include "intent/IntentPerformer.hpp"
+#include "intent/ActionPerformer.hpp"
 #include "intent/RecognitionConnection.hpp"
 #include "intent/RecognitionMessageHandler.hpp"
 #include "intent/RecognitionSpeechHandler.hpp"
@@ -16,7 +16,7 @@ namespace jar {
 std::shared_ptr<RecognitionDispatcher>
 RecognitionDispatcher::create(uint16_t identity,
                               std::shared_ptr<RecognitionConnection> connection,
-                              std::shared_ptr<IntentPerformer> performer,
+                              std::shared_ptr<ActionPerformer> performer,
                               std::shared_ptr<WitRecognitionFactory> factory)
 {
     // clang-format off
@@ -28,7 +28,7 @@ RecognitionDispatcher::create(uint16_t identity,
 
 RecognitionDispatcher::RecognitionDispatcher(uint16_t id,
                                              std::shared_ptr<RecognitionConnection> connection,
-                                             std::shared_ptr<IntentPerformer> performer,
+                                             std::shared_ptr<ActionPerformer> performer,
                                              std::shared_ptr<WitRecognitionFactory> factory)
     : _id{id}
     , _connection{std::move(connection)}
@@ -92,7 +92,7 @@ RecognitionDispatcher::onReadHeaderDone(beast::flat_buffer& buffer,
 }
 
 void
-RecognitionDispatcher::onDone(UtteranceSpecs utterances, std::error_code error)
+RecognitionDispatcher::onDone(Utterances utterances, std::error_code error)
 {
     if (error) {
         LOGE("The <{}> dispatcher has failed: <{}> error", _id, error.message());
@@ -109,7 +109,7 @@ RecognitionDispatcher::getHandler()
 {
     auto handler1 = RecognitionMessageHandler::create(_connection, _factory);
     handler1->onDone(
-        [weakSelf = weak_from_this(), id = _id](UtteranceSpecs result, std::error_code error) {
+        [weakSelf = weak_from_this(), id = _id](Utterances result, std::error_code error) {
             if (auto self = weakSelf.lock()) {
                 LOGD("Message handler of <{}> dispatcher has done: success<{}>", id, !error);
                 self->onDone(std::move(result), error);
@@ -117,7 +117,7 @@ RecognitionDispatcher::getHandler()
         });
     auto handler2 = RecognitionSpeechHandler::create(_connection, _factory);
     handler2->onDone(
-        [weakSelf = weak_from_this(), id = _id](UtteranceSpecs result, std::error_code error) {
+        [weakSelf = weak_from_this(), id = _id](Utterances result, std::error_code error) {
             if (auto self = weakSelf.lock()) {
                 LOGD("Speech handler of <{}> dispatcher has done: success<{}>", id, !error);
                 self->onDone(std::move(result), error);
@@ -125,7 +125,7 @@ RecognitionDispatcher::getHandler()
         });
     auto handler3 = RecognitionTerminalHandler::create(_connection);
     handler3->onDone(
-        [weakSelf = weak_from_this(), id = _id](UtteranceSpecs result, std::error_code error) {
+        [weakSelf = weak_from_this(), id = _id](Utterances result, std::error_code error) {
             if (auto self = weakSelf.lock()) {
                 LOGD("Terminal handler of <{}> dispatcher has done", id);
                 self->onDone(std::move(result), error);

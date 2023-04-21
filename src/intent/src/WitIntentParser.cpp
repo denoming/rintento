@@ -9,22 +9,22 @@ namespace jar {
 
 namespace {
 
-std::optional<IntentSpec>
+std::optional<Intent>
 toIntent(const json::object& jsonObject)
 {
     const auto nameValue = jsonObject.if_contains("name");
     const auto confValue = jsonObject.if_contains("confidence");
     if ((nameValue && nameValue->is_string()) && (confValue && confValue->is_double())) {
         std::string name{nameValue->as_string().begin(), nameValue->as_string().end()};
-        return IntentSpec{std::move(name), static_cast<float>(confValue->as_double())};
+        return Intent{std::move(name), static_cast<float>(confValue->as_double())};
     }
     return std::nullopt;
 }
 
-IntentSpecs
+Intents
 toIntents(const json::array& jsonIntents)
 {
-    IntentSpecs intents;
+    Intents intents;
     for (auto jsonIntent : jsonIntents) {
         if (const auto intentObject = jsonIntent.if_object(); intentObject) {
             if (auto intentOpt = toIntent(*intentObject); intentOpt) {
@@ -35,10 +35,10 @@ toIntents(const json::array& jsonIntents)
     return intents;
 }
 
-std::optional<UtteranceSpec>
+std::optional<Utterance>
 toUtterance(const json::object& object, const bool finalByDefault = false)
 {
-    IntentSpecs intents;
+    Intents intents;
     if (auto intentsValue = object.if_contains("intents"); intentsValue) {
         if (auto intentsArray = intentsValue->if_array(); intentsArray) {
             intents = toIntents(*intentsArray);
@@ -59,12 +59,12 @@ toUtterance(const json::object& object, const bool finalByDefault = false)
         }
     }
 
-    return UtteranceSpec{std::move(text), std::move(intents), isFinal};
+    return Utterance{std::move(text), std::move(intents), isFinal};
 }
 
 } // namespace
 
-std::expected<UtteranceSpecs, std::error_code>
+std::expected<Utterances, std::error_code>
 WitIntentParser::parseMessageResult(std::string_view input)
 {
     if (input.empty()) {
@@ -77,7 +77,7 @@ WitIntentParser::parseMessageResult(std::string_view input)
         return std::unexpected(error);
     }
 
-    UtteranceSpecs output;
+    Utterances output;
     if (auto object = value.if_object(); object) {
         if (auto utterance = toUtterance(*object, true); utterance) {
             output.push_back(std::move(*utterance));
@@ -86,14 +86,14 @@ WitIntentParser::parseMessageResult(std::string_view input)
     return output;
 }
 
-std::expected<UtteranceSpecs, std::error_code>
+std::expected<Utterances, std::error_code>
 WitIntentParser::parseSpeechResult(std::string_view input)
 {
     if (input.empty()) {
         return std::unexpected(std::make_error_code(std::errc::invalid_argument));
     }
 
-    UtteranceSpecs output;
+    Utterances output;
     json::stream_parser parser;
     std::size_t nextRoot{0};
     do {

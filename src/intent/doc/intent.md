@@ -1,11 +1,13 @@
 # Introduction
 
-Intent component is a main component of executor service. This component includes server, recognition handlers and backend clients.
-Additionally multiple known intents  are present. Each of the known intents represents some actions needed to be done upon client request.
+Intent component is a main component of executor service. This component includes server, recognition handlers and
+backend clients.
+Additionally multiple known intents are present.
+Each of the known intents represents some actions needed to be done upon client request.
 
 # Purpose
 
-The purpose is recognizing known intent by text message or audio speech and perform this intent upon client request.
+The purpose is recognizing known intent by text message or audio speech and perform action upon client request.
 
 # Use Cases
 
@@ -35,11 +37,9 @@ UC2 --> Server
 
 | Name                       | Description                                                         |
 |----------------------------|---------------------------------------------------------------------|
-| Intent                     | Represents base class for intents                                   |
-| IntentParser               | Represents base class for intents parser                            |
-| IntentPerformer            | The performer to accomplish intent                                  |
-| IntentRegistry             | The registry to store all currently supported intents               |
-| IntentSubsystem            | The subsystem to handle lifetime of service software units          |
+| Action                     | Represents base class for actions                                   |
+| ActionPerformer            | The performer to accomplish action                                  |
+| ActionRegistry             | The registry to store all currently supported actions               |
 | PositioningClient          | The client to provide current location                              |
 | RecognitionConnection      | The wrapper to handle operations upon client connection             |
 | RecognitionDispatcher      | The dispatcher to handle recognition sent to backend                |
@@ -54,6 +54,7 @@ UC2 --> Server
 | WitSpeechRecognition       | The wit.ai speech recognition request to backend                    |
 | WitRecognition             | Represents base class for recognition request to backend            |
 | WitRecognitionFactory      | The factory to create recognition request to backend                |
+| IntentSubsystem            | The subsystem to handle lifetime of service software units          |
 
 ## Class Diagrams
 
@@ -78,8 +79,8 @@ IConfig <|- Config
 
 IntentSubsystem o-- Worker : 2
 IntentSubsystem o-- Config
-IntentSubsystem o-- IntentRegistry
-IntentSubsystem o-- IntentPerformer
+IntentSubsystem o-- ActionRegistry
+IntentSubsystem o-- ActionPerformer
 IntentSubsystem o-- RecognitionServer
 IntentSubsystem o-- PositioningClient
 IntentSubsystem o-- SpeakerClient
@@ -101,7 +102,7 @@ class RecognitionServer {
     +shutdown()
 }
 
-RecognitionServer o-- IntentPerformer
+RecognitionServer o-- ActionPerformer
 RecognitionServer o-- RecognitionDispatcher : 0..*
 RecognitionServer o-- WitRecognitionFactory
 
@@ -130,7 +131,7 @@ RecognitionSpeechHandler o-- WitSpeechRecognition
 RecognitionSpeechHandler o- SpeechDataBuffer
 
 RecognitionConnection -o RecognitionDispatcher 
-RecognitionDispatcher o-- IntentPerformer
+RecognitionDispatcher o-- ActionPerformer
 RecognitionDispatcher o-- WitRecognitionFactory
 RecognitionDispatcher o-- RecognitionHandler
 
@@ -207,22 +208,22 @@ RecognitionDispatcher -> RecognitionHandler : handle()
 ...handle message or speech recognition...
 RecognitionHandler -> RecognitionDispatcher : onDone(utterances, error)
 deactivate RecognitionHandler
-RecognitionDispatcher -> IntentPerformer : perform(utterances)
-activate IntentPerformer
-IntentPerformer -> IntentRegistry : has(name)
-alt intent is present
-    IntentPerformer -> IntentRegistry : get(name)
-    create Intent
-    IntentPerformer -> Intent : clone()
+RecognitionDispatcher -> ActionPerformer : perform(utterances)
+activate ActionPerformer
+ActionPerformer -> ActionRegistry : has(name)
+alt action is present
+    ActionPerformer -> ActionRegistry : get(name)
+    create Action
+    ActionPerformer -> Action : clone()
 end
-alt has pending intents
-    IntentPerformer -> Intent : perform(callback)
+alt has pending actions
+    ActionPerformer -> Action : perform(callback)
 end
-RecognitionDispatcher <- IntentPerformer : perform(utterances)
+RecognitionDispatcher <- ActionPerformer : perform(utterances)
 RecognitionDispatcher -> RecognitionDispatcher : readHeader()
 RecognitionDispatcher ->> RecognitionConnection : readHeader()
 note right: read next header (if present)
-deactivate IntentPerformer
+deactivate ActionPerformer
 deactivate RecognitionDispatcher
 
 @enduml

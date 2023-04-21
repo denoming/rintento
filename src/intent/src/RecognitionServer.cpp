@@ -9,7 +9,7 @@ namespace jar {
 
 std::shared_ptr<RecognitionServer>
 RecognitionServer::create(io::any_io_executor executor,
-                          std::shared_ptr<IntentPerformer> performer,
+                          std::shared_ptr<ActionPerformer> performer,
                           std::shared_ptr<WitRecognitionFactory> factory)
 {
     // clang-format off
@@ -20,7 +20,7 @@ RecognitionServer::create(io::any_io_executor executor,
 }
 
 RecognitionServer::RecognitionServer(io::any_io_executor executor,
-                                     std::shared_ptr<IntentPerformer> performer,
+                                     std::shared_ptr<ActionPerformer> performer,
                                      std::shared_ptr<WitRecognitionFactory> factory)
     : _executor{std::move(executor)}
     , _performer{std::move(performer)}

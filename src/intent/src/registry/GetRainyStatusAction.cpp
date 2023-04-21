@@ -1,4 +1,4 @@
-#include "intent/registry/GetRainyStatusIntent.hpp"
+#include "intent/registry/GetRainyStatusAction.hpp"
 
 #include "intent/Formatters.hpp"
 #include "intent/IPositioningClient.hpp"
@@ -32,26 +32,26 @@ getTimeBoundaries(std::chrono::days modifier)
 
 } // namespace
 
-std::shared_ptr<GetRainyStatusIntent>
-GetRainyStatusIntent::create(std::string name,
+std::shared_ptr<GetRainyStatusAction>
+GetRainyStatusAction::create(std::string intent,
                              IPositioningClient& locationProvider,
                              ISpeakerClient& speakerClient,
                              IWeatherClient& weatherClient,
                              std::chrono::days daysModifier)
 {
     // clang-format off
-    return std::shared_ptr<GetRainyStatusIntent>(
-        new GetRainyStatusIntent{std::move(name), locationProvider, speakerClient, weatherClient, daysModifier}
+    return std::shared_ptr<GetRainyStatusAction>(
+        new GetRainyStatusAction{std::move(intent), locationProvider, speakerClient, weatherClient, daysModifier}
     );
     // clang-format on
 }
 
-GetRainyStatusIntent::GetRainyStatusIntent(std::string name,
+GetRainyStatusAction::GetRainyStatusAction(std::string intent,
                                            IPositioningClient& positioningClient,
                                            ISpeakerClient& speakerClient,
                                            IWeatherClient& weatherClient,
                                            std::chrono::days daysModifier)
-    : Intent{std::move(name)}
+    : Action{std::move(intent)}
     , _positioningClient{positioningClient}
     , _speakerClient{speakerClient}
     , _weatherClient{weatherClient}
@@ -59,23 +59,23 @@ GetRainyStatusIntent::GetRainyStatusIntent(std::string name,
 {
 }
 
-const GetRainyStatusIntent::Result&
-GetRainyStatusIntent::result() const
+const GetRainyStatusAction::Result&
+GetRainyStatusAction::result() const
 {
     return _result;
 }
 
-std::shared_ptr<Intent>
-GetRainyStatusIntent::clone()
+std::shared_ptr<Action>
+GetRainyStatusAction::clone()
 {
-    return create(name(), _positioningClient, _speakerClient, _weatherClient, _daysModifies);
+    return create(intent(), _positioningClient, _speakerClient, _weatherClient, _daysModifies);
 }
 
 void
-GetRainyStatusIntent::perform()
+GetRainyStatusAction::perform()
 {
     const auto location{_positioningClient.location()};
-    LOGD("[{}]: Getting forecast weather for <{}> location", name(), location);
+    LOGD("[{}]: Getting forecast weather for <{}> location", intent(), location);
 
     _weatherClient.getForecastWeather(
         location.lat,
@@ -93,7 +93,7 @@ GetRainyStatusIntent::perform()
 }
 
 bool
-GetRainyStatusIntent::getRainyStatus(const ForecastWeatherData& weather)
+GetRainyStatusAction::getRainyStatus(const ForecastWeatherData& weather)
 {
     const auto [tb1, tb2] = getTimeBoundaries(_daysModifies);
 
@@ -120,9 +120,9 @@ GetRainyStatusIntent::getRainyStatus(const ForecastWeatherData& weather)
 }
 
 void
-GetRainyStatusIntent::onWeatherDataReady(ForecastWeatherData weather)
+GetRainyStatusAction::onWeatherDataReady(ForecastWeatherData weather)
 {
-    LOGD("[{}]: Getting forecast weather data was succeed", name());
+    LOGD("[{}]: Getting forecast weather data was succeed", intent());
 
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
@@ -130,7 +130,7 @@ GetRainyStatusIntent::onWeatherDataReady(ForecastWeatherData weather)
     }
 
     const auto rainyStatus = getRainyStatus(weather);
-    LOGD("[{}]: Rainy status is available: {}", name(), rainyStatus);
+    LOGD("[{}]: Rainy status is available: {}", intent(), rainyStatus);
 
     const std::string text{rainyStatus ? "Today will be rainy" : "It won't rain today"};
     _speakerClient.synthesizeText(text, "en-US");
@@ -139,15 +139,15 @@ GetRainyStatusIntent::onWeatherDataReady(ForecastWeatherData weather)
 }
 
 void
-GetRainyStatusIntent::onWeatherDataError(std::runtime_error error)
+GetRainyStatusAction::onWeatherDataError(std::runtime_error error)
 {
-    LOGE("[{}]: Getting forecast weather has failed: error<{}>", name(), error.what());
+    LOGE("[{}]: Getting forecast weather has failed: error<{}>", intent(), error.what());
 
     setError(std::make_error_code(std::errc::result_out_of_range));
 }
 
 void
-GetRainyStatusIntent::setResult(Tags tag)
+GetRainyStatusAction::setResult(Tags tag)
 {
     _result = tag;
 
@@ -155,7 +155,7 @@ GetRainyStatusIntent::setResult(Tags tag)
 }
 
 void
-GetRainyStatusIntent::setError(std::error_code errorCode)
+GetRainyStatusAction::setError(std::error_code errorCode)
 {
     _result = std::unexpected(errorCode);
 

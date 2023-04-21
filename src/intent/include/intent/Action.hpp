@@ -10,21 +10,21 @@
 
 namespace jar {
 
-class Intent : public Cancellable {
+class Action : public Cancellable {
 public:
     /* Signatures */
     using OnDone = void(std::error_code);
     /* Signals */
     using OnDoneSignal = sigc::signal<OnDone>;
 
-    Intent(std::string name);
+    Action(std::string intent);
 
-    virtual ~Intent() = default;
+    virtual ~Action() = default;
 
     [[nodiscard]] const std::string&
-    name() const noexcept;
+    intent() const noexcept;
 
-    [[nodiscard]] virtual std::shared_ptr<Intent>
+    [[nodiscard]] virtual std::shared_ptr<Action>
     clone() = 0;
 
     virtual void
@@ -39,7 +39,7 @@ protected:
     complete(std::error_code errorCode = {});
 
 private:
-    std::string _name;
+    std::string _intent;
     OnDoneSignal _onDoneSig;
 };
 

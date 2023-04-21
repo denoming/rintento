@@ -6,21 +6,21 @@
 
 namespace testing {
 
-inline Matcher<jar::IntentSpec>
+inline Matcher<jar::Intent>
 isConfidentIntent(std::string_view name, float threshold)
 {
-    return AllOf(Field("name", &jar::IntentSpec::name, StrCaseEq(name)),
-                 Field("confidence", &jar::IntentSpec::confidence, Gt(threshold)));
+    return AllOf(Field("name", &jar::Intent::name, StrCaseEq(name)),
+                 Field("confidence", &jar::Intent::confidence, Gt(threshold)));
 }
 
-inline Matcher<jar::UtteranceSpec>
+inline Matcher<jar::Utterance>
 isUtterance(std::string_view text,
-            const Matcher<jar::IntentSpecs>& intents,
+            const Matcher<jar::Intents>& intents,
             const bool final = true)
 {
-    return AllOf(Field("text", &jar::UtteranceSpec::text, StrCaseEq(text)),
-                 Field("intents", &jar::UtteranceSpec::intents, intents),
-                 Field("final", &jar::UtteranceSpec::final, final));
+    return AllOf(Field("text", &jar::Utterance::text, StrCaseEq(text)),
+                 Field("intents", &jar::Utterance::intents, intents),
+                 Field("final", &jar::Utterance::final, final));
 }
 
 } // namespace testing

@@ -5,19 +5,19 @@
 
 namespace jar {
 
-class Intent;
+class Action;
 
-class IIntentRegistry {
+class IActionRegistry {
 public:
     [[nodiscard]] virtual bool
     has(const std::string& name) const
         = 0;
 
-    [[nodiscard]] virtual std::shared_ptr<Intent>
+    [[nodiscard]] virtual std::shared_ptr<Action>
     get(const std::string& name) = 0;
 
     virtual void
-    add(std::shared_ptr<Intent> intent)
+    add(std::shared_ptr<Action> intent)
         = 0;
 
     virtual void

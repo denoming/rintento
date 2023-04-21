@@ -8,7 +8,7 @@
 
 namespace jar {
 
-class IntentPerformer;
+class ActionPerformer;
 class RecognitionHandler;
 class RecognitionConnection;
 class WitRecognitionFactory;
@@ -20,7 +20,7 @@ public:
     [[nodiscard]] static std::shared_ptr<RecognitionDispatcher>
     create(uint16_t id,
            std::shared_ptr<RecognitionConnection> connection,
-           std::shared_ptr<IntentPerformer> executor,
+           std::shared_ptr<ActionPerformer> executor,
            std::shared_ptr<WitRecognitionFactory> factory);
 
     void
@@ -35,7 +35,7 @@ public:
 private:
     RecognitionDispatcher(uint16_t id,
                           std::shared_ptr<RecognitionConnection> connection,
-                          std::shared_ptr<IntentPerformer> performer,
+                          std::shared_ptr<ActionPerformer> performer,
                           std::shared_ptr<WitRecognitionFactory> factory);
 
     void
@@ -47,7 +47,7 @@ private:
                      std::error_code error);
 
     void
-    onDone(UtteranceSpecs utterances, std::error_code error);
+    onDone(Utterances utterances, std::error_code error);
 
     std::shared_ptr<RecognitionHandler>
     getHandler();
@@ -58,7 +58,7 @@ private:
 private:
     uint16_t _id;
     std::shared_ptr<RecognitionConnection> _connection;
-    std::shared_ptr<IntentPerformer> _performer;
+    std::shared_ptr<ActionPerformer> _performer;
     std::shared_ptr<WitRecognitionFactory> _factory;
     std::shared_ptr<RecognitionHandler> _handler;
     std::move_only_function<OnDone> _onDone;

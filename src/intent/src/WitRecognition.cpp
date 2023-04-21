@@ -53,7 +53,7 @@ WitRecognition::needData(bool status)
 }
 
 void
-WitRecognition::setResult(UtteranceSpecs result)
+WitRecognition::setResult(Utterances result)
 {
     BOOST_ASSERT(!_done);
     std::unique_lock lock{_doneGuard};

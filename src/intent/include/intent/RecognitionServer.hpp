@@ -10,7 +10,7 @@
 
 namespace jar {
 
-class IntentPerformer;
+class ActionPerformer;
 class WitRecognitionFactory;
 class RecognitionConnection;
 class RecognitionDispatcher;
@@ -19,7 +19,7 @@ class RecognitionServer : public std::enable_shared_from_this<RecognitionServer>
 public:
     [[nodiscard]] static std::shared_ptr<RecognitionServer>
     create(io::any_io_executor executor,
-           std::shared_ptr<IntentPerformer> performer,
+           std::shared_ptr<ActionPerformer> performer,
            std::shared_ptr<WitRecognitionFactory> factory);
 
     bool
@@ -33,7 +33,7 @@ public:
 
 private:
     RecognitionServer(io::any_io_executor executor,
-                      std::shared_ptr<IntentPerformer> performer,
+                      std::shared_ptr<ActionPerformer> performer,
                       std::shared_ptr<WitRecognitionFactory> factory);
 
     void
@@ -62,7 +62,7 @@ private:
 
 private:
     io::any_io_executor _executor;
-    std::shared_ptr<IntentPerformer> _performer;
+    std::shared_ptr<ActionPerformer> _performer;
     std::shared_ptr<WitRecognitionFactory> _factory;
     mutable std::mutex _shutdownGuard;
     std::condition_variable _shutdownReadyCv;

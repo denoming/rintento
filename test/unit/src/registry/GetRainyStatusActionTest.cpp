@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 
 #include "intent/PositioningClient.hpp"
-#include "intent/registry/GetRainyStatusIntent.hpp"
+#include "intent/registry/GetRainyStatusAction.hpp"
 #include "test/MockPositioningClient.hpp"
 #include "test/MockSpeakerClient.hpp"
 #include "test/MockWeatherClient.hpp"
@@ -42,7 +42,7 @@ getWeatherData(bool isRainy, std::chrono::days modifier = {})
     return output;
 }
 
-class GetRainyStatusIntentTest : public Test {
+class GetRainyStatusActionTest : public Test {
 public:
     const std::string kIntentName{"test_rainy_status"};
 
@@ -52,77 +52,77 @@ public:
     NiceMock<MockWeatherClient> weather;
 };
 
-TEST_F(GetRainyStatusIntentTest, CheckIfTodayIsRainy)
+TEST_F(GetRainyStatusActionTest, CheckIfTodayIsRainy)
 {
-    const auto weatherData{getWeatherData(true)};
+    const krn::days kMod{0};
+    const auto weatherData{getWeatherData(true, kMod)};
 
     EXPECT_CALL(speaker, synthesizeText(Not(IsEmpty()), Not(IsEmpty())));
     EXPECT_CALL(weather, getForecastWeather).WillOnce(InvokeArgument<2>(weatherData));
 
-    auto intent
-        = GetRainyStatusIntent::create(kIntentName, positioning, speaker, weather, krn::days{0});
-    ASSERT_TRUE(intent);
+    auto action = GetRainyStatusAction::create(kIntentName, positioning, speaker, weather, kMod);
+    ASSERT_TRUE(action);
 
     MockFunction<void(std::error_code)> onDone;
     EXPECT_CALL(onDone, Call(std::error_code{}));
-    auto c = intent->onDone(onDone.AsStdFunction());
-    intent->perform();
+    auto c = action->onDone(onDone.AsStdFunction());
+    action->perform();
     c.disconnect();
 
-    EXPECT_EQ(intent->result().value(), GetRainyStatusIntent::Tags::isRainy);
+    EXPECT_EQ(action->result().value(), GetRainyStatusAction::Tags::isRainy);
 }
 
-TEST_F(GetRainyStatusIntentTest, CheckIfTomorrowIsRainy)
+TEST_F(GetRainyStatusActionTest, CheckIfTomorrowIsRainy)
 {
-    const auto weatherData{getWeatherData(true, krn::days{1})};
+    const krn::days kMod{1};
+    const auto weatherData{getWeatherData(true, kMod)};
 
     EXPECT_CALL(speaker, synthesizeText(Not(IsEmpty()), Not(IsEmpty())));
     EXPECT_CALL(weather, getForecastWeather).WillOnce(InvokeArgument<2>(weatherData));
 
-    auto intent
-        = GetRainyStatusIntent::create(kIntentName, positioning, speaker, weather, krn::days{1});
-    ASSERT_TRUE(intent);
+    auto action = GetRainyStatusAction::create(kIntentName, positioning, speaker, weather, kMod);
+    ASSERT_TRUE(action);
 
     MockFunction<void(std::error_code)> onDone;
     EXPECT_CALL(onDone, Call(std::error_code{}));
-    auto c = intent->onDone(onDone.AsStdFunction());
-    intent->perform();
+    auto c = action->onDone(onDone.AsStdFunction());
+    action->perform();
     c.disconnect();
 
-    EXPECT_EQ(intent->result().value(), GetRainyStatusIntent::Tags::isRainy);
+    EXPECT_EQ(action->result().value(), GetRainyStatusAction::Tags::isRainy);
 }
 
-TEST_F(GetRainyStatusIntentTest, CheckNotIsRainy)
+TEST_F(GetRainyStatusActionTest, CheckNotIsRainy)
 {
     const auto weatherData{getWeatherData(false)};
 
     EXPECT_CALL(speaker, synthesizeText(Not(IsEmpty()), Not(IsEmpty())));
     EXPECT_CALL(weather, getForecastWeather).WillOnce(InvokeArgument<2>(weatherData));
 
-    auto intent = GetRainyStatusIntent::create(kIntentName, positioning, speaker, weather);
-    ASSERT_TRUE(intent);
+    auto action = GetRainyStatusAction::create(kIntentName, positioning, speaker, weather);
+    ASSERT_TRUE(action);
 
     MockFunction<void(std::error_code)> onDone;
     EXPECT_CALL(onDone, Call(std::error_code{}));
-    auto c = intent->onDone(onDone.AsStdFunction());
-    intent->perform();
+    auto c = action->onDone(onDone.AsStdFunction());
+    action->perform();
     c.disconnect();
-    EXPECT_EQ(intent->result().value(), GetRainyStatusIntent::Tags::notIsRainy);
+    EXPECT_EQ(action->result().value(), GetRainyStatusAction::Tags::notIsRainy);
 }
 
-TEST_F(GetRainyStatusIntentTest, Error)
+TEST_F(GetRainyStatusActionTest, Error)
 {
     EXPECT_CALL(weather, getForecastWeather)
         .WillOnce(InvokeArgument<3>(std::runtime_error{"Error"}));
 
-    auto intent = GetRainyStatusIntent::create(kIntentName, positioning, speaker, weather);
-    ASSERT_TRUE(intent);
+    auto action = GetRainyStatusAction::create(kIntentName, positioning, speaker, weather);
+    ASSERT_TRUE(action);
 
     MockFunction<void(std::error_code)> onDone;
     EXPECT_CALL(onDone, Call(Not(std::error_code{})));
-    auto c = intent->onDone(onDone.AsStdFunction());
-    intent->perform();
+    auto c = action->onDone(onDone.AsStdFunction());
+    action->perform();
     c.disconnect();
 
-    EXPECT_THAT(intent->result().error(), Not(std::error_code{}));
+    EXPECT_THAT(action->result().error(), Not(std::error_code{}));
 }

@@ -16,29 +16,29 @@ struct GeoLocation {
 };
 
 /**
- * The intent spec class representation
+ * The intent class representation
  */
-struct IntentSpec {
+struct Intent {
     std::string name;
     float confidence{0.0f};
 };
 
-/** The bunch of intent specs */
-using IntentSpecs = std::vector<IntentSpec>;
+/** The bunch of intents */
+using Intents = std::vector<Intent>;
 
 /**
- * The utterance spec class representation
+ * The utterance class representation
  */
-struct UtteranceSpec {
+struct Utterance {
     std::string text;
-    IntentSpecs intents;
+    Intents intents;
     bool final{false};
 };
 
-/** The bunch of utterances specs */
-using UtteranceSpecs = std::vector<UtteranceSpec>;
+/** The bunch of utterances */
+using Utterances = std::vector<Utterance>;
 
 bool
-operator==(const IntentSpec& lhs, const IntentSpec& rhs);
+operator==(const Intent& lhs, const Intent& rhs);
 
 } // namespace jar

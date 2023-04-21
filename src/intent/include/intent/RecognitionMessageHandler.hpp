@@ -39,7 +39,7 @@ private:
     onRecognitionError(std::error_code error);
 
     void
-    onRecognitionSuccess(UtteranceSpecs result);
+    onRecognitionSuccess(Utterances result);
 
 private:
     std::shared_ptr<WitRecognitionFactory> _factory;

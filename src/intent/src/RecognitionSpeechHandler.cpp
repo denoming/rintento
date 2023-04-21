@@ -161,7 +161,7 @@ RecognitionSpeechHandler::onRecognitionError(std::error_code error)
 }
 
 void
-RecognitionSpeechHandler::onRecognitionSuccess(UtteranceSpecs result)
+RecognitionSpeechHandler::onRecognitionSuccess(Utterances result)
 {
     LOGD("Submit recognition success: <{}> size", result.size());
     sendResponse(result);

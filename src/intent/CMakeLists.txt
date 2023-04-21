@@ -29,7 +29,7 @@ target_sources(${TARGET}
             src/WitRecognitionFactory.cpp
             src/RecognitionServer.cpp
             src/RecognitionDispatcher.cpp
-            src/IntentPerformer.cpp
+            src/ActionPerformer.cpp
             src/IntentSubsystem.cpp
             src/RecognitionHandler.cpp
             src/RecognitionMessageHandler.cpp
@@ -37,10 +37,10 @@ target_sources(${TARGET}
             src/RecognitionTerminalHandler.cpp
             src/SpeechDataBuffer.cpp
             src/Utils.cpp
-            src/Intent.cpp
-            src/IntentRegistry.cpp
+            src/Action.cpp
+            src/ActionRegistry.cpp
             src/PositioningClient.cpp
-            src/registry/GetRainyStatusIntent.cpp
+            src/registry/GetRainyStatusAction.cpp
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_23)

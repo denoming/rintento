@@ -3,7 +3,7 @@
 namespace jar {
 
 bool
-operator==(const IntentSpec& lhs, const IntentSpec& rhs)
+operator==(const Intent& lhs, const Intent& rhs)
 {
     if (&lhs != &rhs) {
         return (lhs.name == rhs.name);

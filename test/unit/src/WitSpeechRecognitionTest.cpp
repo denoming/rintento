@@ -138,7 +138,7 @@ TEST_F(WitSpeechRecognitionTest, RecognizeSpeech2)
 
 TEST_F(WitSpeechRecognitionTest, RecognizeSpeech3)
 {
-    recognition->onDone([](UtteranceSpecs result, std::error_code error) {
+    recognition->onDone([](Utterances result, std::error_code error) {
         if (error) {
             LOGI("Error occurred");
         } else {

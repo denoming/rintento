@@ -1,6 +1,6 @@
 #pragma once
 
-#include "intent/Intent.hpp"
+#include "intent/Action.hpp"
 #include "jarvis/speaker/ISpeakerClient.hpp"
 #include "jarvis/weather/IWeatherClient.hpp"
 
@@ -12,15 +12,15 @@ namespace jar {
 
 class IPositioningClient;
 
-class GetRainyStatusIntent final : public Intent,
-                                   public std::enable_shared_from_this<GetRainyStatusIntent> {
+class GetRainyStatusAction final : public Action,
+                                   public std::enable_shared_from_this<GetRainyStatusAction> {
 public:
     enum class Tags { isRainy, notIsRainy };
 
     using Result = std::expected<Tags, std::error_code>;
 
-    static std::shared_ptr<GetRainyStatusIntent>
-    create(std::string name,
+    static std::shared_ptr<GetRainyStatusAction>
+    create(std::string intent,
            IPositioningClient& positioningClient,
            ISpeakerClient& speakerClient,
            IWeatherClient& weatherClient,
@@ -29,14 +29,14 @@ public:
     [[nodiscard]] const Result&
     result() const;
 
-    std::shared_ptr<Intent>
+    std::shared_ptr<Action>
     clone() final;
 
     void
     perform() final;
 
 private:
-    GetRainyStatusIntent(std::string name,
+    GetRainyStatusAction(std::string name,
                          IPositioningClient& positioningClient,
                          ISpeakerClient& speakerClient,
                          IWeatherClient& weatherClient,

@@ -104,7 +104,7 @@ RecognitionMessageHandler::onRecognitionError(std::error_code error)
 }
 
 void
-RecognitionMessageHandler::onRecognitionSuccess(UtteranceSpecs result)
+RecognitionMessageHandler::onRecognitionSuccess(Utterances result)
 {
     LOGD("Submit recognition success: <{}> size", result.size());
     sendResponse(result);
