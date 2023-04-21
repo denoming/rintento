@@ -29,10 +29,12 @@ void
 IntentRegistry::add(std::shared_ptr<Intent> intent)
 {
     BOOST_ASSERT(intent);
-    if (has(intent->name())) {
+    const auto intentName{intent->name()};
+
+    if (has(intentName)) {
         throw std::runtime_error{"Intent is already present"};
     } else {
-        _intents.emplace(intent->name(), std::move(intent));
+        _intents.emplace(intentName, std::move(intent));
     }
 }
 
