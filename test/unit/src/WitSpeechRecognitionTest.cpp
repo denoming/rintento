@@ -11,10 +11,6 @@
 #include "test/TestWaiter.hpp"
 #include "test/Utils.hpp"
 
-#include <fstream>
-#include <thread>
-#include <iostream>
-
 using namespace testing;
 using namespace jar;
 
@@ -67,10 +63,11 @@ TEST_F(WitSpeechRecognitionTest, RecognizeSpeech1)
     const std::string_view Message{"turn off the light"};
 
     MockFunction<WitRecognition::OnDone> callback;
-    EXPECT_CALL(callback,
-                Call(Contains(isUtterance("turn off the light",
-                                          Contains(isConfidentIntent("light_off", 0.9f)))),
-                     IsFalse()));
+    EXPECT_CALL(
+        callback,
+        Call(Contains(isUtterance(
+                 "turn off the light", IsEmpty(), Contains(isConfidentIntent("light_off", 0.9f)))),
+             IsFalse()));
     recognition->onDone(callback.AsStdFunction());
 
     bool guard{false};
@@ -103,10 +100,11 @@ TEST_F(WitSpeechRecognitionTest, RecognizeSpeech1)
 TEST_F(WitSpeechRecognitionTest, RecognizeSpeech2)
 {
     MockFunction<WitRecognition::OnDone> callback;
-    EXPECT_CALL(callback,
-                Call(Contains(isUtterance("turn on the light",
-                                          Contains(isConfidentIntent("light_on", 0.9f)))),
-                     IsFalse()));
+    EXPECT_CALL(
+        callback,
+        Call(Contains(isUtterance(
+                 "turn on the light", IsEmpty(), Contains(isConfidentIntent("light_on", 0.9f)))),
+             IsFalse()));
     recognition->onDone(callback.AsStdFunction());
 
     bool guard{false};

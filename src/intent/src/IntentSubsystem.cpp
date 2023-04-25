@@ -151,17 +151,8 @@ private:
             return;
         }
 
-        _registry->add(GetRainyStatusAction::create("get_today_rainy_status",
-                                                    *_positioningClient,
-                                                    *_speakerClient,
-                                                    *_weatherClient,
-                                                    std::chrono::days{0}));
-
-        _registry->add(GetRainyStatusAction::create("get_tomorrow_rainy_status",
-                                                    *_positioningClient,
-                                                    *_speakerClient,
-                                                    *_weatherClient,
-                                                    std::chrono::days{1}));
+        _registry->add(GetRainyStatusAction::create(
+            "get_rainy_status", *_positioningClient, *_speakerClient, *_weatherClient));
     }
 
 private:

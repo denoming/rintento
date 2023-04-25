@@ -1,5 +1,7 @@
 #pragma once
 
+#include "intent/WitTypes.hpp"
+
 #include <memory>
 #include <string>
 
@@ -14,7 +16,7 @@ public:
         = 0;
 
     [[nodiscard]] virtual std::shared_ptr<Action>
-    get(const std::string& name) = 0;
+    get(const std::string& name, Entities entities) = 0;
 
     virtual void
     add(std::shared_ptr<Action> intent)

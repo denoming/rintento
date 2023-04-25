@@ -14,7 +14,7 @@ public:
     has(const std::string& intent) const final;
 
     std::shared_ptr<Action>
-    get(const std::string& intent) final;
+    get(const std::string& intent, Entities entities) final;
 
     void
     add(std::shared_ptr<Action> action) final;

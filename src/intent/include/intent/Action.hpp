@@ -1,5 +1,6 @@
 #pragma once
 
+#include "intent/WitTypes.hpp"
 #include "jarvis/Cancellable.hpp"
 
 #include <sigc++/signal.h>
@@ -17,15 +18,18 @@ public:
     /* Signals */
     using OnDoneSignal = sigc::signal<OnDone>;
 
-    Action(std::string intent);
+    Action(std::string intent, Entities entities = {});
 
     virtual ~Action() = default;
 
     [[nodiscard]] const std::string&
     intent() const noexcept;
 
+    [[nodiscard]] const Entities&
+    entities() const noexcept;
+
     [[nodiscard]] virtual std::shared_ptr<Action>
-    clone() = 0;
+    clone(Entities entities) = 0;
 
     virtual void
     perform()
@@ -40,6 +44,7 @@ protected:
 
 private:
     std::string _intent;
+    Entities _entities;
     OnDoneSignal _onDoneSig;
 };
 

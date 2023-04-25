@@ -8,6 +8,10 @@
 
 #include <boost/assert.hpp>
 
+#include <algorithm>
+
+namespace ranges = std::ranges;
+
 namespace jar {
 
 namespace {
@@ -15,48 +19,82 @@ namespace {
 const int32_t kRainyStatusCode1 = 500;
 const int32_t kRainyStatusCode2 = 599;
 
-std::pair<int64_t, int64_t>
-getTimeBoundaries(std::chrono::days modifier)
+std::optional<bool>
+getRainyStatus(const CurrentWeatherData& weather)
 {
-    namespace krn = std::chrono;
-    krn::time_point p1 = krn::system_clock::now(); // Now
-    krn::time_point p2 = krn::ceil<krn::days>(p1); // The end of current day
-    if (modifier != krn::days::zero()) {
-        p1 = krn::floor<krn::days>(p1) + modifier; // The start of current day + modifier
-        p2 += modifier;                            // The end of current day + modifier
+    std::optional<bool> status;
+    try {
+        const auto id = weather.data.get<int32_t>("id");
+        status = (id >= kRainyStatusCode1 && id <= kRainyStatusCode2);
+    } catch (const std::exception& e) {
+        LOGE("Getting rainy status has failed: {}", e.what());
     }
-    const auto s1 = krn::duration_cast<krn::seconds>(p1.time_since_epoch());
-    const auto s2 = krn::duration_cast<krn::seconds>(p2.time_since_epoch());
-    return std::make_pair(s1.count(), s2.count());
+    return status;
+}
+
+std::optional<bool>
+getRainyStatus(const ForecastWeatherData& weather, Timestamp timestampFrom, Timestamp timestampTo)
+{
+    std::optional<bool> status;
+    try {
+        if (timestampFrom > timestampTo) {
+            throw std::invalid_argument{"Timestamp values are incorrect"};
+        }
+
+        auto beg = ranges::find_if(
+            weather.data,
+            [timestampFrom](Timestamp ts) { return (ts > timestampFrom); },
+            [](const CustomData& d) { return d.get<int64_t>("dt"); });
+        if (beg == ranges::cend(weather.data)) {
+            /* No data available for given interval */
+            return false;
+        } else {
+            /* Getting the data chunk covering given interval */
+            if (beg != ranges::cbegin(weather.data)) {
+                beg = ranges::prev(beg);
+            }
+        }
+
+        auto end = ranges::find_if(
+            beg,
+            ranges::cend(weather.data),
+            [timestampTo](Timestamp ts) { return (ts > timestampTo); },
+            [](const CustomData& d) { return d.get<int64_t>("dt"); });
+
+        status = ranges::any_of(beg, end, [](const CustomData& d) {
+            const auto id = d.get<int32_t>("id");
+            return (id >= kRainyStatusCode1 && id <= kRainyStatusCode2);
+        });
+    } catch (const std::exception& e) {
+        LOGE("Getting rainy status has failed: {}", e.what());
+    }
+    return status;
 }
 
 } // namespace
 
 std::shared_ptr<GetRainyStatusAction>
 GetRainyStatusAction::create(std::string intent,
-                             IPositioningClient& locationProvider,
+                             IPositioningClient& positioningClient,
                              ISpeakerClient& speakerClient,
                              IWeatherClient& weatherClient,
-                             std::chrono::days daysModifier)
+                             Entities entities)
 {
-    // clang-format off
-    return std::shared_ptr<GetRainyStatusAction>(
-        new GetRainyStatusAction{std::move(intent), locationProvider, speakerClient, weatherClient, daysModifier}
-    );
-    // clang-format on
+    return std::shared_ptr<GetRainyStatusAction>(new GetRainyStatusAction{
+        std::move(intent), positioningClient, speakerClient, weatherClient, std::move(entities)});
 }
 
 GetRainyStatusAction::GetRainyStatusAction(std::string intent,
                                            IPositioningClient& positioningClient,
                                            ISpeakerClient& speakerClient,
                                            IWeatherClient& weatherClient,
-                                           std::chrono::days daysModifier)
-    : Action{std::move(intent)}
+                                           Entities entities)
+    : Action{std::move(intent), std::move(entities)}
     , _positioningClient{positioningClient}
     , _speakerClient{speakerClient}
     , _weatherClient{weatherClient}
-    , _daysModifies{daysModifier}
 {
+    retrieveTimeBoundaries();
 }
 
 const GetRainyStatusAction::Result&
@@ -66,57 +104,48 @@ GetRainyStatusAction::result() const
 }
 
 std::shared_ptr<Action>
-GetRainyStatusAction::clone()
+GetRainyStatusAction::clone(Entities entities)
 {
-    return create(intent(), _positioningClient, _speakerClient, _weatherClient, _daysModifies);
+    return create(
+        intent(), _positioningClient, _speakerClient, _weatherClient, std::move(entities));
 }
 
 void
 GetRainyStatusAction::perform()
 {
-    const auto location{_positioningClient.location()};
-    LOGD("[{}]: Getting forecast weather for <{}> location", intent(), location);
+    const auto loc{_positioningClient.location()};
+    LOGD("[{}]: Getting forecast weather for <{}> location", intent(), loc);
 
-    _weatherClient.getForecastWeather(
-        location.lat,
-        location.lon,
-        [weakSelf = weak_from_this()](ForecastWeatherData weatherData) {
-            if (auto self = weakSelf.lock()) {
-                self->onWeatherDataReady(std::move(weatherData));
-            }
-        },
-        [weakSelf = weak_from_this()](const std::runtime_error& error) {
-            if (auto self = weakSelf.lock()) {
-                self->onWeatherDataError(error);
-            }
-        });
+    auto onReady = [weakSelf = weak_from_this()](auto weatherData) {
+        if (auto self = weakSelf.lock()) {
+            self->onWeatherDataReady(std::move(weatherData));
+        }
+    };
+    auto onError = [weakSelf = weak_from_this()](const std::runtime_error& error) {
+        if (auto self = weakSelf.lock()) {
+            self->onWeatherDataError(error);
+        }
+    };
+
+    if (hasTimeBoundaries()) {
+        LOGD("[{}]: Time boundaries is available", intent());
+        _weatherClient.getForecastWeather(loc.lat, loc.lon, std::move(onReady), std::move(onError));
+    } else {
+        LOGD("[{}]: No time boundaries is available", intent());
+        _weatherClient.getCurrentWeather(loc.lat, loc.lon, std::move(onReady), std::move(onError));
+    }
 }
 
-bool
-GetRainyStatusAction::getRainyStatus(const ForecastWeatherData& weather)
+void
+GetRainyStatusAction::onWeatherDataReady(CurrentWeatherData weather)
 {
-    const auto [tb1, tb2] = getTimeBoundaries(_daysModifies);
+    LOGD("[{}]: Getting current weather data was succeed", intent());
 
-    bool isRainy{false};
-    for (const auto& d : weather.data) {
-        const auto dt = d.peek<int64_t>("dt");
-        const auto id = d.peek<int32_t>("id");
-        if (!dt or !id) {
-            continue;
-        }
-        if (dt < tb1) {
-            /* DT is earlier than [b1, b2] time boundaries */
-            continue;
-        }
-        if (dt > tb2) {
-            /* DT is later than [b1, b2] time boundaries (we assume data is sorted by dt) */
-            break;
-        }
-        if (isRainy = (id >= kRainyStatusCode1 && id <= kRainyStatusCode2); isRainy) {
-            break;
-        }
+    if (cancelled()) {
+        setError(std::make_error_code(std::errc::operation_canceled));
+    } else {
+        processRainyStatus(getRainyStatus(weather));
     }
-    return isRainy;
 }
 
 void
@@ -126,16 +155,9 @@ GetRainyStatusAction::onWeatherDataReady(ForecastWeatherData weather)
 
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
-        return;
+    } else {
+        processRainyStatus(getRainyStatus(weather, _timestampFrom, _timestampTo));
     }
-
-    const auto rainyStatus = getRainyStatus(weather);
-    LOGD("[{}]: Rainy status is available: {}", intent(), rainyStatus);
-
-    const std::string text{rainyStatus ? "Today will be rainy" : "It won't rain today"};
-    _speakerClient.synthesizeText(text, "en-US");
-
-    setResult(rainyStatus ? Tags::isRainy : Tags::notIsRainy);
 }
 
 void
@@ -144,6 +166,22 @@ GetRainyStatusAction::onWeatherDataError(std::runtime_error error)
     LOGE("[{}]: Getting forecast weather has failed: error<{}>", intent(), error.what());
 
     setError(std::make_error_code(std::errc::result_out_of_range));
+}
+
+void
+GetRainyStatusAction::processRainyStatus(std::optional<bool> status)
+{
+    if (status) {
+        LOGD("[{}]: Rainy status is available: {}", intent(), *status);
+
+        const std::string text{*status ? "Today will be rainy" : "It won't rain today"};
+        _speakerClient.synthesizeText(text, "en-US");
+
+        setResult(*status ? Tags::Rainy : Tags::NotRainy);
+    } else {
+        LOGD("[{}]: Rainy status is not available", intent());
+        setResult(Tags::Unknown);
+    }
 }
 
 void
@@ -160,6 +198,43 @@ GetRainyStatusAction::setError(std::error_code errorCode)
     _result = std::unexpected(errorCode);
 
     complete(errorCode);
+}
+
+void
+GetRainyStatusAction::retrieveTimeBoundaries()
+{
+    auto entityIt = entities().find(DateTimeEntity::key());
+    if (entityIt == entities().cend()) {
+        LOGD("No target entities are available");
+        return;
+    }
+
+    const auto& entityList = std::get<EntityList>(*entityIt);
+    LOGD("Get entity from <{}> available", entityList.size());
+
+    for (auto&& entity : entityList) {
+        if (std::holds_alternative<DateTimeEntity>(entity)) {
+            const auto& dtEntity = std::get<DateTimeEntity>(entity);
+            if (dtEntity.from && dtEntity.to) {
+                _timestampFrom = dtEntity.from->timestamp;
+                _timestampTo = dtEntity.to->timestamp;
+                break;
+            } else if (dtEntity.exact) {
+                _timestampFrom = _timestampTo = dtEntity.exact->timestamp;
+                break;
+            } else {
+                LOGE("Invalid entity content");
+            }
+        } else {
+            LOGE("Invalid type of entity");
+        }
+    }
+}
+
+bool
+GetRainyStatusAction::hasTimeBoundaries() const
+{
+    return (_timestampFrom != Timestamp::zero() || _timestampTo != Timestamp::zero());
 }
 
 } // namespace jar

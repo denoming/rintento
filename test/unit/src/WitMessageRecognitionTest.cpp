@@ -62,7 +62,8 @@ TEST_F(WitMessageRecognitionTest, RecognizeMessage)
 
     MockFunction<WitRecognition::OnDone> callback;
     EXPECT_CALL(callback,
-                Call(Contains(isUtterance(Message, Contains(isConfidentIntent("light_off", 0.9f)))),
+                Call(Contains(isUtterance(
+                         Message, IsEmpty(), Contains(isConfidentIntent("light_off", 0.9f)))),
                      IsFalse()));
     recognition->onDone(callback.AsStdFunction());
 

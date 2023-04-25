@@ -2,8 +2,9 @@
 
 namespace jar {
 
-Action::Action(std::string intent)
+Action::Action(std::string intent, Entities entities)
     : _intent{std::move(intent)}
+    , _entities{std::move(entities)}
 {
 }
 
@@ -11,6 +12,12 @@ const std::string&
 Action::intent() const noexcept
 {
     return _intent;
+}
+
+[[nodiscard]] const Entities&
+Action::entities() const noexcept
+{
+    return _entities;
 }
 
 [[nodiscard]] sigc::connection

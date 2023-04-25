@@ -1,5 +1,7 @@
 #include "intent/WitIntentParser.hpp"
 
+#include "intent/Utils.hpp"
+
 #include <boost/assert.hpp>
 #include <boost/json.hpp>
 
@@ -7,28 +9,113 @@ namespace json = boost::json;
 
 namespace jar {
 
+static Confidence
+tag_invoke(json::value_to_tag<Confidence>, const json::value& v)
+{
+    if (auto c = v.if_double(); c) {
+        return {.value = static_cast<float>(*c)};
+    }
+    if (auto c = v.if_int64(); c) {
+        return {.value = static_cast<float>(*c)};
+    }
+    throw std::out_of_range{"Invalid confidence value"};
+}
+
+static Timestamp
+tag_invoke(json::value_to_tag<Timestamp>, const json::value& v)
+{
+    return parseDateTime(v.as_string());
+}
+
+static DateTimeEntity::Grains
+tag_invoke(json::value_to_tag<DateTimeEntity::Grains>, const json::value& v)
+{
+    const auto& str = v.as_string();
+    if (str == "hour") {
+        return DateTimeEntity::Grains::hour;
+    }
+    if (str == "day") {
+        return DateTimeEntity::Grains::day;
+    }
+    return DateTimeEntity::Grains::unknown;
+}
+
+static DateTimeEntity::Value
+tag_invoke(json::value_to_tag<DateTimeEntity::Value>, const json::value& v)
+{
+    DateTimeEntity::Value value;
+    value.grain = json::value_to<DateTimeEntity::Grains>(v.as_object().at("grain"));
+    value.timestamp = json::value_to<Timestamp>(v.as_object().at("value"));
+    return value;
+}
+
+static DateTimeEntity
+tag_invoke(json::value_to_tag<DateTimeEntity>, const json::value& v)
+{
+    DateTimeEntity entity;
+    const auto& object = v.as_object();
+    if (const auto& value = object.if_contains("value"); value) {
+        entity.exact = json::value_to<DateTimeEntity::Value>(v);
+    }
+    if (const auto& value = object.if_contains("from"); value) {
+        entity.from = json::value_to<DateTimeEntity::Value>(object.at("from"));
+    }
+    if (const auto& value = object.if_contains("to"); value) {
+        entity.to = json::value_to<DateTimeEntity::Value>(object.at("to"));
+    }
+    entity.confidence = json::value_to<Confidence>(object.at("confidence"));
+    return entity;
+}
+
 namespace {
 
-std::optional<Intent>
-toIntent(const json::object& jsonObject)
+std::optional<EntityAlts>
+toEntity(const json::value& input)
 {
-    const auto nameValue = jsonObject.if_contains("name");
-    const auto confValue = jsonObject.if_contains("confidence");
-    if ((nameValue && nameValue->is_string()) && (confValue && confValue->is_double())) {
-        std::string name{nameValue->as_string().begin(), nameValue->as_string().end()};
-        return Intent{std::move(name), static_cast<float>(confValue->as_double())};
+    try {
+        const auto& name = input.at("name").as_string();
+        const auto& role = input.at("role").as_string();
+        if (name == DateTimeEntity::kName && role == DateTimeEntity::kRole) {
+            return json::value_to<DateTimeEntity>(input);
+        }
+        return std::nullopt;
+    } catch (const std::exception& e) {
+        return std::nullopt;
     }
-    return std::nullopt;
+}
+
+EntityList
+toEntities(const json::value& input)
+{
+    EntityList entityList;
+    for (auto&& entry : input.as_array()) {
+        if (auto entity = toEntity(entry); entity) {
+            entityList.push_back(std::move(*entity));
+        }
+    }
+    return entityList;
+}
+
+std::optional<Intent>
+toIntent(const json::object& input)
+{
+    try {
+        const auto& name = input.at("name").as_string();
+        const auto& conf = input.at("confidence").as_double();
+        return Intent{std::string(name.cbegin(), name.cend()), static_cast<float>(conf)};
+    } catch (const std::exception&) {
+        return std::nullopt;
+    }
 }
 
 Intents
-toIntents(const json::array& jsonIntents)
+toIntents(const json::array& input)
 {
     Intents intents;
-    for (auto jsonIntent : jsonIntents) {
-        if (const auto intentObject = jsonIntent.if_object(); intentObject) {
-            if (auto intentOpt = toIntent(*intentObject); intentOpt) {
-                intents.push_back(std::move(*intentOpt));
+    for (auto entry : input) {
+        if (const auto object = entry.if_object(); object) {
+            if (auto intent = toIntent(*object); intent) {
+                intents.push_back(std::move(*intent));
             }
         }
     }
@@ -36,30 +123,35 @@ toIntents(const json::array& jsonIntents)
 }
 
 std::optional<Utterance>
-toUtterance(const json::object& object, const bool finalByDefault = false)
+toUtterance(const json::object& root, const bool finalByDefault = false)
 {
-    Intents intents;
-    if (auto intentsValue = object.if_contains("intents"); intentsValue) {
-        if (auto intentsArray = intentsValue->if_array(); intentsArray) {
-            intents = toIntents(*intentsArray);
+    try {
+        Entities entities;
+        if (auto value = root.if_contains("entities"); value) {
+            for (auto&& entry : value->as_object()) {
+                entities[entry.key()] = toEntities(entry.value());
+            }
         }
-    }
 
-    bool isFinal{finalByDefault};
-    if (auto finalValue = object.if_contains("is_final"); finalValue) {
-        if (auto finalPtr = finalValue->if_bool(); finalPtr) {
-            isFinal = *finalPtr;
+        Intents intents;
+        if (auto value = root.if_contains("intents"); value) {
+            intents = toIntents(value->as_array());
         }
-    }
 
-    std::string text;
-    if (auto textValue = object.if_contains("text"); textValue) {
-        if (auto textPtr = textValue->if_string(); textPtr) {
-            text.assign(textPtr->cbegin(), textPtr->cend());
+        bool isFinal{finalByDefault};
+        if (auto value = root.if_contains("is_final"); value) {
+            isFinal = value->as_bool();
         }
-    }
 
-    return Utterance{std::move(text), std::move(intents), isFinal};
+        std::string text;
+        if (auto value = root.if_contains("text"); value) {
+            text = value->as_string();
+        }
+
+        return Utterance{std::move(text), std::move(entities), std::move(intents), isFinal};
+    } catch (const std::exception&) {
+        return std::nullopt;
+    }
 }
 
 } // namespace
@@ -95,7 +187,7 @@ WitIntentParser::parseSpeechResult(std::string_view input)
 
     Utterances output;
     json::stream_parser parser;
-    std::size_t nextRoot{0};
+    std::size_t nextRoot;
     do {
         std::error_code error;
         if (nextRoot = parser.write_some(input, error); error) {

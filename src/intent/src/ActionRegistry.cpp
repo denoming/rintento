@@ -15,13 +15,13 @@ ActionRegistry::has(const std::string& intent) const
 }
 
 std::shared_ptr<Action>
-ActionRegistry::get(const std::string& intent)
+ActionRegistry::get(const std::string& intent, Entities entities)
 {
     BOOST_ASSERT(!intent.empty());
     if (auto actionIt = _actions.find(intent); actionIt == _actions.cend()) {
         throw std::runtime_error{"No action for given intent"};
     } else {
-        return std::get<1>(*actionIt)->clone();
+        return std::get<1>(*actionIt)->clone(std::move(entities));
     }
 }
 

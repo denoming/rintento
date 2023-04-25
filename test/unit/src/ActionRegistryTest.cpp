@@ -9,15 +9,15 @@ using namespace jar;
 
 class TestAction final : public jar::Action {
 public:
-    TestAction(std::string intent)
-        : Action{std::move(intent)}
+    TestAction(std::string intent, Entities entities = {})
+        : Action{std::move(intent), std::move(entities)}
     {
     }
 
     std::shared_ptr<Action>
-    clone() final
+    clone(Entities entities) final
     {
-        return std::make_shared<TestAction>(intent());
+        return std::make_shared<TestAction>(intent(), std::move(entities));
     }
 
     MOCK_METHOD(void, perform, (), (final));

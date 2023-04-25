@@ -8,6 +8,19 @@
 
 namespace jar {
 
+namespace {
+
+Intents::const_iterator
+mostConfidentIntent(const Intents& intents)
+{
+    return std::max_element(
+        intents.cbegin(), intents.cend(), [](const Intent& n1, const Intent& n2) {
+            return (n1.confidence < n2.confidence);
+        });
+}
+
+} // namespace
+
 std::shared_ptr<ActionPerformer>
 ActionPerformer::create(ActionRegistry& registry)
 {
@@ -24,22 +37,23 @@ ActionPerformer::perform(Utterances utterances)
 {
     LOGI("The <{}> utterances are available", utterances.size());
 
-    auto filtered = utterances | std::views::filter([](const auto& u) { return u.final; });
-    for (auto&& utterance : filtered) {
-        for (auto&& intent : utterance.intents) {
-            if (_registry.has(intent.name)) {
-                LOGI("Add <{}> action to the pending queue", intent.name);
-                auto action = _registry.get(intent.name);
-                action->onDone(sigc::mem_fun(*this, &ActionPerformer::onActionDone));
-                _pendingActions.push(action);
-                break;
-            }
+    auto filteredUtterances = utterances | std::views::filter([](const Utterance& u) {
+                                  return u.final && !u.intents.empty();
+                              });
+
+    for (auto&& utterance : filteredUtterances) {
+        if (const auto intentIt = mostConfidentIntent(utterance.intents);
+            _registry.has(intentIt->name)) {
+            LOGI("Add action for <{}> intent", intentIt->name);
+            auto action = _registry.get(intentIt->name, std::move(utterance.entities));
+            action->onDone(sigc::mem_fun(*this, &ActionPerformer::onActionDone));
+            _pendingActions.push(action);
         }
     }
 
     if (!_pendingActions.empty()) {
         auto& action = _pendingActions.front();
-        LOGI("Perform <{}> action", action->intent());
+        LOGI("Perform action for <{}> intent", action->intent());
         action->perform();
     } else {
         LOGE("No pending actions");

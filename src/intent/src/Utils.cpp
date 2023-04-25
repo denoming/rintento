@@ -1,11 +1,13 @@
 #include "intent/Utils.hpp"
 
-#include <boost/url/parse.hpp>
 #include <boost/url/encode.hpp>
+#include <boost/url/parse.hpp>
 #include <boost/url/rfc/pchars.hpp>
 
 #include <spdlog/fmt/chrono.h>
 #include <spdlog/fmt/fmt.h>
+
+#include <iomanip>
 
 namespace urls = boost::urls;
 
@@ -83,5 +85,33 @@ isSpeechTarget(std::string_view input)
 }
 
 } // namespace parser
+
+int64_t
+parseDateTime(std::string_view input, std::error_code errorCode)
+{
+    static const char* kFormat{"%Y-%m-%dT%H:%M:%S"};
+    std::tm t = {};
+    std::istringstream ss{std::string{input}};
+    ss >> std::get_time(&t, kFormat);
+    if (ss.fail()) {
+        errorCode = std::make_error_code(std::errc::invalid_argument);
+        return {};
+    } else {
+        errorCode = {};
+        const auto timePoint = std::chrono::system_clock::from_time_t(std::mktime(&t));
+        return timePoint.time_since_epoch().count();
+    }
+}
+
+int64_t
+parseDateTime(std::string_view input)
+{
+    std::error_code errorCode;
+    const auto value = parseDateTime(input, errorCode);
+    if (errorCode) {
+        throw std::invalid_argument{"Invalid ISO8601 format"};
+    }
+    return value;
+}
 
 } // namespace jar
