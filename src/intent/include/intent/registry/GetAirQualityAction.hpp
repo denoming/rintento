@@ -1,17 +1,18 @@
 #pragma once
 
-#include "intent/Action.hpp"
+#include "intent/WitTypes.hpp"
+#include "intent/registry/DateTimeAction.hpp"
 #include "jarvis/speaker/ISpeakerClient.hpp"
 #include "jarvis/weather/IWeatherClient.hpp"
 
-#include <chrono>
 #include <expected>
+#include <memory>
 
 namespace jar {
 
 class IPositioningClient;
 
-class GetAirQualityAction final : public Action,
+class GetAirQualityAction final : public DateTimeAction,
                                   public std::enable_shared_from_this<GetAirQualityAction> {
 public:
     enum class Tags { Unknown, Good, Fair, Moderate, Poor, VeryPoor };
@@ -59,20 +60,11 @@ private:
     void
     announceResult();
 
-    void
-    retrieveTimeBoundaries();
-
-    [[nodiscard]] bool
-    hasTimeBoundaries() const;
-
 private:
     IPositioningClient& _positioningClient;
     ISpeakerClient& _speakerClient;
     IWeatherClient& _weatherClient;
-    std::chrono::days _daysModifies;
     Result _result;
-    Timestamp _tsFrom;
-    Timestamp _tsTo;
 };
 
 } // namespace jar

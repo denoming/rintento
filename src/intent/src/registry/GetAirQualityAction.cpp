@@ -4,8 +4,6 @@
 #include "intent/IPositioningClient.hpp"
 #include "intent/WitHelpers.hpp"
 #include "jarvis/Logger.hpp"
-#include "jarvis/speaker/SpeakerClient.hpp"
-#include "jarvis/weather/WeatherClient.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -123,12 +121,11 @@ GetAirQualityAction::GetAirQualityAction(std::string intent,
                                          ISpeakerClient& speakerClient,
                                          IWeatherClient& weatherClient,
                                          Entities entities)
-    : Action{std::move(intent), std::move(entities)}
+    : DateTimeAction{std::move(intent), std::move(entities)}
     , _positioningClient{positioningClient}
     , _speakerClient{speakerClient}
     , _weatherClient{weatherClient}
 {
-    retrieveTimeBoundaries();
 }
 
 const GetAirQualityAction::Result&
@@ -161,7 +158,7 @@ GetAirQualityAction::perform()
         }
     };
 
-    if (hasTimeBoundaries()) {
+    if (hasTimestamps()) {
         LOGD("[{}]: Time boundaries is available", intent());
         _weatherClient.getForecastAirQuality(
             loc.lat, loc.lon, std::move(onReady), std::move(onError));
@@ -191,7 +188,7 @@ GetAirQualityAction::onAirQualityDataReady(ForecastAirQualityData data)
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
     } else {
-        setResult(processAirQualityData(data, _tsFrom, _tsTo));
+        setResult(processAirQualityData(data, timestampFrom(), timestampTo()));
     }
 }
 
@@ -227,32 +224,6 @@ GetAirQualityAction::announceResult()
     LOGD("[{}]: Air quality status is available: {}", intent(), _result.value());
 
     _speakerClient.synthesizeText(fmt::format("The air quality is {}", _result.value()), "en-US");
-}
-
-void
-GetAirQualityAction::retrieveTimeBoundaries()
-{
-    wit::EntityPredicate<DateTimeEntity> predicate{entities()};
-    if (!predicate.has()) {
-        LOGD("[{}]: No target entity is available", intent());
-        return;
-    }
-
-    const auto& entity = predicate.get();
-    if (entity.from && entity.to) {
-        _tsFrom = entity.from->timestamp;
-        _tsTo = entity.to->timestamp;
-    } else if (entity.exact) {
-        _tsFrom = _tsTo = entity.exact->timestamp;
-    } else {
-        LOGE("[{}]: Invalid entity content", intent());
-    }
-}
-
-bool
-GetAirQualityAction::hasTimeBoundaries() const
-{
-    return (_tsFrom != Timestamp::zero() || _tsTo != Timestamp::zero());
 }
 
 } // namespace jar

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "intent/Action.hpp"
 #include "intent/WitTypes.hpp"
+#include "intent/registry/DateTimeAction.hpp"
 #include "jarvis/speaker/ISpeakerClient.hpp"
 #include "jarvis/weather/IWeatherClient.hpp"
 
@@ -12,7 +12,7 @@ namespace jar {
 
 class IPositioningClient;
 
-class GetRainyStatusAction final : public Action,
+class GetRainyStatusAction final : public DateTimeAction,
                                    public std::enable_shared_from_this<GetRainyStatusAction> {
 public:
     enum class Tags { Unknown, Rainy, NotRainy };
@@ -60,19 +60,11 @@ private:
     void
     setError(std::error_code errorCode);
 
-    void
-    retrieveTimeBoundaries();
-
-    [[nodiscard]] bool
-    hasTimeBoundaries() const;
-
 private:
     IPositioningClient& _positioningClient;
     ISpeakerClient& _speakerClient;
     IWeatherClient& _weatherClient;
     Result _result;
-    Timestamp _timestampFrom;
-    Timestamp _timestampTo;
 };
 
 } // namespace jar

@@ -4,10 +4,6 @@
 #include "intent/IPositioningClient.hpp"
 #include "intent/WitHelpers.hpp"
 #include "jarvis/Logger.hpp"
-#include "jarvis/speaker/SpeakerClient.hpp"
-#include "jarvis/weather/WeatherClient.hpp"
-
-#include <boost/assert.hpp>
 
 #include <algorithm>
 #include <chrono>
@@ -71,12 +67,11 @@ GetRainyStatusAction::GetRainyStatusAction(std::string intent,
                                            ISpeakerClient& speakerClient,
                                            IWeatherClient& weatherClient,
                                            Entities entities)
-    : Action{std::move(intent), std::move(entities)}
+    : DateTimeAction{std::move(intent), std::move(entities)}
     , _positioningClient{positioningClient}
     , _speakerClient{speakerClient}
     , _weatherClient{weatherClient}
 {
-    retrieveTimeBoundaries();
 }
 
 const GetRainyStatusAction::Result&
@@ -109,7 +104,7 @@ GetRainyStatusAction::perform()
         }
     };
 
-    if (hasTimeBoundaries()) {
+    if (hasTimestamps()) {
         LOGD("[{}]: Time boundaries is available", intent());
         _weatherClient.getForecastWeather(loc.lat, loc.lon, std::move(onReady), std::move(onError));
     } else {
@@ -138,7 +133,7 @@ GetRainyStatusAction::onWeatherDataReady(ForecastWeatherData weather)
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
     } else {
-        processRainyStatus(getRainyStatus(weather, _timestampFrom, _timestampTo));
+        processRainyStatus(getRainyStatus(weather, timestampFrom(), timestampTo()));
     }
 }
 
@@ -180,32 +175,6 @@ GetRainyStatusAction::setError(std::error_code errorCode)
     _result = std::unexpected(errorCode);
 
     complete(errorCode);
-}
-
-void
-GetRainyStatusAction::retrieveTimeBoundaries()
-{
-    wit::EntityPredicate<DateTimeEntity> predicate{entities()};
-    if (!predicate.has()) {
-        LOGD("No target entity is available");
-        return;
-    }
-
-    const auto& entity = predicate.get();
-    if (entity.from && entity.to) {
-        _timestampFrom = entity.from->timestamp;
-        _timestampTo = entity.to->timestamp;
-    } else if (entity.exact) {
-        _timestampFrom = _timestampTo = entity.exact->timestamp;
-    } else {
-        LOGE("Invalid entity content");
-    }
-}
-
-bool
-GetRainyStatusAction::hasTimeBoundaries() const
-{
-    return (_timestampFrom != Timestamp::zero() || _timestampTo != Timestamp::zero());
 }
 
 } // namespace jar
