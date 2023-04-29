@@ -52,13 +52,13 @@ private:
     onWeatherDataError(std::runtime_error error);
 
     void
-    processRainyStatus(std::optional<bool> status);
-
-    void
     setResult(Tags tag);
 
     void
     setError(std::error_code errorCode);
+
+    void
+    announceResult();
 
 private:
     IPositioningClient& _positioningClient;

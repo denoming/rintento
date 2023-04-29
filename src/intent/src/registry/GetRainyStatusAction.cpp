@@ -6,11 +6,32 @@
 #include "jarvis/Logger.hpp"
 
 #include <algorithm>
-#include <chrono>
 #include <ranges>
 
-namespace krn = std::chrono;
-namespace ranges = std::ranges;
+namespace fmt {
+
+template<>
+struct formatter<jar::GetRainyStatusAction::Tags> : public formatter<std::string_view> {
+    template<typename FormatContext>
+    auto
+    format(const jar::GetRainyStatusAction::Tags& tag, FormatContext& c) const
+    {
+        std::string name{"Unknown"};
+        switch (tag) {
+        case jar::GetRainyStatusAction::Tags::Rainy:
+            name = "Rainy";
+            break;
+        case jar::GetRainyStatusAction::Tags::NotRainy:
+            name = "NotRainy";
+            break;
+        default:
+            break;
+        }
+        return fmt::formatter<std::string_view>::format(name, c);
+    }
+};
+
+} // namespace fmt
 
 namespace jar {
 
@@ -19,30 +40,36 @@ namespace {
 const int32_t kRainyStatusCode1 = 500;
 const int32_t kRainyStatusCode2 = 599;
 
-std::optional<bool>
+GetRainyStatusAction::Tags
 getRainyStatus(const CurrentWeatherData& weather)
 {
-    std::optional<bool> status;
+    GetRainyStatusAction::Tags status{GetRainyStatusAction::Tags::Unknown};
     try {
         const auto id = weather.data.get<int32_t>("id");
-        status = (id >= kRainyStatusCode1 && id <= kRainyStatusCode2);
+        if (id >= kRainyStatusCode1 && id <= kRainyStatusCode2) {
+            status = GetRainyStatusAction::Tags::Rainy;
+        } else {
+            status = GetRainyStatusAction::Tags::NotRainy;
+        }
     } catch (const std::exception& e) {
         LOGE("Getting rainy status has failed: {}", e.what());
     }
     return status;
 }
 
-std::optional<bool>
+GetRainyStatusAction::Tags
 getRainyStatus(const ForecastWeatherData& weather, Timestamp timestampFrom, Timestamp timestampTo)
 {
-    std::optional<bool> status;
+    GetRainyStatusAction::Tags status{GetRainyStatusAction::Tags::Unknown};
     try {
         const wit::DateTimePredicate predicate{timestampFrom, timestampTo};
-        return std::ranges::any_of(weather.data | std::views::filter(predicate),
-                                   [](const CustomData& d) {
-                                       const auto id = d.get<int32_t>("id");
-                                       return (id >= kRainyStatusCode1 && id <= kRainyStatusCode2);
-                                   });
+        const bool willBeRainy = std::ranges::any_of(
+            weather.data | std::views::filter(predicate), [](const CustomData& d) {
+                const auto id = d.get<int32_t>("id");
+                return (id >= kRainyStatusCode1 && id <= kRainyStatusCode2);
+            });
+        status = willBeRainy ? GetRainyStatusAction::Tags::Rainy
+                             : GetRainyStatusAction::Tags::NotRainy;
     } catch (const std::exception& e) {
         LOGE("Getting rainy status has failed: {}", e.what());
     }
@@ -121,7 +148,7 @@ GetRainyStatusAction::onWeatherDataReady(CurrentWeatherData weather)
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
     } else {
-        processRainyStatus(getRainyStatus(weather));
+        setResult(getRainyStatus(weather));
     }
 }
 
@@ -133,7 +160,7 @@ GetRainyStatusAction::onWeatherDataReady(ForecastWeatherData weather)
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
     } else {
-        processRainyStatus(getRainyStatus(weather, timestampFrom(), timestampTo()));
+        setResult(getRainyStatus(weather, timestampFrom(), timestampTo()));
     }
 }
 
@@ -146,25 +173,11 @@ GetRainyStatusAction::onWeatherDataError(std::runtime_error error)
 }
 
 void
-GetRainyStatusAction::processRainyStatus(std::optional<bool> status)
-{
-    if (status) {
-        LOGD("[{}]: Rainy status is available: {}", intent(), *status);
-
-        const std::string text{*status ? "Today will be rainy" : "It won't rain today"};
-        _speakerClient.synthesizeText(text, "en-US");
-
-        setResult(*status ? Tags::Rainy : Tags::NotRainy);
-    } else {
-        LOGD("[{}]: Rainy status is not available", intent());
-        setResult(Tags::Unknown);
-    }
-}
-
-void
 GetRainyStatusAction::setResult(Tags tag)
 {
     _result = tag;
+
+    announceResult();
 
     complete({});
 }
@@ -175,6 +188,17 @@ GetRainyStatusAction::setError(std::error_code errorCode)
     _result = std::unexpected(errorCode);
 
     complete(errorCode);
+}
+
+void
+GetRainyStatusAction::announceResult()
+{
+    LOGD("[{}]: Rainy status is available: {}", intent(), _result.value());
+
+    const std::string text{(_result == Tags::Rainy) ? "Today will be rainy"
+                                                    : "It won't rain today"};
+
+    _speakerClient.synthesizeText(text, "en-US");
 }
 
 } // namespace jar

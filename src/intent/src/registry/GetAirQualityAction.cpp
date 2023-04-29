@@ -17,28 +17,27 @@ struct formatter<jar::GetAirQualityAction::Tags> : public formatter<std::string_
     auto
     format(const jar::GetAirQualityAction::Tags& tag, FormatContext& c) const
     {
-        std::string view;
+        std::string name{"Unknown"};
         switch (tag) {
-        case jar::GetAirQualityAction::Tags::Unknown:
-            view = "Unknown";
-            break;
         case jar::GetAirQualityAction::Tags::Good:
-            view = "Good";
+            name = "Good";
             break;
         case jar::GetAirQualityAction::Tags::Fair:
-            view = "Fair";
+            name = "Fair";
             break;
         case jar::GetAirQualityAction::Tags::Moderate:
-            view = "Moderate";
+            name = "Moderate";
             break;
         case jar::GetAirQualityAction::Tags::Poor:
-            view = "Poor";
+            name = "Poor";
             break;
         case jar::GetAirQualityAction::Tags::VeryPoor:
-            view = "VeryPoor";
+            name = "VeryPoor";
+            break;
+        default:
             break;
         }
-        return fmt::formatter<std::string_view>::format(view, c);
+        return fmt::formatter<std::string_view>::format(name, c);
     }
 };
 
