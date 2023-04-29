@@ -9,6 +9,8 @@
 
 #include <chrono>
 
+#include "intent/WitHelpers.hpp"
+
 using namespace testing;
 using namespace jar;
 
@@ -17,16 +19,19 @@ namespace krn = std::chrono;
 namespace {
 
 ForecastWeatherData
-getWeatherData(const bool isRainy, krn::sys_seconds timestampFrom, krn::sys_seconds timestampTo)
+getWeatherData(GetRainyStatusAction::Tags tag,
+               krn::sys_seconds timestampFrom,
+               krn::sys_seconds timestampTo)
 {
-    static constexpr auto kStep = krn::hours{4};
+    static constexpr auto kStep = krn::hours{3};
     ForecastWeatherData output;
     while (timestampFrom < timestampTo) {
         const auto dt = krn::duration_cast<krn::seconds>(timestampFrom.time_since_epoch()).count();
         CustomData d;
         d.assign({
             {"dt", int64_t{dt}},
-            {"id", int32_t{isRainy ? 501 : 801}},
+            {"duration", int32_t{10800}},
+            {"id", int32_t{(tag == GetRainyStatusAction::Tags::Rainy) ? 501 : 801}},
         });
         output.data.push_back(std::move(d));
         timestampFrom += kStep;
@@ -35,12 +40,12 @@ getWeatherData(const bool isRainy, krn::sys_seconds timestampFrom, krn::sys_seco
 }
 
 ForecastWeatherData
-getTodayWeatherData(bool isRainy, krn::days modifier = {})
+getWeatherData(GetRainyStatusAction::Tags tag, krn::days modifier = {})
 {
     auto p0 = krn::system_clock::now();
     auto p1 = modifier + krn::floor<krn::days>(p0);
     auto p2 = modifier + krn::ceil<krn::days>(p0);
-    return getWeatherData(isRainy, p1, p2);
+    return getWeatherData(tag, p1, p2);
 }
 
 } // namespace
@@ -57,7 +62,7 @@ public:
 
 TEST_F(GetRainyStatusActionTest, CheckNotRainyForToday)
 {
-    const auto weatherData{getTodayWeatherData(false, krn::days{0})};
+    const auto weatherData{getWeatherData(GetRainyStatusAction::Tags::NotRainy, krn::days{0})};
     EXPECT_CALL(speaker, synthesizeText(Not(IsEmpty()), Not(IsEmpty())));
     EXPECT_CALL(weather, getForecastWeather).WillOnce(InvokeArgument<2>(weatherData));
 
@@ -87,7 +92,7 @@ TEST_F(GetRainyStatusActionTest, CheckNotRainyForToday)
 
 TEST_F(GetRainyStatusActionTest, CheckIsRainyForInterval)
 {
-    const auto weatherData{getTodayWeatherData(true, krn::days{0})};
+    const auto weatherData{getWeatherData(GetRainyStatusAction::Tags::Rainy, krn::days{0})};
     EXPECT_CALL(speaker, synthesizeText(Not(IsEmpty()), Not(IsEmpty())));
     EXPECT_CALL(weather, getForecastWeather).WillOnce(InvokeArgument<2>(weatherData));
 
@@ -125,7 +130,7 @@ TEST_F(GetRainyStatusActionTest, CheckIsRainyForInterval)
 
 TEST_F(GetRainyStatusActionTest, CheckNotIsRainy)
 {
-    const auto weatherData{getTodayWeatherData(true, krn::days{0})};
+    const auto weatherData{getWeatherData(GetRainyStatusAction::Tags::Rainy, krn::days{0})};
     EXPECT_CALL(speaker, synthesizeText(Not(IsEmpty()), Not(IsEmpty())));
     EXPECT_CALL(weather, getForecastWeather).WillOnce(InvokeArgument<2>(weatherData));
 

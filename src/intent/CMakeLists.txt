@@ -28,6 +28,7 @@ target_sources(${TARGET}
             src/WitIntentParser.cpp
             src/WitRecognitionFactory.cpp
             src/WitTypes.cpp
+            src/WitHelpers.cpp
             src/RecognitionServer.cpp
             src/RecognitionDispatcher.cpp
             src/ActionPerformer.cpp

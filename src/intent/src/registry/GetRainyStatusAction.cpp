@@ -2,6 +2,7 @@
 
 #include "intent/Formatters.hpp"
 #include "intent/IPositioningClient.hpp"
+#include "intent/WitHelpers.hpp"
 #include "jarvis/Logger.hpp"
 #include "jarvis/speaker/SpeakerClient.hpp"
 #include "jarvis/weather/WeatherClient.hpp"
@@ -9,7 +10,10 @@
 #include <boost/assert.hpp>
 
 #include <algorithm>
+#include <chrono>
+#include <ranges>
 
+namespace krn = std::chrono;
 namespace ranges = std::ranges;
 
 namespace jar {
@@ -37,34 +41,12 @@ getRainyStatus(const ForecastWeatherData& weather, Timestamp timestampFrom, Time
 {
     std::optional<bool> status;
     try {
-        if (timestampFrom > timestampTo) {
-            throw std::invalid_argument{"Timestamp values are incorrect"};
-        }
-
-        auto beg = ranges::find_if(
-            weather.data,
-            [timestampFrom](Timestamp ts) { return (ts > timestampFrom); },
-            [](const CustomData& d) { return d.get<int64_t>("dt"); });
-        if (beg == ranges::cend(weather.data)) {
-            /* No data available for given interval */
-            return false;
-        } else {
-            /* Getting the data chunk covering given interval */
-            if (beg != ranges::cbegin(weather.data)) {
-                beg = ranges::prev(beg);
-            }
-        }
-
-        auto end = ranges::find_if(
-            beg,
-            ranges::cend(weather.data),
-            [timestampTo](Timestamp ts) { return (ts > timestampTo); },
-            [](const CustomData& d) { return d.get<int64_t>("dt"); });
-
-        status = ranges::any_of(beg, end, [](const CustomData& d) {
-            const auto id = d.get<int32_t>("id");
-            return (id >= kRainyStatusCode1 && id <= kRainyStatusCode2);
-        });
+        const wit::WeatherDataPredicate predicate{timestampFrom, timestampTo};
+        return std::ranges::any_of(weather.data | std::views::filter(predicate),
+                                   [](const CustomData& d) {
+                                       const auto id = d.get<int32_t>("id");
+                                       return (id >= kRainyStatusCode1 && id <= kRainyStatusCode2);
+                                   });
     } catch (const std::exception& e) {
         LOGE("Getting rainy status has failed: {}", e.what());
     }
@@ -203,31 +185,20 @@ GetRainyStatusAction::setError(std::error_code errorCode)
 void
 GetRainyStatusAction::retrieveTimeBoundaries()
 {
-    auto entityIt = entities().find(DateTimeEntity::key());
-    if (entityIt == entities().cend()) {
-        LOGD("No target entities are available");
+    wit::EntityPredicate<DateTimeEntity> predicate{entities()};
+    if (!predicate.has()) {
+        LOGD("No target entity is available");
         return;
     }
 
-    const auto& entityList = std::get<EntityList>(*entityIt);
-    LOGD("Get entity from <{}> available", entityList.size());
-
-    for (auto&& entity : entityList) {
-        if (std::holds_alternative<DateTimeEntity>(entity)) {
-            const auto& dtEntity = std::get<DateTimeEntity>(entity);
-            if (dtEntity.from && dtEntity.to) {
-                _timestampFrom = dtEntity.from->timestamp;
-                _timestampTo = dtEntity.to->timestamp;
-                break;
-            } else if (dtEntity.exact) {
-                _timestampFrom = _timestampTo = dtEntity.exact->timestamp;
-                break;
-            } else {
-                LOGE("Invalid entity content");
-            }
-        } else {
-            LOGE("Invalid type of entity");
-        }
+    const auto& entity = predicate.get();
+    if (entity.from && entity.to) {
+        _timestampFrom = entity.from->timestamp;
+        _timestampTo = entity.to->timestamp;
+    } else if (entity.exact) {
+        _timestampFrom = _timestampTo = entity.exact->timestamp;
+    } else {
+        LOGE("Invalid entity content");
     }
 }
 

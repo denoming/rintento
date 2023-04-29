@@ -8,6 +8,7 @@ target_sources(${TARGET}
             src/WitSpeechRecognitionTest.cpp
             src/UtilsTest.cpp
             src/ActionRegistryTest.cpp
+            src/WitHelperTest.cpp
             src/registry/GetRainyStatusActionTest.cpp
 )
 
