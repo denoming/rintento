@@ -43,6 +43,7 @@ target_sources(${TARGET}
             src/ActionRegistry.cpp
             src/PositioningClient.cpp
             src/registry/GetRainyStatusAction.cpp
+            src/registry/GetAirQualityAction.cpp
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_23)

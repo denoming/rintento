@@ -2,14 +2,14 @@
 
 namespace jar::wit {
 
-WeatherDataPredicate::WeatherDataPredicate(Timestamp from, Timestamp to)
+DateTimePredicate::DateTimePredicate(Timestamp from, Timestamp to)
     : _from{from}
     , _to{to}
 {
 }
 
 bool
-WeatherDataPredicate::operator()(const CustomData& d) const
+DateTimePredicate::operator()(const CustomData& d) const
 {
     bool output;
     int64_t b = d.get<int64_t>("dt");

@@ -41,7 +41,7 @@ getRainyStatus(const ForecastWeatherData& weather, Timestamp timestampFrom, Time
 {
     std::optional<bool> status;
     try {
-        const wit::WeatherDataPredicate predicate{timestampFrom, timestampTo};
+        const wit::DateTimePredicate predicate{timestampFrom, timestampTo};
         return std::ranges::any_of(weather.data | std::views::filter(predicate),
                                    [](const CustomData& d) {
                                        const auto id = d.get<int32_t>("id");

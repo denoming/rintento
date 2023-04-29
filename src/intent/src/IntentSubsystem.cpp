@@ -6,6 +6,7 @@
 #include "intent/PositioningClient.hpp"
 #include "intent/RecognitionServer.hpp"
 #include "intent/WitRecognitionFactory.hpp"
+#include "intent/registry/GetAirQualityAction.hpp"
 #include "intent/registry/GetRainyStatusAction.hpp"
 #include "jarvis/Application.hpp"
 #include "jarvis/Logger.hpp"
@@ -153,6 +154,8 @@ private:
 
         _registry->add(GetRainyStatusAction::create(
             "get_rainy_status", *_positioningClient, *_speakerClient, *_weatherClient));
+        _registry->add(GetAirQualityAction::create(
+            "get_air_quality_status", *_positioningClient, *_speakerClient, *_weatherClient));
     }
 
 private:

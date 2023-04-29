@@ -12,13 +12,13 @@ namespace jar::wit {
  * Predicate to filter custom data by given timestamp range interval with particular duration.
  *
  * Takes into account \b dt and \b duration fields of custom data to calculate intersection with
- * weather data timeline.
+ * custom data timeline.
  */
-class WeatherDataPredicate {
+class DateTimePredicate {
 public:
-    WeatherDataPredicate() = default;
+    DateTimePredicate() = default;
 
-    WeatherDataPredicate(Timestamp from, Timestamp to);
+    DateTimePredicate(Timestamp from, Timestamp to);
 
     /**
      * Checks if custom data intersects with given timestamp range

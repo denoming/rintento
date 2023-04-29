@@ -46,15 +46,15 @@ TEST(WitHelperTest, WetherDataPredicate)
 
     const krn::sys_seconds from1 = krn::ceil<krn::days>(krn::system_clock::now());
     const krn::sys_seconds to1 = from1 + krn::hours{2};
-    EXPECT_EQ(std::ranges::count_if(data, wit::WeatherDataPredicate{from1, to1}), 1);
+    EXPECT_EQ(std::ranges::count_if(data, wit::DateTimePredicate{from1, to1}), 1);
 
     const krn::sys_seconds from2 = krn::floor<krn::days>(krn::system_clock::now());
     const krn::sys_seconds to2 = from2 + krn::hours{5};
-    EXPECT_EQ(std::ranges::count_if(data, wit::WeatherDataPredicate{from2, to2}), 2);
+    EXPECT_EQ(std::ranges::count_if(data, wit::DateTimePredicate{from2, to2}), 2);
 
     const krn::sys_seconds from3 = krn::floor<krn::days>(krn::system_clock::now()) + krn::hours{2};
     const krn::sys_seconds to3 = from3 + krn::hours{5};
-    EXPECT_EQ(std::ranges::count_if(data, wit::WeatherDataPredicate{from3, to3}), 3);
+    EXPECT_EQ(std::ranges::count_if(data, wit::DateTimePredicate{from3, to3}), 3);
 }
 
 TEST(WitHelperTest, EntityPredicate)

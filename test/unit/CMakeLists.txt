@@ -10,6 +10,7 @@ target_sources(${TARGET}
             src/ActionRegistryTest.cpp
             src/WitHelperTest.cpp
             src/registry/GetRainyStatusActionTest.cpp
+            src/registry/GetAirQualityActionTest.cpp
 )
 
 target_link_libraries(${TARGET}
