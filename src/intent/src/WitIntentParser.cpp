@@ -1,6 +1,6 @@
 #include "intent/WitIntentParser.hpp"
 
-#include "intent/Utils.hpp"
+#include "jarvis/Utils.hpp"
 
 #include <boost/assert.hpp>
 #include <boost/json.hpp>
@@ -24,7 +24,11 @@ tag_invoke(json::value_to_tag<Confidence>, const json::value& v)
 static Timestamp
 tag_invoke(json::value_to_tag<Timestamp>, const json::value& v)
 {
-    return parseDateTime(v.as_string());
+    if (auto ts = parseDateTime(v.as_string()); ts.has_value()) {
+        return ts.value();
+    } else {
+        throw std::system_error{ts.error()};
+    }
 }
 
 static DateTimeEntity::Grains

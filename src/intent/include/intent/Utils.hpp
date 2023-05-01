@@ -3,7 +3,6 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <system_error>
 
 namespace jar {
 
@@ -35,17 +34,5 @@ isMessageTarget(std::string_view input);
 isSpeechTarget(std::string_view input);
 
 } // namespace parser
-
-/**
- * Parse date and time in ISO8601 format
- */
-int64_t
-parseDateTime(std::string_view input, std::error_code errorCode);
-
-/**
- * Parse date and time in ISO8601 format
- */
-int64_t
-parseDateTime(std::string_view input);
 
 } // namespace jar

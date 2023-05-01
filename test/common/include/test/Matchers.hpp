@@ -1,7 +1,7 @@
 #pragma once
 
 #include "intent/Types.hpp"
-#include "intent/Utils.hpp"
+#include "jarvis/Utils.hpp"
 
 #include <gmock/gmock.h>
 
