@@ -45,6 +45,7 @@ target_sources(${TARGET}
             src/registry/DateTimeAction.cpp
             src/registry/GetRainyStatusAction.cpp
             src/registry/GetAirQualityAction.cpp
+            src/registry/GetWeatherTemperatureAction.cpp
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_23)
