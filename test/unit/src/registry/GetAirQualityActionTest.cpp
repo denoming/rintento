@@ -104,7 +104,7 @@ TEST_F(GetAirQualityActionTest, CheckTodayAirQuality)
     action->perform();
     c.disconnect();
 
-    EXPECT_EQ(action->result().value(), GetAirQualityAction::Tags::Good);
+    EXPECT_THAT(action->result(), Optional(GetAirQualityAction::Tags::Good));
 }
 
 TEST_F(GetAirQualityActionTest, CheckWorstAirQuality)
@@ -154,7 +154,7 @@ TEST_F(GetAirQualityActionTest, CheckWorstAirQuality)
     action->perform();
     c.disconnect();
 
-    EXPECT_EQ(action->result().value(), GetAirQualityAction::Tags::Poor);
+    EXPECT_THAT(action->result(), Optional(GetAirQualityAction::Tags::Poor));
 }
 
 TEST_F(GetAirQualityActionTest, Error)
@@ -171,5 +171,5 @@ TEST_F(GetAirQualityActionTest, Error)
     action->perform();
     c.disconnect();
 
-    EXPECT_THAT(action->result().error(), Not(std::error_code{}));
+    EXPECT_EQ(action->result(), std::nullopt);
 }

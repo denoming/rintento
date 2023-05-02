@@ -125,7 +125,7 @@ TEST_F(GetRainyStatusActionTest, CheckIsRainyForInterval)
     action->perform();
     c.disconnect();
 
-    EXPECT_EQ(action->result().value(), GetRainyStatusAction::Tags::Rainy);
+    EXPECT_THAT(action->result(), Optional(GetRainyStatusAction::Tags::Rainy));
 }
 
 TEST_F(GetRainyStatusActionTest, CheckNotIsRainy)
@@ -161,7 +161,8 @@ TEST_F(GetRainyStatusActionTest, CheckNotIsRainy)
     auto c = action->onDone(onDone.AsStdFunction());
     action->perform();
     c.disconnect();
-    EXPECT_EQ(action->result().value(), GetRainyStatusAction::Tags::NotRainy);
+
+    EXPECT_THAT(action->result(), Optional(GetRainyStatusAction::Tags::NotRainy));
 }
 
 TEST_F(GetRainyStatusActionTest, Error)
@@ -178,5 +179,5 @@ TEST_F(GetRainyStatusActionTest, Error)
     action->perform();
     c.disconnect();
 
-    EXPECT_THAT(action->result().error(), Not(std::error_code{}));
+    EXPECT_EQ(action->result(), std::nullopt);
 }

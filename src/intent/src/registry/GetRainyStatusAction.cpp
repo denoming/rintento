@@ -8,6 +8,9 @@
 #include <algorithm>
 #include <ranges>
 
+static const int32_t kRainyStatusCode1 = 500;
+static const int32_t kRainyStatusCode2 = 599;
+
 namespace fmt {
 
 template<>
@@ -34,49 +37,6 @@ struct formatter<jar::GetRainyStatusAction::Tags> : public formatter<std::string
 } // namespace fmt
 
 namespace jar {
-
-namespace {
-
-const int32_t kRainyStatusCode1 = 500;
-const int32_t kRainyStatusCode2 = 599;
-
-GetRainyStatusAction::Tags
-getRainyStatus(const CurrentWeatherData& weather)
-{
-    GetRainyStatusAction::Tags status{GetRainyStatusAction::Tags::Unknown};
-    try {
-        const auto id = weather.data.get<int32_t>("id");
-        if (id >= kRainyStatusCode1 && id <= kRainyStatusCode2) {
-            status = GetRainyStatusAction::Tags::Rainy;
-        } else {
-            status = GetRainyStatusAction::Tags::NotRainy;
-        }
-    } catch (const std::exception& e) {
-        LOGE("Getting rainy status has failed: {}", e.what());
-    }
-    return status;
-}
-
-GetRainyStatusAction::Tags
-getRainyStatus(const ForecastWeatherData& weather, Timestamp timestampFrom, Timestamp timestampTo)
-{
-    GetRainyStatusAction::Tags status{GetRainyStatusAction::Tags::Unknown};
-    try {
-        const wit::DateTimePredicate predicate{timestampFrom, timestampTo};
-        const bool willBeRainy = std::ranges::any_of(
-            weather.data | std::views::filter(predicate), [](const CustomData& d) {
-                const auto id = d.get<int32_t>("id");
-                return (id >= kRainyStatusCode1 && id <= kRainyStatusCode2);
-            });
-        status = willBeRainy ? GetRainyStatusAction::Tags::Rainy
-                             : GetRainyStatusAction::Tags::NotRainy;
-    } catch (const std::exception& e) {
-        LOGE("Getting rainy status has failed: {}", e.what());
-    }
-    return status;
-}
-
-} // namespace
 
 std::shared_ptr<GetRainyStatusAction>
 GetRainyStatusAction::create(std::string intent,
@@ -148,7 +108,7 @@ GetRainyStatusAction::onWeatherDataReady(CurrentWeatherData weather)
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
     } else {
-        setResult(getRainyStatus(weather));
+        retrieveRainyStatus(weather);
     }
 }
 
@@ -160,7 +120,7 @@ GetRainyStatusAction::onWeatherDataReady(ForecastWeatherData weather)
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
     } else {
-        setResult(getRainyStatus(weather, timestampFrom(), timestampTo()));
+        retrieveRainyStatus(weather);
     }
 }
 
@@ -173,9 +133,45 @@ GetRainyStatusAction::onWeatherDataError(std::runtime_error error)
 }
 
 void
-GetRainyStatusAction::setResult(Tags tag)
+GetRainyStatusAction::retrieveRainyStatus(const CurrentWeatherData& weather)
 {
-    _result = tag;
+    try {
+        const auto id = weather.data.get<int32_t>("id");
+        if (id >= kRainyStatusCode1 && id <= kRainyStatusCode2) {
+            setResult(GetRainyStatusAction::Tags::Rainy);
+        } else {
+            setResult(GetRainyStatusAction::Tags::NotRainy);
+        }
+    } catch (const std::exception& e) {
+        LOGE("[{}]: Getting rainy status has failed: {}", intent(), e.what());
+        setError(std::make_error_code(std::errc::invalid_argument));
+    }
+}
+
+void
+GetRainyStatusAction::retrieveRainyStatus(const ForecastWeatherData& weather)
+{
+    try {
+        const wit::DateTimePredicate predicate{timestampFrom(), timestampTo()};
+        const bool willBeRainy = std::ranges::any_of(
+            weather.data | std::views::filter(predicate), [](const CustomData& d) {
+                const auto id = d.get<int32_t>("id");
+                return (id >= kRainyStatusCode1 && id <= kRainyStatusCode2);
+            });
+        setResult(willBeRainy ? GetRainyStatusAction::Tags::Rainy
+                              : GetRainyStatusAction::Tags::NotRainy);
+    } catch (const std::exception& e) {
+        LOGE("[{}]: Getting rainy status has failed: {}", intent(), e.what());
+        setError(std::make_error_code(std::errc::invalid_argument));
+    }
+}
+
+void
+GetRainyStatusAction::setResult(Result result)
+{
+    LOGD("[{}]: Rainy status is available: {}", intent(), result.value());
+
+    _result = std::move(result);
 
     announceResult();
 
@@ -185,19 +181,14 @@ GetRainyStatusAction::setResult(Tags tag)
 void
 GetRainyStatusAction::setError(std::error_code errorCode)
 {
-    _result = std::unexpected(errorCode);
-
     complete(errorCode);
 }
 
 void
 GetRainyStatusAction::announceResult()
 {
-    LOGD("[{}]: Rainy status is available: {}", intent(), _result.value());
-
     const std::string text{(_result == Tags::Rainy) ? "Today will be rainy"
                                                     : "It won't rain today"};
-
     _speakerClient.synthesizeText(text, "en-US");
 }
 

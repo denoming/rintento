@@ -5,7 +5,7 @@
 #include "jarvis/speaker/ISpeakerClient.hpp"
 #include "jarvis/weather/IWeatherClient.hpp"
 
-#include <expected>
+#include <optional>
 #include <memory>
 
 namespace jar {
@@ -17,7 +17,7 @@ class GetAirQualityAction final : public DateTimeAction,
 public:
     enum class Tags { Unknown, Good, Fair, Moderate, Poor, VeryPoor };
 
-    using Result = std::expected<Tags, std::error_code>;
+    using Result = std::optional<Tags>;
 
     static std::shared_ptr<GetAirQualityAction>
     create(std::string intent,
@@ -52,7 +52,13 @@ private:
     onAirQualityDataError(std::runtime_error error);
 
     void
-    setResult(Tags tag);
+    retrieveResult(const CurrentAirQualityData& airQuality);
+
+    void
+    retrieveResult(const ForecastAirQualityData& airQuality);
+
+    void
+    setResult(Result result);
 
     void
     setError(std::error_code errorCode);

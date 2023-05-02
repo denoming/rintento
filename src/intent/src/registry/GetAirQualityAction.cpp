@@ -53,7 +53,7 @@ toTag(int32_t aqi)
     GetAirQualityAction::Tags tag{GetAirQualityAction::Tags::Unknown};
     switch (aqi) {
     case 1:
-        tag = GetAirQualityAction::Tags::Good;
+        return GetAirQualityAction::Tags::Good;
         break;
     case 2:
         tag = GetAirQualityAction::Tags::Fair;
@@ -69,37 +69,6 @@ toTag(int32_t aqi)
         break;
     }
     return tag;
-}
-
-GetAirQualityAction::Tags
-processAirQualityData(const CurrentAirQualityData& airQuality)
-{
-    GetAirQualityAction::Tags status{GetAirQualityAction::Tags::Unknown};
-    try {
-        return toTag(airQuality.data.get<int32_t>("aqi"));
-    } catch (const std::exception& e) {
-        LOGE("Getting air quality status has failed: {}", e.what());
-    }
-    return status;
-}
-
-GetAirQualityAction::Tags
-processAirQualityData(const ForecastAirQualityData& airQuality, Timestamp tsFrom, Timestamp tsTo)
-{
-    int32_t aqi1 = std::numeric_limits<int32_t>::min();
-    try {
-        const wit::DateTimePredicate predicate{tsFrom, tsTo};
-        std::ranges::for_each(airQuality.data | std::views::filter(predicate),
-                              [&](const CustomData& d) {
-                                  if (const auto aqi2 = d.get<int32_t>("aqi"); aqi2 > aqi1) {
-                                      aqi1 = aqi2;
-                                  }
-                              });
-        return toTag(aqi1);
-    } catch (const std::exception& e) {
-        LOGE("Getting air quality status has failed: {}", e.what());
-    }
-    return GetAirQualityAction::Tags::Unknown;
 }
 
 } // namespace
@@ -176,7 +145,7 @@ GetAirQualityAction::onAirQualityDataReady(CurrentAirQualityData data)
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
     } else {
-        setResult(processAirQualityData(data));
+        retrieveResult(data);
     }
 }
 
@@ -187,7 +156,7 @@ GetAirQualityAction::onAirQualityDataReady(ForecastAirQualityData data)
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
     } else {
-        setResult(processAirQualityData(data, timestampFrom(), timestampTo()));
+        retrieveResult(data);
     }
 }
 
@@ -200,9 +169,41 @@ GetAirQualityAction::onAirQualityDataError(std::runtime_error error)
 }
 
 void
-GetAirQualityAction::setResult(Tags tag)
+GetAirQualityAction::retrieveResult(const CurrentAirQualityData& airQuality)
 {
-    _result = tag;
+    try {
+        setResult(toTag(airQuality.data.get<int32_t>("aqi")));
+    } catch (const std::exception& e) {
+        LOGE("[{}]: Getting air quality status has failed: {}", intent(), e.what());
+        setError(std::make_error_code(std::errc::invalid_argument));
+    }
+}
+
+void
+GetAirQualityAction::retrieveResult(const ForecastAirQualityData& airQuality)
+{
+    int32_t aqi1 = std::numeric_limits<int32_t>::min();
+    try {
+        const wit::DateTimePredicate predicate{timestampFrom(), timestampTo()};
+        std::ranges::for_each(airQuality.data | std::views::filter(predicate),
+                              [&](const CustomData& d) {
+                                  if (const auto aqi2 = d.get<int32_t>("aqi"); aqi2 > aqi1) {
+                                      aqi1 = aqi2;
+                                  }
+                              });
+        setResult(toTag(aqi1));
+    } catch (const std::exception& e) {
+        LOGE("[{}]: Getting air quality status has failed: {}", intent(), e.what());
+        setError(std::make_error_code(std::errc::invalid_argument));
+    }
+}
+
+void
+GetAirQualityAction::setResult(Result result)
+{
+    LOGD("[{}]: Air quality status is available: {}", intent(), result.value());
+
+    _result = std::move(result);
 
     announceResult();
 
@@ -212,16 +213,12 @@ GetAirQualityAction::setResult(Tags tag)
 void
 GetAirQualityAction::setError(std::error_code errorCode)
 {
-    _result = std::unexpected(errorCode);
-
     complete(errorCode);
 }
 
 void
 GetAirQualityAction::announceResult()
 {
-    LOGD("[{}]: Air quality status is available: {}", intent(), _result.value());
-
     _speakerClient.synthesizeText(fmt::format("The air quality is {}", _result.value()), "en-US");
 }
 
