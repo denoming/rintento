@@ -78,7 +78,7 @@ void
 GetRainyStatusAction::perform()
 {
     const auto loc{_positioningClient.location()};
-    LOGD("[{}]: Getting forecast weather for <{}> location", intent(), loc);
+    LOGD("[{}]: Getting weather data for <{}> location", intent(), loc);
 
     auto onReady = [weakSelf = weak_from_this()](auto weatherData) {
         if (auto self = weakSelf.lock()) {
