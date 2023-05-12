@@ -12,6 +12,7 @@ target_sources(${TARGET}
             src/registry/GetRainyStatusActionTest.cpp
             src/registry/GetAirQualityActionTest.cpp
             src/registry/GetWeatherTemperatureActionTest.cpp
+            src/registry/GetWindConditionActionTest.cpp
 )
 
 target_link_libraries(${TARGET}
