@@ -54,7 +54,7 @@ getForecastWeatherData(krn::sys_seconds timestampFrom, krn::sys_seconds timestam
 
 class GetWeatherTemperatureActionTest : public Test {
 public:
-    const std::string kIntentName{"test_rainy_status"};
+    const std::string kIntentName{"test_intent"};
 
 public:
     NiceMock<MockPositioningClient> positioning;
@@ -65,7 +65,7 @@ public:
 TEST_F(GetWeatherTemperatureActionTest, GetCurrent)
 {
     const auto weatherData{getCurrentWeatherData()};
-    EXPECT_CALL(speaker, synthesizeText(Not(IsEmpty()), Not(IsEmpty())));
+    EXPECT_CALL(speaker, synthesizeSsml(Not(IsEmpty()), Not(IsEmpty())));
     EXPECT_CALL(weather, getCurrentWeather).WillOnce(InvokeArgument<2>(weatherData));
 
     auto action = GetWeatherTemperatureAction::create(kIntentName, positioning, speaker, weather);
@@ -89,7 +89,7 @@ TEST_F(GetWeatherTemperatureActionTest, GetForPeriod)
     const krn::sys_seconds tsTo = tsFrom + krn::days{1};
 
     const auto weatherData{getForecastWeatherData(tsFrom, tsTo)};
-    EXPECT_CALL(speaker, synthesizeText(Not(IsEmpty()), Not(IsEmpty())));
+    EXPECT_CALL(speaker, synthesizeSsml(Not(IsEmpty()), Not(IsEmpty())));
     EXPECT_CALL(weather, getForecastWeather).WillOnce(InvokeArgument<2>(weatherData));
 
     DateTimeEntity entity;

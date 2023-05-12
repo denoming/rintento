@@ -52,7 +52,7 @@ getWeatherData(GetRainyStatusAction::Tags tag, krn::days modifier = {})
 
 class GetRainyStatusActionTest : public Test {
 public:
-    const std::string kIntentName{"test_rainy_status"};
+    const std::string kIntentName{"test_intent"};
 
 public:
     NiceMock<MockPositioningClient> positioning;

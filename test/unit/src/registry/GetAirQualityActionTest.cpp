@@ -65,7 +65,7 @@ getAirQualityData(GetAirQualityAction::Tags tag, krn::sys_seconds tsFrom, krn::s
 
 class GetAirQualityActionTest : public Test {
 public:
-    const std::string kIntentName{"test_rainy_status"};
+    const std::string kIntentName{"test_intent"};
 
 public:
     NiceMock<MockPositioningClient> positioning;
