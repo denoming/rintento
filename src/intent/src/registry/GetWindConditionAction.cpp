@@ -68,23 +68,6 @@ struct formatter<jar::GetWindConditionAction::Tags> : public formatter<std::stri
 
 namespace jar {
 
-/**
- * Description      Wind Speed, km/h
- * Calm             <1
- * Light Air        1-5
- * Light Breeze     6-11
- * Gentle Breeze    12-19
- * Moderate Breeze  20-28
- * Fresh Breeze     29-38
- * Strong Breeze    38-49
- * Near Gale        50-61
- * Gale             62-74
- * Strong Gale      75-88
- * Storm            89-102
- * Violent Storm    103-117
- * Hurricane        118+
- */
-
 namespace {
 
 GetWindConditionAction::Tags

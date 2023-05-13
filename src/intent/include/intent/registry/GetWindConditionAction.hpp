@@ -15,7 +15,7 @@ class IPositioningClient;
 /**
  * The action class for getting wind condition.
  *
- *  Tag              Wind Speed, km/h
+ *  Tag              Value, km/h
  *  Calm             <1
  *  Light Air        1-5
  *  Light Breeze     6-11
