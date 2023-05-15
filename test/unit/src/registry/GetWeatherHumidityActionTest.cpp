@@ -29,7 +29,7 @@ ForecastWeatherData
 getForecastWeatherData(krn::sys_seconds timestampFrom, krn::sys_seconds timestampTo)
 {
     static constexpr auto kStep = krn::hours{3};
-    int32_t humidity{25};
+    int32_t humidity{50};
     CustomDataSet dataSet;
     while (timestampFrom < timestampTo) {
         const auto dt = krn::duration_cast<krn::seconds>(timestampFrom.time_since_epoch()).count();
@@ -40,7 +40,7 @@ getForecastWeatherData(krn::sys_seconds timestampFrom, krn::sys_seconds timestam
             {"main.humidity", humidity},
         });
         dataSet.push_back(std::move(d));
-        humidity += 10;
+        humidity += 5;
         timestampFrom += kStep;
     }
     return ForecastWeatherData{.data = std::move(dataSet)};
@@ -75,9 +75,9 @@ TEST_F(GetWeatherHumidityActionTest, GetCurrent)
 
     const auto& result = action->result();
     ASSERT_TRUE(result);
-    EXPECT_EQ(result->min, GetWeatherHumidityAction::Tags::Comfortable);
-    EXPECT_EQ(result->avg, GetWeatherHumidityAction::Tags::Comfortable);
-    EXPECT_EQ(result->max, GetWeatherHumidityAction::Tags::Comfortable);
+    EXPECT_EQ(result->min, HumidityGrade::Comfortable);
+    EXPECT_EQ(result->avg, HumidityGrade::Comfortable);
+    EXPECT_EQ(result->max, HumidityGrade::Comfortable);
 }
 
 TEST_F(GetWeatherHumidityActionTest, GetForPeriod)
@@ -116,9 +116,9 @@ TEST_F(GetWeatherHumidityActionTest, GetForPeriod)
 
     const auto& result = action->result();
     ASSERT_TRUE(result);
-    EXPECT_THAT(result->min, Eq(GetWeatherHumidityAction::Tags::Comfortable));
-    EXPECT_THAT(result->avg, Not(GetWeatherHumidityAction::Tags::Comfortable));
-    EXPECT_THAT(result->max, Not(GetWeatherHumidityAction::Tags::Comfortable));
+    EXPECT_THAT(result->min, Eq(HumidityGrade::Comfortable));
+    EXPECT_THAT(result->avg, Not(HumidityGrade::Comfortable));
+    EXPECT_THAT(result->max, Not(HumidityGrade::Comfortable));
 }
 
 TEST_F(GetWeatherHumidityActionTest, Error)

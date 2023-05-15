@@ -3,7 +3,9 @@
 #include "intent/Formatters.hpp"
 #include "intent/IPositioningClient.hpp"
 #include "intent/WitHelpers.hpp"
-#include "jarvis/Logger.hpp"
+
+#include <jarvis/Logger.hpp>
+#include <jarvis/weather/Formatters.hpp>
 
 #include <boost/assert.hpp>
 
@@ -13,97 +15,19 @@
 namespace fmt {
 
 template<>
-struct formatter<jar::GetWindConditionAction::Tags> : public formatter<std::string_view> {
+struct formatter<jar::GetWindConditionAction::WindValues> : public formatter<std::string_view> {
     template<typename FormatContext>
     auto
-    format(const jar::GetWindConditionAction::Tags& tag, FormatContext& c) const
+    format(const jar::GetWindConditionAction::WindValues& v, FormatContext& c) const
     {
-        std::string name{"Unknown"};
-        switch (tag) {
-        case jar::GetWindConditionAction::Tags::Calm:
-            name = "Calm";
-            break;
-        case jar::GetWindConditionAction::Tags::LightAir:
-            name = "LightAir";
-            break;
-        case jar::GetWindConditionAction::Tags::LightBreeze:
-            name = "LightBreeze";
-            break;
-        case jar::GetWindConditionAction::Tags::GentleBreeze:
-            name = "GentleBreeze";
-            break;
-        case jar::GetWindConditionAction::Tags::ModerateBreeze:
-            name = "ModerateBreeze";
-            break;
-        case jar::GetWindConditionAction::Tags::FreshBreeze:
-            name = "FreshBreeze";
-            break;
-        case jar::GetWindConditionAction::Tags::StrongBreeze:
-            name = "StrongBreeze";
-            break;
-        case jar::GetWindConditionAction::Tags::NearGale:
-            name = "NearGale";
-            break;
-        case jar::GetWindConditionAction::Tags::Gale:
-            name = "Gale";
-            break;
-        case jar::GetWindConditionAction::Tags::StrongGale:
-            name = "StrongGale";
-            break;
-        case jar::GetWindConditionAction::Tags::Storm:
-            name = "Storm";
-            break;
-        case jar::GetWindConditionAction::Tags::ViolentStorm:
-            name = "ViolentStorm";
-            break;
-        case jar::GetWindConditionAction::Tags::Hurricane:
-            name = "Hurricane";
-            break;
-        }
-        return fmt::formatter<std::string_view>::format(name, c);
+        static constexpr const std::string_view kFormat{"min<{}>, avg<{}>, max<{}>"};
+        return formatter<std::string_view>::format(fmt::format(kFormat, v.min, v.avg, v.max), c);
     }
 };
 
 } // namespace fmt
 
 namespace jar {
-
-namespace {
-
-GetWindConditionAction::Tags
-toTag(double windSpeed)
-{
-    using enum GetWindConditionAction::Tags;
-    auto tag{GetWindConditionAction::Tags::Calm};
-    if (windSpeed >= 1.0 and windSpeed <= 5.0) {
-        tag = LightAir;
-    } else if (windSpeed >= 6.0 and windSpeed <= 11.0) {
-        tag = LightBreeze;
-    } else if (windSpeed >= 12.0 and windSpeed <= 19.0) {
-        tag = GentleBreeze;
-    } else if (windSpeed >= 20.0 and windSpeed <= 28.0) {
-        tag = ModerateBreeze;
-    } else if (windSpeed >= 29.0 and windSpeed <= 38.0) {
-        tag = FreshBreeze;
-    } else if (windSpeed >= 38.0 and windSpeed <= 49.0) {
-        tag = StrongBreeze;
-    } else if (windSpeed >= 50.0 and windSpeed <= 61.0) {
-        tag = NearGale;
-    } else if (windSpeed >= 62.0 and windSpeed <= 74.0) {
-        tag = Gale;
-    } else if (windSpeed >= 75.0 and windSpeed <= 88.0) {
-        tag = StrongGale;
-    } else if (windSpeed >= 89.0 and windSpeed <= 102.0) {
-        tag = Storm;
-    } else if (windSpeed >= 103.0 and windSpeed <= 117.0) {
-        tag = ViolentStorm;
-    } else if (windSpeed >= 118.0) {
-        tag = Hurricane;
-    }
-    return tag;
-}
-
-} // namespace
 
 std::shared_ptr<GetWindConditionAction>
 GetWindConditionAction::create(std::string intent,
@@ -175,7 +99,7 @@ GetWindConditionAction::onWeatherDataReady(CurrentWeatherData weather)
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
     } else {
-        retrieveWindCondition(weather);
+        retrieveResult(weather);
     }
 }
 
@@ -187,7 +111,7 @@ GetWindConditionAction::onWeatherDataReady(ForecastWeatherData weather)
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
     } else {
-        retrieveWindCondition(weather);
+        retrieveResult(weather);
     }
 }
 
@@ -200,11 +124,15 @@ GetWindConditionAction::onWeatherDataError(std::runtime_error error)
 }
 
 void
-GetWindConditionAction::retrieveWindCondition(const CurrentWeatherData& weather)
+GetWindConditionAction::retrieveResult(const CurrentWeatherData& weather)
 {
     try {
-        const double speed = weather.data.get<double>("wind.speed");
-        setResult(toTag(speed));
+        const double windSpeed = weather.data.get<double>("wind.speed");
+        setResult(WindValues{
+            .min = WindGrade{windSpeed},
+            .avg = WindGrade{windSpeed},
+            .max = WindGrade{windSpeed},
+        });
     } catch (const std::exception& e) {
         LOGE("[{}]: Getting wind condition has failed: {}", intent(), e.what());
         setError(std::make_error_code(std::errc::invalid_argument));
@@ -212,19 +140,26 @@ GetWindConditionAction::retrieveWindCondition(const CurrentWeatherData& weather)
 }
 
 void
-GetWindConditionAction::retrieveWindCondition(const ForecastWeatherData& weather)
+GetWindConditionAction::retrieveResult(const ForecastWeatherData& weather)
 {
     try {
         const wit::DateTimePredicate predicate{timestampFrom(), timestampTo()};
         int32_t count{};
-        double avgWindSpeed{};
+        double sum{};
+        double min{std::numeric_limits<double>::max()};
+        double max{std::numeric_limits<double>::min()};
         std::ranges::for_each(weather.data | std::views::filter(predicate),
                               [&](const CustomData& d) {
-                                  count++;
-                                  avgWindSpeed += d.get<double>("wind.speed");
+                                  const double speed = d.get<double>("wind.speed");
+                                  count++, sum += speed;
+                                  min = std::min(min, speed);
+                                  max = std::max(max, speed);
                               });
-        avgWindSpeed = std::round(avgWindSpeed / count);
-        setResult(toTag(avgWindSpeed));
+        setResult(WindValues{
+            .min = WindGrade{min},
+            .avg = WindGrade{sum / count},
+            .max = WindGrade{max},
+        });
     } catch (const std::exception& e) {
         LOGE("[{}]: Getting wind condition has failed: {}", intent(), e.what());
         setError(std::make_error_code(std::errc::invalid_argument));
@@ -234,7 +169,7 @@ GetWindConditionAction::retrieveWindCondition(const ForecastWeatherData& weather
 void
 GetWindConditionAction::setResult(Result result)
 {
-    LOGD("[{}]: The wind condition is available: {}", intent(), result.value());
+    LOGD("[{}]: The wind values are available: {}", intent(), *result);
 
     _result = std::move(result);
 
@@ -259,7 +194,7 @@ GetWindConditionAction::announceResult()
     // clang-format on
 
     BOOST_ASSERT(_result);
-    _speakerClient.synthesizeSsml(fmt::format(fmt::runtime(kText), *_result), "en-US");
+    _speakerClient.synthesizeSsml(fmt::format(fmt::runtime(kText), _result->avg), "en-US");
 }
 
 } // namespace jar

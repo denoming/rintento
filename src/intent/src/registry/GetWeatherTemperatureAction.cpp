@@ -3,7 +3,8 @@
 #include "intent/Formatters.hpp"
 #include "intent/IPositioningClient.hpp"
 #include "intent/WitHelpers.hpp"
-#include "jarvis/Logger.hpp"
+
+#include <jarvis/Logger.hpp>
 
 #include <boost/assert.hpp>
 
@@ -13,12 +14,17 @@
 namespace fmt {
 
 template<>
-struct formatter<jar::GetWeatherTemperatureAction::Temperature> : public formatter<std::string> {
+struct formatter<jar::GetWeatherTemperatureAction::TemperatureValues>
+    : public formatter<std::string_view> {
     template<typename FormatContext>
     auto
-    format(const jar::GetWeatherTemperatureAction::Temperature& t, FormatContext& c) const
+    format(const jar::GetWeatherTemperatureAction::TemperatureValues& t, FormatContext& c) const
     {
-        return formatter<std::string>::format(fmt::format("{} [{}]", t.temp, t.tempFeelsLike), c);
+        static constexpr const std::string_view kFormat{"min<{} [{}]>, avg<{} [{}]>, max<{} [{}]>"};
+        return formatter<std::string_view>::format(
+            fmt::format(
+                kFormat, t.min, t.minFeelsLike, t.avg, t.avgFeelsLike, t.max, t.maxFeelsLike),
+            c);
     }
 };
 
@@ -96,7 +102,7 @@ GetWeatherTemperatureAction::onWeatherDataReady(CurrentWeatherData weather)
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
     } else {
-        retrieveTemperature(weather);
+        retrieveResult(weather);
     }
 }
 
@@ -108,7 +114,7 @@ GetWeatherTemperatureAction::onWeatherDataReady(ForecastWeatherData weather)
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
     } else {
-        retrieveTemperature(weather);
+        retrieveResult(weather);
     }
 }
 
@@ -121,14 +127,18 @@ GetWeatherTemperatureAction::onWeatherDataError(std::runtime_error error)
 }
 
 void
-GetWeatherTemperatureAction::retrieveTemperature(const CurrentWeatherData& weather)
+GetWeatherTemperatureAction::retrieveResult(const CurrentWeatherData& weather)
 {
     try {
-        const auto t1 = weather.data.get<double>("main.temp");
-        const auto t2 = weather.data.get<double>("main.tempFeelsLike");
-        setResult(Temperature{
-            .temp = static_cast<int32_t>(std::round(t1)),
-            .tempFeelsLike = static_cast<int32_t>(std::round(t2)),
+        const int32_t t1 = std::round(weather.data.get<double>("main.temp"));
+        const int32_t t2 = std::round(weather.data.get<double>("main.tempFeelsLike"));
+        setResult(TemperatureValues{
+            .min = t1,
+            .minFeelsLike = t2,
+            .avg = t1,
+            .avgFeelsLike = t2,
+            .max = t1,
+            .maxFeelsLike = t2,
         });
     } catch (const std::exception& e) {
         LOGE("[{}]: Getting temperature value has failed: {}", intent(), e.what());
@@ -137,26 +147,36 @@ GetWeatherTemperatureAction::retrieveTemperature(const CurrentWeatherData& weath
 }
 
 void
-GetWeatherTemperatureAction::retrieveTemperature(const ForecastWeatherData& weather)
+GetWeatherTemperatureAction::retrieveResult(const ForecastWeatherData& weather)
 {
     try {
         const wit::DateTimePredicate predicate{timestampFrom(), timestampTo()};
         int32_t count{};
-        double avgTemp{}, avgTempFeels{};
+        double sum{}, sumFeels{};
+        double min{std::numeric_limits<double>::max()};
+        double minFeels{min};
+        double max{std::numeric_limits<double>::min()};
+        double maxFeels{max};
         std::ranges::for_each(weather.data | std::views::filter(predicate),
                               [&](const CustomData& d) {
-                                  count++;
-                                  avgTemp += d.get<double>("main.temp");
-                                  avgTempFeels += d.get<double>("main.tempFeelsLike");
+                                  const auto t1 = d.get<double>("main.temp");
+                                  const auto t2 = d.get<double>("main.tempFeelsLike");
+                                  count++, sum += t1, sumFeels += t2;
+                                  min = std::min(min, t1);
+                                  minFeels = std::min(minFeels, t2);
+                                  max = std::max(max, t1);
+                                  maxFeels = std::max(maxFeels, t2);
                               });
         if (count == 0) {
             setError(std::make_error_code(std::errc::no_message));
         } else {
-            avgTemp = std::round(avgTemp / count);
-            avgTempFeels = std::round(avgTempFeels / count);
-            setResult(Temperature{
-                .temp = static_cast<int32_t>(avgTemp),
-                .tempFeelsLike = static_cast<int32_t>(avgTempFeels),
+            setResult(TemperatureValues{
+                .min = static_cast<int32_t>(std::round(min)),
+                .minFeelsLike = static_cast<int32_t>(std::round(minFeels)),
+                .avg = static_cast<int32_t>(std::round(sum / count)),
+                .avgFeelsLike = static_cast<int32_t>(std::round(sumFeels / count)),
+                .max = static_cast<int32_t>(std::round(max)),
+                .maxFeelsLike = static_cast<int32_t>(std::round(maxFeels)),
             });
         }
     } catch (const std::exception& e) {
@@ -168,7 +188,7 @@ GetWeatherTemperatureAction::retrieveTemperature(const ForecastWeatherData& weat
 void
 GetWeatherTemperatureAction::setResult(Result result)
 {
-    LOGD("[{}]: The temperature is available: {}", intent(), result.value());
+    LOGD("[{}]: The temperature values are available: {}", intent(), *result);
 
     _result = std::move(result);
 
@@ -194,7 +214,7 @@ GetWeatherTemperatureAction::announceResult()
 
     BOOST_ASSERT(_result);
     const auto& value = *_result;
-    _speakerClient.synthesizeSsml(fmt::format(fmt::runtime(kText), value.temp, value.tempFeelsLike),
+    _speakerClient.synthesizeSsml(fmt::format(fmt::runtime(kText), value.avg, value.avgFeelsLike),
                                   "en-US");
 }
 

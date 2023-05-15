@@ -2,11 +2,13 @@
 
 #include "intent/WitTypes.hpp"
 #include "intent/registry/DateTimeAction.hpp"
-#include "jarvis/speaker/ISpeakerClient.hpp"
-#include "jarvis/weather/IWeatherClient.hpp"
 
-#include <optional>
+#include <jarvis/speaker/ISpeakerClient.hpp>
+#include <jarvis/weather/Grades.hpp>
+#include <jarvis/weather/IWeatherClient.hpp>
+
 #include <memory>
+#include <optional>
 
 namespace jar {
 
@@ -15,9 +17,7 @@ class IPositioningClient;
 class GetAirQualityAction final : public DateTimeAction,
                                   public std::enable_shared_from_this<GetAirQualityAction> {
 public:
-    enum class Tags { Unknown, Good, Fair, Moderate, Poor, VeryPoor };
-
-    using Result = std::optional<Tags>;
+    using Result = std::optional<AirQualityIndex>;
 
     static std::shared_ptr<GetAirQualityAction>
     create(std::string intent,

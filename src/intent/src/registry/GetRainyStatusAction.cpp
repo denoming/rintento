@@ -3,31 +3,29 @@
 #include "intent/Formatters.hpp"
 #include "intent/IPositioningClient.hpp"
 #include "intent/WitHelpers.hpp"
-#include "jarvis/Logger.hpp"
+
+#include <jarvis/Logger.hpp>
+
+#include <boost/assert.hpp>
 
 #include <algorithm>
 #include <ranges>
 
-static const int32_t kRainyStatusCode1 = 500;
-static const int32_t kRainyStatusCode2 = 599;
-
 namespace fmt {
 
 template<>
-struct formatter<jar::GetRainyStatusAction::Tags> : public formatter<std::string_view> {
+struct formatter<jar::GetRainyStatusAction::RainyStatus> : public formatter<std::string_view> {
     template<typename FormatContext>
     auto
-    format(const jar::GetRainyStatusAction::Tags& tag, FormatContext& c) const
+    format(const jar::GetRainyStatusAction::RainyStatus& s, FormatContext& c) const
     {
-        std::string name{"Unknown"};
-        switch (tag) {
-        case jar::GetRainyStatusAction::Tags::Rainy:
+        std::string_view name{"Unknown"};
+        switch (s) {
+        case jar::GetRainyStatusAction::Rainy:
             name = "Rainy";
             break;
-        case jar::GetRainyStatusAction::Tags::NotRainy:
+        case jar::GetRainyStatusAction::NotRainy:
             name = "NotRainy";
-            break;
-        default:
             break;
         }
         return fmt::formatter<std::string_view>::format(name, c);
@@ -108,7 +106,7 @@ GetRainyStatusAction::onWeatherDataReady(CurrentWeatherData weather)
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
     } else {
-        retrieveRainyStatus(weather);
+        retrieveResult(weather);
     }
 }
 
@@ -120,7 +118,7 @@ GetRainyStatusAction::onWeatherDataReady(ForecastWeatherData weather)
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
     } else {
-        retrieveRainyStatus(weather);
+        retrieveResult(weather);
     }
 }
 
@@ -133,15 +131,11 @@ GetRainyStatusAction::onWeatherDataError(std::runtime_error error)
 }
 
 void
-GetRainyStatusAction::retrieveRainyStatus(const CurrentWeatherData& weather)
+GetRainyStatusAction::retrieveResult(const CurrentWeatherData& weather)
 {
     try {
-        const auto id = weather.data.get<int32_t>("id");
-        if (id >= kRainyStatusCode1 && id <= kRainyStatusCode2) {
-            setResult(GetRainyStatusAction::Tags::Rainy);
-        } else {
-            setResult(GetRainyStatusAction::Tags::NotRainy);
-        }
+        const WeatherGrade grade{weather.data.get<int32_t>("id")};
+        setResult((grade.value == WeatherGrade::Rain) ? RainyStatus::Rainy : RainyStatus::NotRainy);
     } catch (const std::exception& e) {
         LOGE("[{}]: Getting rainy status has failed: {}", intent(), e.what());
         setError(std::make_error_code(std::errc::invalid_argument));
@@ -149,17 +143,16 @@ GetRainyStatusAction::retrieveRainyStatus(const CurrentWeatherData& weather)
 }
 
 void
-GetRainyStatusAction::retrieveRainyStatus(const ForecastWeatherData& weather)
+GetRainyStatusAction::retrieveResult(const ForecastWeatherData& weather)
 {
     try {
         const wit::DateTimePredicate predicate{timestampFrom(), timestampTo()};
         const bool willBeRainy = std::ranges::any_of(
             weather.data | std::views::filter(predicate), [](const CustomData& d) {
-                const auto id = d.get<int32_t>("id");
-                return (id >= kRainyStatusCode1 && id <= kRainyStatusCode2);
+                const WeatherGrade grade{d.get<int32_t>("id")};
+                return (grade.value == WeatherGrade::Rain);
             });
-        setResult(willBeRainy ? GetRainyStatusAction::Tags::Rainy
-                              : GetRainyStatusAction::Tags::NotRainy);
+        setResult(willBeRainy ? RainyStatus::Rainy : RainyStatus::NotRainy);
     } catch (const std::exception& e) {
         LOGE("[{}]: Getting rainy status has failed: {}", intent(), e.what());
         setError(std::make_error_code(std::errc::invalid_argument));
@@ -187,8 +180,9 @@ GetRainyStatusAction::setError(std::error_code errorCode)
 void
 GetRainyStatusAction::announceResult()
 {
-    const std::string text{(_result == Tags::Rainy) ? "Today will be rainy"
-                                                    : "It won't rain today"};
+    BOOST_ASSERT(_result);
+
+    const std::string text{*_result ? "Today will be rainy" : "It won't rain today"};
     _speakerClient.synthesizeText(text, "en-US");
 }
 

@@ -3,7 +3,9 @@
 #include "intent/Formatters.hpp"
 #include "intent/IPositioningClient.hpp"
 #include "intent/WitHelpers.hpp"
-#include "jarvis/Logger.hpp"
+
+#include <jarvis/Logger.hpp>
+#include <jarvis/weather/Formatters.hpp>
 
 #include <boost/assert.hpp>
 
@@ -13,47 +15,20 @@
 namespace fmt {
 
 template<>
-struct formatter<jar::GetWeatherHumidityAction::Tags> : public formatter<std::string_view> {
+struct formatter<jar::GetWeatherHumidityAction::HumidityValues>
+    : public formatter<std::string_view> {
     template<typename FormatContext>
     auto
-    format(const jar::GetWeatherHumidityAction::Tags& tag, FormatContext& c) const
+    format(const jar::GetWeatherHumidityAction::HumidityValues& t, FormatContext& c) const
     {
-        std::string_view name{"Unknown"};
-        switch (tag) {
-        case jar::GetWeatherHumidityAction::Tags::Comfortable:
-            name = "Comfortable";
-            break;
-        case jar::GetWeatherHumidityAction::Tags::Sticky:
-            name = "Comfortable";
-            break;
-        case jar::GetWeatherHumidityAction::Tags::Oppressive:
-            name = "Oppressive";
-            break;
-        }
-        return fmt::formatter<std::string_view>::format(name, c);
+        static constexpr const std::string_view kFormat{"min<{}>, avg<{}>, max<{}>"};
+        return formatter<std::string_view>::format(fmt::format(kFormat, t.min, t.avg, t.max), c);
     }
 };
 
 } // namespace fmt
 
 namespace jar {
-
-namespace {
-
-GetWeatherHumidityAction::Tags
-toTag(int32_t humidity)
-{
-    using enum GetWeatherHumidityAction::Tags;
-    auto tag{GetWeatherHumidityAction::Tags::Comfortable};
-    if (humidity > 55 and humidity < 65) {
-        return Sticky;
-    } else if (humidity >= 65) {
-        return Oppressive;
-    }
-    return tag;
-}
-
-} // namespace
 
 std::shared_ptr<GetWeatherHumidityAction>
 GetWeatherHumidityAction::create(std::string intent,
@@ -125,7 +100,7 @@ GetWeatherHumidityAction::onWeatherDataReady(CurrentWeatherData weather)
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
     } else {
-        retrieveHumidity(weather);
+        retrieveResult(weather);
     }
 }
 
@@ -137,7 +112,7 @@ GetWeatherHumidityAction::onWeatherDataReady(ForecastWeatherData weather)
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
     } else {
-        retrieveHumidity(weather);
+        retrieveResult(weather);
     }
 }
 
@@ -150,14 +125,14 @@ GetWeatherHumidityAction::onWeatherDataError(std::runtime_error error)
 }
 
 void
-GetWeatherHumidityAction::retrieveHumidity(const CurrentWeatherData& weather)
+GetWeatherHumidityAction::retrieveResult(const CurrentWeatherData& weather)
 {
     try {
-        const auto humidity = toTag(weather.data.get<int32_t>("main.humidity"));
-        setResult(Values{
-            .min = humidity,
-            .avg = humidity,
-            .max = humidity,
+        const auto grade = HumidityGrade{weather.data.get<int32_t>("main.humidity")};
+        setResult(HumidityValues{
+            .min = grade,
+            .avg = grade,
+            .max = grade,
         });
     } catch (const std::exception& e) {
         LOGE("[{}]: Getting humidity has failed: {}", intent(), e.what());
@@ -166,30 +141,25 @@ GetWeatherHumidityAction::retrieveHumidity(const CurrentWeatherData& weather)
 }
 
 void
-GetWeatherHumidityAction::retrieveHumidity(const ForecastWeatherData& weather)
+GetWeatherHumidityAction::retrieveResult(const ForecastWeatherData& weather)
 {
     try {
         const wit::DateTimePredicate predicate{timestampFrom(), timestampTo()};
         int32_t count{};
         int32_t min{std::numeric_limits<int32_t>::max()};
-        int32_t sum{};
         int32_t max{std::numeric_limits<int32_t>::min()};
+        int32_t sum{};
         std::ranges::for_each(weather.data | std::views::filter(predicate),
                               [&](const CustomData& d) {
                                   const int32_t h = d.get<int32_t>("main.humidity");
-                                  count++;
-                                  if (min > h) {
-                                      min = h;
-                                  }
-                                  sum += h;
-                                  if (max < h) {
-                                      max = h;
-                                  }
+                                  count++, sum += h;
+                                  min = std::min(min, h);
+                                  max = std::max(max, h);
                               });
-        setResult(Values{
-            .min = toTag(min),
-            .avg = toTag(sum / count),
-            .max = toTag(max),
+        setResult(HumidityValues{
+            .min = HumidityGrade{min},
+            .avg = HumidityGrade{sum / count},
+            .max = HumidityGrade{max},
         });
     } catch (const std::exception& e) {
         LOGE("[{}]: Getting humidity has failed: {}", intent(), e.what());

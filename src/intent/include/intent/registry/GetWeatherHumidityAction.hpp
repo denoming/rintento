@@ -2,8 +2,10 @@
 
 #include "intent/WitTypes.hpp"
 #include "intent/registry/DateTimeAction.hpp"
-#include "jarvis/speaker/ISpeakerClient.hpp"
-#include "jarvis/weather/IWeatherClient.hpp"
+
+#include <jarvis/speaker/ISpeakerClient.hpp>
+#include <jarvis/weather/Grades.hpp>
+#include <jarvis/weather/IWeatherClient.hpp>
 
 #include <memory>
 #include <optional>
@@ -12,27 +14,17 @@ namespace jar {
 
 class IPositioningClient;
 
-/**
- * The action class for getting humidity.
- *
- * Tag          Value, %
- * Comfortable  <= 55           (dry and comfortable)
- * Sticky       > 55 and < 65   (becoming "sticky" with muggy evenings)
- * Oppressive   >= 65           (lots of moisture in the air, becoming oppressive)
- */
 class GetWeatherHumidityAction final
     : public DateTimeAction,
       public std::enable_shared_from_this<GetWeatherHumidityAction> {
 public:
-    enum class Tags { Comfortable, Sticky, Oppressive };
-
-    struct Values {
-        Tags min;
-        Tags avg;
-        Tags max;
+    struct HumidityValues {
+        HumidityGrade min;
+        HumidityGrade avg;
+        HumidityGrade max;
     };
 
-    using Result = std::optional<Values>;
+    using Result = std::optional<HumidityValues>;
 
     [[nodiscard]] static std::shared_ptr<GetWeatherHumidityAction>
     create(std::string intent,
@@ -67,10 +59,10 @@ private:
     onWeatherDataError(std::runtime_error error);
 
     void
-    retrieveHumidity(const CurrentWeatherData& weather);
+    retrieveResult(const CurrentWeatherData& weather);
 
     void
-    retrieveHumidity(const ForecastWeatherData& weather);
+    retrieveResult(const ForecastWeatherData& weather);
 
     void
     setResult(Result result);

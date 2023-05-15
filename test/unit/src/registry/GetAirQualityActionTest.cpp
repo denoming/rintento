@@ -16,34 +16,8 @@ namespace krn = std::chrono;
 
 namespace {
 
-int32_t
-fromTag(GetAirQualityAction::Tags tag)
-{
-    int32_t output;
-    switch (tag) {
-    case GetAirQualityAction::Tags::Good:
-        output = 1;
-        break;
-    case GetAirQualityAction::Tags::Fair:
-        output = 2;
-        break;
-    case GetAirQualityAction::Tags::Moderate:
-        output = 3;
-        break;
-    case GetAirQualityAction::Tags::Poor:
-        output = 4;
-        break;
-    case GetAirQualityAction::Tags::VeryPoor:
-        output = 5;
-        break;
-    default:
-        output = -1;
-    }
-    return output;
-}
-
 CustomDataSet
-getAirQualityData(GetAirQualityAction::Tags tag, krn::sys_seconds tsFrom, krn::sys_seconds tsTo)
+getAirQualityData(int32_t aqi, krn::sys_seconds tsFrom, krn::sys_seconds tsTo)
 {
     static constexpr auto kStep = krn::hours{1};
     CustomDataSet output;
@@ -53,7 +27,7 @@ getAirQualityData(GetAirQualityAction::Tags tag, krn::sys_seconds tsFrom, krn::s
         d.assign({
             {"dt", int64_t{dt}},
             {"duration", int32_t{1 * 60 * 60}},
-            {"aqi", int32_t{fromTag(tag)}},
+            {"aqi", aqi},
         });
         output.push_back(std::move(d));
         tsFrom += kStep;
@@ -77,7 +51,7 @@ TEST_F(GetAirQualityActionTest, CheckTodayAirQuality)
 {
     const krn::sys_seconds tsFrom = krn::floor<krn::days>(krn::system_clock::now());
     const krn::sys_seconds tsTo = krn::ceil<krn::days>(krn::system_clock::now());
-    const auto dataSet{getAirQualityData(GetAirQualityAction::Tags::Good, tsFrom, tsTo)};
+    const auto dataSet{getAirQualityData(1, tsFrom, tsTo)};
 
     ForecastAirQualityData airQuality = {.data = std::move(dataSet)};
     EXPECT_CALL(speaker, synthesizeText(Not(IsEmpty()), Not(IsEmpty())));
@@ -104,20 +78,20 @@ TEST_F(GetAirQualityActionTest, CheckTodayAirQuality)
     action->perform();
     c.disconnect();
 
-    EXPECT_THAT(action->result(), Optional(GetAirQualityAction::Tags::Good));
+    EXPECT_THAT(action->result(), Optional(AirQualityIndex::Good));
 }
 
 TEST_F(GetAirQualityActionTest, CheckWorstAirQuality)
 {
     const auto tsForm1 = krn::floor<krn::days>(krn::system_clock::now());
     const auto tsTo1 = tsForm1 + krn::hours{3};
-    const auto dataSet1{getAirQualityData(GetAirQualityAction::Tags::Good, tsForm1, tsTo1)};
+    const auto dataSet1{getAirQualityData(1, tsForm1, tsTo1)};
     const auto tsForm2 = tsTo1;
     const auto tsTo2 = tsForm2 + krn::hours{3};
-    const auto dataSet2{getAirQualityData(GetAirQualityAction::Tags::Fair, tsForm2, tsTo2)};
+    const auto dataSet2{getAirQualityData(2, tsForm2, tsTo2)};
     const auto tsForm3 = tsTo2;
     const auto tsTo3 = tsForm3 + krn::hours{3};
-    const auto dataSet3{getAirQualityData(GetAirQualityAction::Tags::Poor, tsForm3, tsTo3)};
+    const auto dataSet3{getAirQualityData(4, tsForm3, tsTo3)};
 
     ForecastAirQualityData airQuality;
     airQuality.data.insert(std::end(airQuality.data), std::begin(dataSet1), std::end(dataSet1));
@@ -154,7 +128,7 @@ TEST_F(GetAirQualityActionTest, CheckWorstAirQuality)
     action->perform();
     c.disconnect();
 
-    EXPECT_THAT(action->result(), Optional(GetAirQualityAction::Tags::Poor));
+    EXPECT_THAT(action->result(), Optional(AirQualityIndex::Poor));
 }
 
 TEST_F(GetAirQualityActionTest, Error)

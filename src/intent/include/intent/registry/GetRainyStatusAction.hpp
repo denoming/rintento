@@ -2,11 +2,13 @@
 
 #include "intent/WitTypes.hpp"
 #include "intent/registry/DateTimeAction.hpp"
-#include "jarvis/speaker/ISpeakerClient.hpp"
-#include "jarvis/weather/IWeatherClient.hpp"
 
-#include <optional>
+#include <jarvis/speaker/ISpeakerClient.hpp>
+#include <jarvis/weather/Grades.hpp>
+#include <jarvis/weather/IWeatherClient.hpp>
+
 #include <memory>
+#include <optional>
 
 namespace jar {
 
@@ -15,9 +17,9 @@ class IPositioningClient;
 class GetRainyStatusAction final : public DateTimeAction,
                                    public std::enable_shared_from_this<GetRainyStatusAction> {
 public:
-    enum class Tags { Rainy, NotRainy };
+    enum RainyStatus { Rainy, NotRainy };
 
-    using Result = std::optional<Tags>;
+    using Result = std::optional<RainyStatus>;
 
     [[nodiscard]] static std::shared_ptr<GetRainyStatusAction>
     create(std::string intent,
@@ -52,10 +54,10 @@ private:
     onWeatherDataError(std::runtime_error error);
 
     void
-    retrieveRainyStatus(const CurrentWeatherData& weather);
+    retrieveResult(const CurrentWeatherData& weather);
 
     void
-    retrieveRainyStatus(const ForecastWeatherData& weather);
+    retrieveResult(const ForecastWeatherData& weather);
 
     void
     setResult(Result result);

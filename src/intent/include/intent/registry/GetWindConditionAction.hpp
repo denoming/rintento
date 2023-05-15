@@ -2,8 +2,10 @@
 
 #include "intent/WitTypes.hpp"
 #include "intent/registry/DateTimeAction.hpp"
-#include "jarvis/speaker/ISpeakerClient.hpp"
-#include "jarvis/weather/IWeatherClient.hpp"
+
+#include <jarvis/speaker/ISpeakerClient.hpp>
+#include <jarvis/weather/Grades.hpp>
+#include <jarvis/weather/IWeatherClient.hpp>
 
 #include <memory>
 #include <optional>
@@ -12,45 +14,16 @@ namespace jar {
 
 class IPositioningClient;
 
-/**
- * The action class for getting wind condition.
- *
- *  Tag              Value, km/h
- *  Calm             <1
- *  Light Air        1-5
- *  Light Breeze     6-11
- *  Gentle Breeze    12-19
- *  Moderate Breeze  20-28
- *  Fresh Breeze     29-38
- *  Strong Breeze    38-49
- *  Near Gale        50-61
- *  Gale             62-74
- *  Strong Gale      75-88
- *  Storm            89-102
- *  Violent Storm    103-117
- *  Hurricane        118+
- *
- */
 class GetWindConditionAction final : public DateTimeAction,
                                      public std::enable_shared_from_this<GetWindConditionAction> {
 public:
-    enum class Tags {
-        Calm,
-        LightAir,
-        LightBreeze,
-        GentleBreeze,
-        ModerateBreeze,
-        FreshBreeze,
-        StrongBreeze,
-        NearGale,
-        Gale,
-        StrongGale,
-        Storm,
-        ViolentStorm,
-        Hurricane
+    struct WindValues {
+        WindGrade min;
+        WindGrade avg;
+        WindGrade max;
     };
 
-    using Result = std::optional<Tags>;
+    using Result = std::optional<WindValues>;
 
     [[nodiscard]] static std::shared_ptr<GetWindConditionAction>
     create(std::string intent,
@@ -85,10 +58,10 @@ private:
     onWeatherDataError(std::runtime_error error);
 
     void
-    retrieveWindCondition(const CurrentWeatherData& weather);
+    retrieveResult(const CurrentWeatherData& weather);
 
     void
-    retrieveWindCondition(const ForecastWeatherData& weather);
+    retrieveResult(const ForecastWeatherData& weather);
 
     void
     setResult(Result result);

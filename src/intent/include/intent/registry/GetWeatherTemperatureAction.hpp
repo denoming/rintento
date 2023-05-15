@@ -2,8 +2,9 @@
 
 #include "intent/WitTypes.hpp"
 #include "intent/registry/DateTimeAction.hpp"
-#include "jarvis/speaker/ISpeakerClient.hpp"
-#include "jarvis/weather/IWeatherClient.hpp"
+
+#include <jarvis/speaker/ISpeakerClient.hpp>
+#include <jarvis/weather/IWeatherClient.hpp>
 
 #include <expected>
 #include <memory>
@@ -16,12 +17,16 @@ class GetWeatherTemperatureAction final
     : public DateTimeAction,
       public std::enable_shared_from_this<GetWeatherTemperatureAction> {
 public:
-    struct Temperature {
-        int32_t temp{};
-        int32_t tempFeelsLike{};
+    struct TemperatureValues {
+        int32_t min{};
+        int32_t minFeelsLike{};
+        int32_t avg{};
+        int32_t avgFeelsLike{};
+        int32_t max{};
+        int32_t maxFeelsLike{};
     };
 
-    using Result = std::optional<Temperature>;
+    using Result = std::optional<TemperatureValues>;
 
     static std::shared_ptr<GetWeatherTemperatureAction>
     create(std::string intent,
@@ -56,10 +61,10 @@ private:
     onWeatherDataError(std::runtime_error error);
 
     void
-    retrieveTemperature(const CurrentWeatherData& weather);
+    retrieveResult(const CurrentWeatherData& weather);
 
     void
-    retrieveTemperature(const ForecastWeatherData& weather);
+    retrieveResult(const ForecastWeatherData& weather);
 
     void
     setResult(Result result);

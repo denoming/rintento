@@ -79,8 +79,12 @@ TEST_F(GetWeatherTemperatureActionTest, GetCurrent)
 
     const auto& result = action->result();
     ASSERT_TRUE(result);
-    EXPECT_EQ(result->temp, 15);
-    EXPECT_EQ(result->tempFeelsLike, 16);
+    EXPECT_EQ(result->min, 15);
+    EXPECT_EQ(result->minFeelsLike, 16);
+    EXPECT_EQ(result->avg, 15);
+    EXPECT_EQ(result->avgFeelsLike, 16);
+    EXPECT_EQ(result->max, 15);
+    EXPECT_EQ(result->maxFeelsLike, 16);
 }
 
 TEST_F(GetWeatherTemperatureActionTest, GetForPeriod)
@@ -120,8 +124,12 @@ TEST_F(GetWeatherTemperatureActionTest, GetForPeriod)
 
     const auto& result = action->result();
     ASSERT_TRUE(result);
-    EXPECT_THAT(result->temp, Gt(15));
-    EXPECT_THAT(result->tempFeelsLike, Gt(16));
+    EXPECT_THAT(result->min, Eq(15));
+    EXPECT_THAT(result->minFeelsLike, Eq(16));
+    EXPECT_THAT(result->avg, Gt(15));
+    EXPECT_THAT(result->avgFeelsLike, Gt(16));
+    EXPECT_THAT(result->max, Gt(15));
+    EXPECT_THAT(result->maxFeelsLike, Gt(16));
 }
 
 TEST_F(GetWeatherTemperatureActionTest, Error)

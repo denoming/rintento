@@ -3,75 +3,15 @@
 #include "intent/Formatters.hpp"
 #include "intent/IPositioningClient.hpp"
 #include "intent/WitHelpers.hpp"
-#include "jarvis/Logger.hpp"
+
+#include <jarvis/Logger.hpp>
+#include <jarvis/weather/Formatters.hpp>
 
 #include <algorithm>
 #include <limits>
 #include <ranges>
 
-namespace fmt {
-
-template<>
-struct formatter<jar::GetAirQualityAction::Tags> : public formatter<std::string_view> {
-    template<typename FormatContext>
-    auto
-    format(const jar::GetAirQualityAction::Tags& tag, FormatContext& c) const
-    {
-        std::string name{"Unknown"};
-        switch (tag) {
-        case jar::GetAirQualityAction::Tags::Good:
-            name = "Good";
-            break;
-        case jar::GetAirQualityAction::Tags::Fair:
-            name = "Fair";
-            break;
-        case jar::GetAirQualityAction::Tags::Moderate:
-            name = "Moderate";
-            break;
-        case jar::GetAirQualityAction::Tags::Poor:
-            name = "Poor";
-            break;
-        case jar::GetAirQualityAction::Tags::VeryPoor:
-            name = "VeryPoor";
-            break;
-        default:
-            break;
-        }
-        return fmt::formatter<std::string_view>::format(name, c);
-    }
-};
-
-} // namespace fmt
-
 namespace jar {
-
-namespace {
-
-GetAirQualityAction::Tags
-toTag(int32_t aqi)
-{
-    GetAirQualityAction::Tags tag{GetAirQualityAction::Tags::Unknown};
-    switch (aqi) {
-    case 1:
-        return GetAirQualityAction::Tags::Good;
-        break;
-    case 2:
-        tag = GetAirQualityAction::Tags::Fair;
-        break;
-    case 3:
-        tag = GetAirQualityAction::Tags::Moderate;
-        break;
-    case 4:
-        tag = GetAirQualityAction::Tags::Poor;
-        break;
-    case 5:
-        tag = GetAirQualityAction::Tags::VeryPoor;
-        break;
-    }
-    return tag;
-}
-
-} // namespace
 
 std::shared_ptr<GetAirQualityAction>
 GetAirQualityAction::create(std::string intent,
@@ -172,7 +112,7 @@ void
 GetAirQualityAction::retrieveResult(const CurrentAirQualityData& airQuality)
 {
     try {
-        setResult(toTag(airQuality.data.get<int32_t>("aqi")));
+        setResult(AirQualityIndex{airQuality.data.get<int32_t>("aqi")});
     } catch (const std::exception& e) {
         LOGE("[{}]: Getting air quality status has failed: {}", intent(), e.what());
         setError(std::make_error_code(std::errc::invalid_argument));
@@ -191,7 +131,7 @@ GetAirQualityAction::retrieveResult(const ForecastAirQualityData& airQuality)
                                       aqi1 = aqi2;
                                   }
                               });
-        setResult(toTag(aqi1));
+        setResult(AirQualityIndex{aqi1});
     } catch (const std::exception& e) {
         LOGE("[{}]: Getting air quality status has failed: {}", intent(), e.what());
         setError(std::make_error_code(std::errc::invalid_argument));

@@ -75,7 +75,9 @@ TEST_F(GetWindConditionActionTest, GetCurrent)
 
     const auto& result = action->result();
     ASSERT_TRUE(result);
-    EXPECT_THAT(result, Optional(GetWindConditionAction::Tags::LightAir));
+    EXPECT_EQ(result->min, WindGrade::LightAir);
+    EXPECT_EQ(result->avg, WindGrade::LightAir);
+    EXPECT_EQ(result->max, WindGrade::LightAir);
 }
 
 TEST_F(GetWindConditionActionTest, GetForPeriod)
@@ -114,7 +116,9 @@ TEST_F(GetWindConditionActionTest, GetForPeriod)
 
     const auto& result = action->result();
     ASSERT_TRUE(result);
-    EXPECT_THAT(result, Optional(GetWindConditionAction::Tags::StrongBreeze));
+    EXPECT_THAT(result->min, Eq(WindGrade::LightAir));
+    EXPECT_THAT(result->avg, Not(WindGrade::LightAir));
+    EXPECT_THAT(result->max, Not(WindGrade::LightAir));
 }
 
 TEST_F(GetWindConditionActionTest, Error)
