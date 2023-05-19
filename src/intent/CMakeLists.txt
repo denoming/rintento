@@ -43,6 +43,7 @@ target_sources(${TARGET}
             src/ActionRegistry.cpp
             src/PositioningClient.cpp
             src/registry/DateTimeAction.cpp
+            src/registry/WeatherAction.cpp
             src/registry/GetRainyStatusAction.cpp
             src/registry/GetAirQualityAction.cpp
             src/registry/GetWeatherTemperatureAction.cpp

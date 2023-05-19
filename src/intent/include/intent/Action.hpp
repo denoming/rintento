@@ -39,8 +39,11 @@ public:
     onDone(OnDoneSignal::slot_type&& slot);
 
 protected:
+    virtual void
+    setError(std::error_code errorCode);
+
     void
-    complete(std::error_code errorCode = {});
+    finalize(std::error_code errorCode = {});
 
 private:
     std::string _intent;

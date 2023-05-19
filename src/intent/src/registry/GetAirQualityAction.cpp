@@ -7,6 +7,8 @@
 #include <jarvis/Logger.hpp>
 #include <jarvis/weather/Formatters.hpp>
 
+#include <boost/assert.hpp>
+
 #include <algorithm>
 #include <limits>
 #include <ranges>
@@ -147,19 +149,16 @@ GetAirQualityAction::setResult(Result result)
 
     announceResult();
 
-    complete({});
-}
-
-void
-GetAirQualityAction::setError(std::error_code errorCode)
-{
-    complete(errorCode);
+    finalize();
 }
 
 void
 GetAirQualityAction::announceResult()
 {
-    _speakerClient.synthesizeText(fmt::format("The air quality is {}", _result.value()), "en-US");
+    BOOST_ASSERT(_result);
+    const std::string text = fmt::format("The air quality is {}", _result.value());
+
+    _speakerClient.synthesizeText(text, "en-US");
 }
 
 } // namespace jar

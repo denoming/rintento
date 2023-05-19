@@ -1,6 +1,5 @@
 #include "intent/registry/GetWeatherHumidityAction.hpp"
 
-#include "intent/Formatters.hpp"
 #include "intent/IPositioningClient.hpp"
 #include "intent/WitHelpers.hpp"
 
@@ -8,6 +7,7 @@
 #include <jarvis/weather/Formatters.hpp>
 
 #include <boost/assert.hpp>
+#include <fmt/core.h>
 
 #include <algorithm>
 #include <ranges>
@@ -46,10 +46,8 @@ GetWeatherHumidityAction::GetWeatherHumidityAction(std::string intent,
                                                    ISpeakerClient& speakerClient,
                                                    IWeatherClient& weatherClient,
                                                    Entities entities)
-    : DateTimeAction{std::move(intent), std::move(entities)}
-    , _positioningClient{positioningClient}
-    , _speakerClient{speakerClient}
-    , _weatherClient{weatherClient}
+    : WeatherAction{
+        std::move(intent), positioningClient, speakerClient, weatherClient, std::move(entities)}
 {
 }
 
@@ -62,66 +60,7 @@ GetWeatherHumidityAction::GetWeatherHumidityAction::result() const
 std::shared_ptr<Action>
 GetWeatherHumidityAction::clone(Entities entities)
 {
-    return create(
-        intent(), _positioningClient, _speakerClient, _weatherClient, std::move(entities));
-}
-
-void
-GetWeatherHumidityAction::perform()
-{
-    const auto loc{_positioningClient.location()};
-    LOGD("[{}]: Getting weather data for <{}> location", intent(), loc);
-
-    auto onReady = [weakSelf = weak_from_this()](auto weatherData) {
-        if (auto self = weakSelf.lock()) {
-            self->onWeatherDataReady(std::move(weatherData));
-        }
-    };
-    auto onError = [weakSelf = weak_from_this()](const std::runtime_error& error) {
-        if (auto self = weakSelf.lock()) {
-            self->onWeatherDataError(error);
-        }
-    };
-
-    if (hasTimestamps()) {
-        LOGD("[{}]: Time boundaries is available", intent());
-        _weatherClient.getForecastWeather(loc.lat, loc.lon, std::move(onReady), std::move(onError));
-    } else {
-        LOGD("[{}]: No time boundaries is available", intent());
-        _weatherClient.getCurrentWeather(loc.lat, loc.lon, std::move(onReady), std::move(onError));
-    }
-}
-
-void
-GetWeatherHumidityAction::onWeatherDataReady(CurrentWeatherData weather)
-{
-    LOGD("[{}]: Getting current weather data was succeed", intent());
-
-    if (cancelled()) {
-        setError(std::make_error_code(std::errc::operation_canceled));
-    } else {
-        retrieveResult(weather);
-    }
-}
-
-void
-GetWeatherHumidityAction::onWeatherDataReady(ForecastWeatherData weather)
-{
-    LOGD("[{}]: Getting forecast weather data was succeed", intent());
-
-    if (cancelled()) {
-        setError(std::make_error_code(std::errc::operation_canceled));
-    } else {
-        retrieveResult(weather);
-    }
-}
-
-void
-GetWeatherHumidityAction::onWeatherDataError(std::runtime_error error)
-{
-    LOGE("[{}]: Getting weather data has failed: error<{}>", intent(), error.what());
-
-    setError(std::make_error_code(std::errc::result_out_of_range));
+    return create(intent(), positioning(), speaker(), weather(), std::move(entities));
 }
 
 void
@@ -180,27 +119,22 @@ GetWeatherHumidityAction::setResult(Result result)
 
     announceResult();
 
-    complete({});
-}
-
-void
-GetWeatherHumidityAction::setError(std::error_code errorCode)
-{
-    complete(errorCode);
+    finalize();
 }
 
 void
 GetWeatherHumidityAction::announceResult()
 {
     // clang-format off
-    static const std::string_view kText{
+    static const constexpr std::string_view kFormat{
         R"(<speak>Humidity values are <break time="100ms"/>minimum value is <say-as interpret-as="unit">{}</say-as> percent <break time="100ms"/> average value is <say-as interpret-as="unit">{}</say-as> percent <break time="100ms"/> maximum value is <say-as interpret-as="unit">{}</say-as> percent</speak>)"
     };
     // clang-format on
 
     BOOST_ASSERT(_result);
-    _speakerClient.synthesizeSsml(
-        fmt::format(fmt::runtime(kText), _result->min, _result->avg, _result->max), "en-US");
+    const std::string ssml = fmt::format(kFormat, _result->min, _result->avg, _result->max);
+
+    speaker().synthesizeSsml(ssml, "en-US");
 }
 
 } // namespace jar

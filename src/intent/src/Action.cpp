@@ -27,9 +27,15 @@ Action::onDone(OnDoneSignal::slot_type&& slot)
 }
 
 void
-Action::complete(std::error_code errorCode)
+Action::finalize(std::error_code errorCode)
 {
     _onDoneSig.emit(errorCode);
+}
+
+void
+Action::setError(std::error_code errorCode)
+{
+    finalize(errorCode);
 }
 
 } // namespace jar

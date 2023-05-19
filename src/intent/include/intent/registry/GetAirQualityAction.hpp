@@ -61,9 +61,6 @@ private:
     setResult(Result result);
 
     void
-    setError(std::error_code errorCode);
-
-    void
     announceResult();
 
 private:

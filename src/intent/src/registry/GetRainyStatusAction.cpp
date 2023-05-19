@@ -1,12 +1,12 @@
 #include "intent/registry/GetRainyStatusAction.hpp"
 
-#include "intent/Formatters.hpp"
 #include "intent/IPositioningClient.hpp"
 #include "intent/WitHelpers.hpp"
 
 #include <jarvis/Logger.hpp>
 
 #include <boost/assert.hpp>
+#include <fmt/core.h>
 
 #include <algorithm>
 #include <ranges>
@@ -52,10 +52,8 @@ GetRainyStatusAction::GetRainyStatusAction(std::string intent,
                                            ISpeakerClient& speakerClient,
                                            IWeatherClient& weatherClient,
                                            Entities entities)
-    : DateTimeAction{std::move(intent), std::move(entities)}
-    , _positioningClient{positioningClient}
-    , _speakerClient{speakerClient}
-    , _weatherClient{weatherClient}
+    : WeatherAction{
+        std::move(intent), positioningClient, speakerClient, weatherClient, std::move(entities)}
 {
 }
 
@@ -68,66 +66,7 @@ GetRainyStatusAction::result() const
 std::shared_ptr<Action>
 GetRainyStatusAction::clone(Entities entities)
 {
-    return create(
-        intent(), _positioningClient, _speakerClient, _weatherClient, std::move(entities));
-}
-
-void
-GetRainyStatusAction::perform()
-{
-    const auto loc{_positioningClient.location()};
-    LOGD("[{}]: Getting weather data for <{}> location", intent(), loc);
-
-    auto onReady = [weakSelf = weak_from_this()](auto weatherData) {
-        if (auto self = weakSelf.lock()) {
-            self->onWeatherDataReady(std::move(weatherData));
-        }
-    };
-    auto onError = [weakSelf = weak_from_this()](const std::runtime_error& error) {
-        if (auto self = weakSelf.lock()) {
-            self->onWeatherDataError(error);
-        }
-    };
-
-    if (hasTimestamps()) {
-        LOGD("[{}]: Time boundaries is available", intent());
-        _weatherClient.getForecastWeather(loc.lat, loc.lon, std::move(onReady), std::move(onError));
-    } else {
-        LOGD("[{}]: No time boundaries is available", intent());
-        _weatherClient.getCurrentWeather(loc.lat, loc.lon, std::move(onReady), std::move(onError));
-    }
-}
-
-void
-GetRainyStatusAction::onWeatherDataReady(CurrentWeatherData weather)
-{
-    LOGD("[{}]: Getting current weather data was succeed", intent());
-
-    if (cancelled()) {
-        setError(std::make_error_code(std::errc::operation_canceled));
-    } else {
-        retrieveResult(weather);
-    }
-}
-
-void
-GetRainyStatusAction::onWeatherDataReady(ForecastWeatherData weather)
-{
-    LOGD("[{}]: Getting forecast weather data was succeed", intent());
-
-    if (cancelled()) {
-        setError(std::make_error_code(std::errc::operation_canceled));
-    } else {
-        retrieveResult(weather);
-    }
-}
-
-void
-GetRainyStatusAction::onWeatherDataError(std::runtime_error error)
-{
-    LOGE("[{}]: Getting forecast weather has failed: error<{}>", intent(), error.what());
-
-    setError(std::make_error_code(std::errc::result_out_of_range));
+    return create(intent(), positioning(), speaker(), weather(), std::move(entities));
 }
 
 void
@@ -168,22 +107,16 @@ GetRainyStatusAction::setResult(Result result)
 
     announceResult();
 
-    complete({});
-}
-
-void
-GetRainyStatusAction::setError(std::error_code errorCode)
-{
-    complete(errorCode);
+    finalize();
 }
 
 void
 GetRainyStatusAction::announceResult()
 {
     BOOST_ASSERT(_result);
-
     const std::string text{*_result ? "Today will be rainy" : "It won't rain today"};
-    _speakerClient.synthesizeText(text, "en-US");
+
+    speaker().synthesizeText(text, "en-US");
 }
 
 } // namespace jar
