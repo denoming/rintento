@@ -14,6 +14,7 @@ target_sources(${TARGET}
             src/registry/GetWeatherTemperatureActionTest.cpp
             src/registry/GetWindConditionActionTest.cpp
             src/registry/GetWeatherHumidityActionTest.cpp
+            src/registry/GetWeatherStatusActionTest.cpp
 )
 
 target_link_libraries(${TARGET}
