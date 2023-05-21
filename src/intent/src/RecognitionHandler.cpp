@@ -1,7 +1,8 @@
 #include "intent/RecognitionHandler.hpp"
 
 #include "intent/RecognitionConnection.hpp"
-#include "jarvis/Logger.hpp"
+
+#include <jarvis/Logger.hpp>
 
 #include <boost/assert.hpp>
 #include <boost/json.hpp>

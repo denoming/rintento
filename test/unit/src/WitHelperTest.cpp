@@ -44,32 +44,34 @@ TEST(WitHelperTest, WetherDataPredicate)
 {
     const auto data{getCustomData(krn::days{0}, krn::hours{3})};
 
-    const krn::sys_seconds from1 = krn::ceil<krn::days>(krn::system_clock::now());
-    const krn::sys_seconds to1 = from1 + krn::hours{2};
-    EXPECT_EQ(std::ranges::count_if(data, wit::DateTimePredicate{from1, to1}), 1);
+    const auto now = krn::system_clock::now();
+    const auto t1 = krn::ceil<krn::days>(now);
+    const auto t2 = t1 + krn::hours{2};
+    EXPECT_EQ(std::ranges::count_if(data, wit::DateTimePredicate{Timestamp{t1}, Timestamp{t2}}), 1);
 
-    const krn::sys_seconds from2 = krn::floor<krn::days>(krn::system_clock::now());
-    const krn::sys_seconds to2 = from2 + krn::hours{5};
-    EXPECT_EQ(std::ranges::count_if(data, wit::DateTimePredicate{from2, to2}), 2);
+    const auto t3 = krn::floor<krn::days>(now);
+    const auto t4 = t3 + krn::hours{5};
+    EXPECT_EQ(std::ranges::count_if(data, wit::DateTimePredicate{Timestamp{t3}, Timestamp{t4}}), 2);
 
-    const krn::sys_seconds from3 = krn::floor<krn::days>(krn::system_clock::now()) + krn::hours{2};
-    const krn::sys_seconds to3 = from3 + krn::hours{5};
-    EXPECT_EQ(std::ranges::count_if(data, wit::DateTimePredicate{from3, to3}), 3);
+    const auto t5 = krn::floor<krn::days>(now) + krn::hours{2};
+    const auto t6 = t5 + krn::hours{5};
+    EXPECT_EQ(std::ranges::count_if(data, wit::DateTimePredicate{Timestamp{t5}, Timestamp{t6}}), 3);
 }
 
 TEST(WitHelperTest, EntityPredicate)
 {
-    const krn::sys_seconds tsFrom = krn::ceil<krn::days>(krn::system_clock::now()) + krn::hours{1};
-    const krn::sys_seconds tsTo = tsFrom + krn::hours{2};
+    const auto now = krn::ceil<krn::days>(krn::system_clock::now());
+    const auto ts1 = Timestamp{now + krn::hours{1}};
+    const auto ts2 = Timestamp{now + krn::hours{3}};
 
     DateTimeEntity entity;
     entity.from = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::hour,
-        .timestamp = tsFrom,
+        .timestamp = ts1,
     };
     entity.to = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::hour,
-        .timestamp = tsTo,
+        .timestamp = ts2,
     };
 
     Entities entities1{

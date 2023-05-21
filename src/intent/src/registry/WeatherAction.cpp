@@ -4,6 +4,7 @@
 #include "intent/IPositioningClient.hpp"
 
 #include <jarvis/Logger.hpp>
+#include <jarvis/Formatters.hpp>
 
 namespace jar {
 

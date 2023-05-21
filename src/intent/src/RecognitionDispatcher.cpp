@@ -7,7 +7,8 @@
 #include "intent/RecognitionTerminalHandler.hpp"
 #include "intent/Utils.hpp"
 #include "intent/WitRecognitionFactory.hpp"
-#include "jarvis/Logger.hpp"
+
+#include <jarvis/Logger.hpp>
 
 #include <boost/assert.hpp>
 

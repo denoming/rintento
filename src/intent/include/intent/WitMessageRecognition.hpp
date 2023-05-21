@@ -1,7 +1,8 @@
 #pragma once
 
 #include "intent/WitRecognition.hpp"
-#include "jarvis/Network.hpp"
+
+#include <jarvis/Network.hpp>
 
 #include <memory>
 #include <string_view>

@@ -1,7 +1,8 @@
 #pragma once
 
 #include "intent/WitTypes.hpp"
-#include "jarvis/Cancellable.hpp"
+
+#include <jarvis/Cancellable.hpp>
 
 #include <sigc++/signal.h>
 

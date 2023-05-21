@@ -4,9 +4,10 @@
 #include "common/Config.hpp"
 #include "intent/WitMessageRecognition.hpp"
 #include "intent/WitRecognitionFactory.hpp"
-#include "jarvis/Worker.hpp"
 #include "test/Matchers.hpp"
 #include "test/TestWaiter.hpp"
+
+#include <jarvis/Worker.hpp>
 
 #include <filesystem>
 #include <thread>

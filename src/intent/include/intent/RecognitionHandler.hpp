@@ -1,7 +1,8 @@
 #pragma once
 
 #include "intent/WitTypes.hpp"
-#include "jarvis/Network.hpp"
+
+#include <jarvis/Network.hpp>
 
 #include <functional>
 #include <memory>

@@ -1,8 +1,8 @@
 #include "intent/RecognitionSpeechHandler.hpp"
 
-#include "jarvis/Logger.hpp"
+#include <jarvis/Logger.hpp>
+
 #include "intent/RecognitionConnection.hpp"
-#include "intent/Types.hpp"
 #include "intent/Utils.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 #include "intent/WitSpeechRecognition.hpp"

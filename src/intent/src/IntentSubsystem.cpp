@@ -9,11 +9,12 @@
 #include "intent/registry/GetAirQualityAction.hpp"
 #include "intent/registry/GetRainyStatusAction.hpp"
 #include "intent/registry/GetWeatherTemperatureAction.hpp"
-#include "jarvis/Application.hpp"
-#include "jarvis/Logger.hpp"
-#include "jarvis/Worker.hpp"
-#include "jarvis/speaker/SpeakerClient.hpp"
-#include "jarvis/weather/WeatherClient.hpp"
+
+#include <jarvis/Application.hpp>
+#include <jarvis/Logger.hpp>
+#include <jarvis/Worker.hpp>
+#include <jarvis/speaker/SpeakerClient.hpp>
+#include <jarvis/weather/WeatherClient.hpp>
 
 #include <boost/assert.hpp>
 

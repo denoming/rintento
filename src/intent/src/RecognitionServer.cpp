@@ -3,7 +3,8 @@
 #include "intent/RecognitionConnection.hpp"
 #include "intent/RecognitionDispatcher.hpp"
 #include "intent/WitRecognitionFactory.hpp"
-#include "jarvis/Logger.hpp"
+
+#include <jarvis/Logger.hpp>
 
 namespace jar {
 

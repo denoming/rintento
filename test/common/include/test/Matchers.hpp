@@ -1,9 +1,10 @@
 #pragma once
 
-#include "intent/Types.hpp"
-#include "jarvis/Utils.hpp"
+#include <jarvis/DateTime.hpp>
 
 #include <gmock/gmock.h>
+
+#include "intent/WitTypes.hpp"
 
 namespace testing {
 
@@ -19,9 +20,9 @@ matchEntityWithExactTime(jar::DateTimeEntity::Grains grain, std::string_view dat
 {
     return Field("value",
                  &jar::DateTimeEntity::exact,
-                 Optional(AllOf(
-                     Field(&jar::DateTimeEntity::Value::grain, grain),
-                     Field(&jar::DateTimeEntity::Value::timestamp, jar::parseDateTime(dateTime)))));
+                 Optional(AllOf(Field(&jar::DateTimeEntity::Value::grain, grain),
+                                Field(&jar::DateTimeEntity::Value::timestamp,
+                                      jar::parseZonedDateTime(dateTime)))));
 }
 
 inline Matcher<const jar::DateTimeEntity&>
@@ -33,12 +34,12 @@ matchEntityWithTimeRange(jar::DateTimeEntity::Grains grain,
                        &jar::DateTimeEntity::from,
                        Optional(AllOf(Field(&jar::DateTimeEntity::Value::grain, grain),
                                       Field(&jar::DateTimeEntity::Value::timestamp,
-                                            jar::parseDateTime(from))))),
+                                            jar::parseZonedDateTime(from))))),
                  Field("to",
                        &jar::DateTimeEntity::to,
                        Optional(AllOf(Field(&jar::DateTimeEntity::Value::grain, grain),
                                       Field(&jar::DateTimeEntity::Value::timestamp,
-                                            jar::parseDateTime(to))))));
+                                            jar::parseZonedDateTime(to))))));
 }
 
 inline Matcher<jar::Utterance>

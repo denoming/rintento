@@ -11,15 +11,16 @@ DateTimePredicate::DateTimePredicate(Timestamp from, Timestamp to)
 bool
 DateTimePredicate::operator()(const CustomData& d) const
 {
-    bool output;
-    int64_t b = d.get<int64_t>("dt");
-    if (const auto dur = d.peek<int32_t>("duration"); dur) {
-        int64_t e = b + *dur;
-        output = (b >= _from and b < _to) || (e > _from and e <= _to) || (b <= _from and e >= _to);
+    bool rv;
+    const int64_t d1 = d.get<int64_t>("dt");
+    const Timestamp t1{d1};
+    if (const auto duration = d.peek<int32_t>("duration"); duration) {
+        const Timestamp t2{d1 + *duration};
+        rv = (t1 >= _from && t1 < _to) || (t2 > _from && t2 <= _to) || (t1 <= _from && t2 >= _to);
     } else {
-        output = (b >= _from and b <= _to);
+        rv = (t1 >= _from && t1 <= _to);
     }
-    return output;
+    return rv;
 }
 
 } // namespace jar::wit

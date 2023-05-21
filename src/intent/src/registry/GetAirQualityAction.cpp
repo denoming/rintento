@@ -5,6 +5,7 @@
 #include "intent/WitHelpers.hpp"
 
 #include <jarvis/Logger.hpp>
+#include <jarvis/Formatters.hpp>
 #include <jarvis/weather/Formatters.hpp>
 
 #include <boost/assert.hpp>

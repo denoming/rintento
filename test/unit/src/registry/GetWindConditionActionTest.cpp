@@ -82,21 +82,21 @@ TEST_F(GetWindConditionActionTest, GetCurrent)
 
 TEST_F(GetWindConditionActionTest, GetForPeriod)
 {
-    const krn::sys_seconds tsFrom = krn::floor<krn::days>(krn::system_clock::now());
-    const krn::sys_seconds tsTo = tsFrom + krn::days{1};
+    const krn::sys_seconds t1 = krn::floor<krn::days>(krn::system_clock::now());
+    const krn::sys_seconds t2 = t1 + krn::days{1};
 
-    const auto weatherData{getForecastWeatherData(tsFrom, tsTo)};
+    const auto weatherData{getForecastWeatherData(t1, t2)};
     EXPECT_CALL(speaker, synthesizeSsml(Not(IsEmpty()), Not(IsEmpty())));
     EXPECT_CALL(weather, getForecastWeather).WillOnce(InvokeArgument<2>(weatherData));
 
     DateTimeEntity entity;
     entity.from = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::hour,
-        .timestamp = tsFrom,
+        .timestamp = Timestamp{t1},
     };
     entity.to = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::hour,
-        .timestamp = tsTo,
+        .timestamp = Timestamp{t2},
     };
 
     auto action = GetWindConditionAction::create(kIntentName,

@@ -1,8 +1,7 @@
 #include "intent/WitIntentParser.hpp"
 
-#include "jarvis/Utils.hpp"
+#include <jarvis/DateTime.hpp>
 
-#include <boost/assert.hpp>
 #include <boost/json.hpp>
 
 namespace json = boost::json;
@@ -24,7 +23,7 @@ tag_invoke(json::value_to_tag<Confidence>, const json::value& v)
 static Timestamp
 tag_invoke(json::value_to_tag<Timestamp>, const json::value& v)
 {
-    if (auto ts = parseDateTime(v.as_string()); ts.has_value()) {
+    if (auto ts = parseZonedDateTime(v.as_string()); ts.has_value()) {
         return ts.value();
     } else {
         throw std::system_error{ts.error()};

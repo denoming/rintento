@@ -49,9 +49,9 @@ public:
 
 TEST_F(GetAirQualityActionTest, CheckTodayAirQuality)
 {
-    const krn::sys_seconds tsFrom = krn::floor<krn::days>(krn::system_clock::now());
-    const krn::sys_seconds tsTo = krn::ceil<krn::days>(krn::system_clock::now());
-    const auto dataSet{getAirQualityData(1, tsFrom, tsTo)};
+    const krn::sys_seconds t1 = krn::floor<krn::days>(krn::system_clock::now());
+    const krn::sys_seconds t2 = krn::ceil<krn::days>(krn::system_clock::now());
+    const auto dataSet{getAirQualityData(1, t1, t2)};
 
     ForecastAirQualityData airQuality = {.data = std::move(dataSet)};
     EXPECT_CALL(speaker, synthesizeText(Not(IsEmpty()), Not(IsEmpty())));
@@ -83,15 +83,16 @@ TEST_F(GetAirQualityActionTest, CheckTodayAirQuality)
 
 TEST_F(GetAirQualityActionTest, CheckWorstAirQuality)
 {
-    const auto tsForm1 = krn::floor<krn::days>(krn::system_clock::now());
-    const auto tsTo1 = tsForm1 + krn::hours{3};
-    const auto dataSet1{getAirQualityData(1, tsForm1, tsTo1)};
-    const auto tsForm2 = tsTo1;
-    const auto tsTo2 = tsForm2 + krn::hours{3};
-    const auto dataSet2{getAirQualityData(2, tsForm2, tsTo2)};
-    const auto tsForm3 = tsTo2;
-    const auto tsTo3 = tsForm3 + krn::hours{3};
-    const auto dataSet3{getAirQualityData(4, tsForm3, tsTo3)};
+    const auto now = krn::system_clock::now();
+    const auto t1 = krn::floor<krn::days>(now);
+    const auto t2 = t1 + krn::hours{3};
+    const auto dataSet1{getAirQualityData(1, t1, t2)};
+    const auto t3 = t2;
+    const auto t4 = t3 + krn::hours{3};
+    const auto dataSet2{getAirQualityData(2, t3, t4)};
+    const auto t5 = t4;
+    const auto t6 = t5 + krn::hours{3};
+    const auto dataSet3{getAirQualityData(4, t5, t6)};
 
     ForecastAirQualityData airQuality;
     airQuality.data.insert(std::end(airQuality.data), std::begin(dataSet1), std::end(dataSet1));
@@ -100,17 +101,14 @@ TEST_F(GetAirQualityActionTest, CheckWorstAirQuality)
     EXPECT_CALL(speaker, synthesizeText(Not(IsEmpty()), Not(IsEmpty())));
     EXPECT_CALL(weather, getForecastAirQuality).WillOnce(InvokeArgument<2>(airQuality));
 
-    const krn::sys_seconds dtFrom = krn::floor<krn::days>(krn::system_clock::now());
-    const krn::sys_seconds dtTo = krn::ceil<krn::days>(krn::system_clock::now());
-
     DateTimeEntity entity;
     entity.from = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::hour,
-        .timestamp = dtFrom,
+        .timestamp = Timestamp{krn::floor<krn::days>(now)},
     };
     entity.to = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::hour,
-        .timestamp = dtTo,
+        .timestamp = Timestamp{krn::ceil<krn::days>(now)},
     };
 
     auto action = GetAirQualityAction::create(kIntentName,

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "intent/Types.hpp"
+#include <jarvis/Types.hpp>
 
 namespace jar {
 

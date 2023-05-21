@@ -3,7 +3,6 @@
 #include "intent/WitTypes.hpp"
 
 #include <expected>
-#include <optional>
 #include <system_error>
 
 namespace jar {

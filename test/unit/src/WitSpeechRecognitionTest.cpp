@@ -5,11 +5,12 @@
 #include "intent/Formatters.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 #include "intent/WitSpeechRecognition.hpp"
-#include "jarvis/Logger.hpp"
-#include "jarvis/Worker.hpp"
 #include "test/Matchers.hpp"
 #include "test/TestWaiter.hpp"
 #include "test/Utils.hpp"
+
+#include <jarvis/Logger.hpp>
+#include <jarvis/Worker.hpp>
 
 using namespace testing;
 using namespace jar;

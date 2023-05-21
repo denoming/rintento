@@ -19,14 +19,12 @@ namespace krn = std::chrono;
 namespace {
 
 ForecastWeatherData
-getWeatherData(bool willBeRainy,
-               krn::sys_seconds timestampFrom,
-               krn::sys_seconds timestampTo)
+getWeatherData(bool willBeRainy, krn::sys_seconds tsFrom, krn::sys_seconds tsTo)
 {
     static constexpr auto kStep = krn::hours{3};
     ForecastWeatherData output;
-    while (timestampFrom < timestampTo) {
-        const auto dt = krn::duration_cast<krn::seconds>(timestampFrom.time_since_epoch()).count();
+    while (tsFrom < tsTo) {
+        const auto dt = krn::duration_cast<krn::seconds>(tsFrom.time_since_epoch()).count();
         CustomData d;
         d.assign({
             {"dt", int64_t{dt}},
@@ -34,7 +32,7 @@ getWeatherData(bool willBeRainy,
             {"id", int32_t{willBeRainy ? 501 : 800}},
         });
         output.data.push_back(std::move(d));
-        timestampFrom += kStep;
+        tsFrom += kStep;
     }
     return output;
 }
@@ -42,10 +40,10 @@ getWeatherData(bool willBeRainy,
 ForecastWeatherData
 getWeatherData(bool willBeRainy, krn::days modifier = {})
 {
-    auto p0 = krn::system_clock::now();
-    auto p1 = modifier + krn::floor<krn::days>(p0);
-    auto p2 = modifier + krn::ceil<krn::days>(p0);
-    return getWeatherData(willBeRainy, p1, p2);
+    auto now = krn::system_clock::now();
+    auto ts1 = modifier + krn::floor<krn::days>(now);
+    auto ts2 = modifier + krn::ceil<krn::days>(now);
+    return getWeatherData(willBeRainy, ts1, ts2);
 }
 
 } // namespace
@@ -96,18 +94,16 @@ TEST_F(GetRainyStatusActionTest, CheckIsRainyForInterval)
     EXPECT_CALL(speaker, synthesizeText(Not(IsEmpty()), Not(IsEmpty())));
     EXPECT_CALL(weather, getForecastWeather).WillOnce(InvokeArgument<2>(weatherData));
 
-    const auto now = krn::system_clock::now();
-    const krn::sys_seconds timestampFrom = krn::ceil<krn::hours>(now) + krn::hours{1};
-    const krn::sys_seconds timestampTo = timestampFrom + krn::hours{2};
+    const auto now = krn::ceil<krn::hours>(krn::system_clock::now());
 
     DateTimeEntity entity;
     entity.from = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::hour,
-        .timestamp = timestampFrom,
+        .timestamp = Timestamp{now + krn::hours{1}},
     };
     entity.to = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::hour,
-        .timestamp = timestampTo,
+        .timestamp = Timestamp{now + krn::hours{3}},
     };
 
     auto action = GetRainyStatusAction::create(kIntentName,
@@ -134,17 +130,16 @@ TEST_F(GetRainyStatusActionTest, CheckNotIsRainy)
     EXPECT_CALL(speaker, synthesizeText(Not(IsEmpty()), Not(IsEmpty())));
     EXPECT_CALL(weather, getForecastWeather).WillOnce(InvokeArgument<2>(weatherData));
 
-    const krn::sys_seconds tsFrom = krn::ceil<krn::days>(krn::system_clock::now()) + krn::hours{1};
-    const krn::sys_seconds tsTo = tsFrom + krn::hours{2};
+    const auto now = krn::ceil<krn::days>(krn::system_clock::now());
 
     DateTimeEntity entity;
     entity.from = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::hour,
-        .timestamp = tsFrom,
+        .timestamp = Timestamp{now + krn::hours{1}},
     };
     entity.to = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::hour,
-        .timestamp = tsTo,
+        .timestamp = Timestamp{now + krn::hours{3}},
     };
 
     auto action = GetRainyStatusAction::create(kIntentName,

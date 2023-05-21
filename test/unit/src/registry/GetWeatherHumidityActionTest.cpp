@@ -26,13 +26,13 @@ getCurrentWeatherData()
 }
 
 ForecastWeatherData
-getForecastWeatherData(krn::sys_seconds timestampFrom, krn::sys_seconds timestampTo)
+getForecastWeatherData(krn::sys_seconds tsFrom, krn::sys_seconds tsTo)
 {
     static constexpr auto kStep = krn::hours{3};
     int32_t humidity{50};
     CustomDataSet dataSet;
-    while (timestampFrom < timestampTo) {
-        const auto dt = krn::duration_cast<krn::seconds>(timestampFrom.time_since_epoch()).count();
+    while (tsFrom < tsTo) {
+        const auto dt = krn::duration_cast<krn::seconds>(tsFrom.time_since_epoch()).count();
         CustomData d;
         d.assign({
             {"dt", int64_t{dt}},
@@ -41,7 +41,7 @@ getForecastWeatherData(krn::sys_seconds timestampFrom, krn::sys_seconds timestam
         });
         dataSet.push_back(std::move(d));
         humidity += 5;
-        timestampFrom += kStep;
+        tsFrom += kStep;
     }
     return ForecastWeatherData{.data = std::move(dataSet)};
 }
@@ -82,21 +82,22 @@ TEST_F(GetWeatherHumidityActionTest, GetCurrent)
 
 TEST_F(GetWeatherHumidityActionTest, GetForPeriod)
 {
-    const krn::sys_seconds tsFrom = krn::floor<krn::days>(krn::system_clock::now());
-    const krn::sys_seconds tsTo = tsFrom + krn::days{1};
+    const auto now = krn::floor<krn::days>(krn::system_clock::now());
+    const auto t1 = krn::floor<krn::days>(krn::system_clock::now());
+    const auto t2 = t1 + krn::days{1};
 
-    const auto weatherData{getForecastWeatherData(tsFrom, tsTo)};
+    const auto weatherData{getForecastWeatherData(t1, t2)};
     EXPECT_CALL(speaker, synthesizeSsml(Not(IsEmpty()), Not(IsEmpty())));
     EXPECT_CALL(weather, getForecastWeather).WillOnce(InvokeArgument<2>(weatherData));
 
     DateTimeEntity entity;
     entity.from = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::hour,
-        .timestamp = tsFrom,
+        .timestamp = Timestamp{t1},
     };
     entity.to = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::hour,
-        .timestamp = tsTo,
+        .timestamp = Timestamp{t2},
     };
 
     auto action = GetWeatherHumidityAction::create(kIntentName,

@@ -2,7 +2,8 @@
 
 #include "intent/Action.hpp"
 #include "intent/ActionRegistry.hpp"
-#include "jarvis/Logger.hpp"
+
+#include <jarvis/Logger.hpp>
 
 #include <ranges>
 

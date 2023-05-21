@@ -1,6 +1,6 @@
 #pragma once
 
-#include "jarvis/speaker/ISpeakerClient.hpp"
+#include <jarvis/speaker/ISpeakerClient.hpp>
 
 #include <gmock/gmock.h>
 

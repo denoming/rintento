@@ -1,6 +1,7 @@
 #pragma once
 
-#include <chrono>
+#include <jarvis/Timestamp.hpp>
+
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -11,28 +12,6 @@ namespace jar {
 
 struct Confidence {
     float value{};
-};
-
-struct Timestamp {
-    Timestamp() = default;
-
-    Timestamp(const int64_t v);
-
-    Timestamp(std::chrono::sys_seconds v);
-
-    auto
-    operator<=>(const Timestamp& other) const
-        = default;
-
-    operator std::chrono::sys_seconds() const;
-
-    static Timestamp
-    zero();
-
-    static Timestamp
-    now();
-
-    int64_t value{};
 };
 
 struct Entity {
