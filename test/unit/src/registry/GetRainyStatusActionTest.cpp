@@ -18,11 +18,11 @@ namespace krn = std::chrono;
 
 namespace {
 
-ForecastWeatherData
+WeatherForecastData
 getWeatherData(bool willBeRainy, krn::sys_seconds tsFrom, krn::sys_seconds tsTo)
 {
     static constexpr auto kStep = krn::hours{3};
-    ForecastWeatherData output;
+    WeatherForecastData output;
     while (tsFrom < tsTo) {
         const auto dt = krn::duration_cast<krn::seconds>(tsFrom.time_since_epoch()).count();
         CustomData d;
@@ -37,7 +37,7 @@ getWeatherData(bool willBeRainy, krn::sys_seconds tsFrom, krn::sys_seconds tsTo)
     return output;
 }
 
-ForecastWeatherData
+WeatherForecastData
 getWeatherData(bool willBeRainy, krn::days modifier = {})
 {
     auto now = krn::system_clock::now();
@@ -62,7 +62,7 @@ TEST_F(GetRainyStatusActionTest, CheckNotRainyForToday)
 {
     const auto weatherData{getWeatherData(false, krn::days{0})};
     EXPECT_CALL(speaker, synthesizeText(Not(IsEmpty()), Not(IsEmpty())));
-    EXPECT_CALL(weather, getForecastWeather).WillOnce(InvokeArgument<2>(weatherData));
+    EXPECT_CALL(weather, getWeatherForecast).WillOnce(InvokeArgument<1>(weatherData));
 
     DateTimeEntity entity;
     entity.exact = DateTimeEntity::Value{
@@ -92,7 +92,7 @@ TEST_F(GetRainyStatusActionTest, CheckIsRainyForInterval)
 {
     const auto weatherData{getWeatherData(true, krn::days{0})};
     EXPECT_CALL(speaker, synthesizeText(Not(IsEmpty()), Not(IsEmpty())));
-    EXPECT_CALL(weather, getForecastWeather).WillOnce(InvokeArgument<2>(weatherData));
+    EXPECT_CALL(weather, getWeatherForecast).WillOnce(InvokeArgument<1>(weatherData));
 
     const auto now = krn::ceil<krn::hours>(krn::system_clock::now());
 
@@ -128,7 +128,7 @@ TEST_F(GetRainyStatusActionTest, CheckNotIsRainy)
 {
     const auto weatherData{getWeatherData(true, krn::days{0})};
     EXPECT_CALL(speaker, synthesizeText(Not(IsEmpty()), Not(IsEmpty())));
-    EXPECT_CALL(weather, getForecastWeather).WillOnce(InvokeArgument<2>(weatherData));
+    EXPECT_CALL(weather, getWeatherForecast).WillOnce(InvokeArgument<1>(weatherData));
 
     const auto now = krn::ceil<krn::days>(krn::system_clock::now());
 
@@ -162,8 +162,7 @@ TEST_F(GetRainyStatusActionTest, CheckNotIsRainy)
 
 TEST_F(GetRainyStatusActionTest, Error)
 {
-    EXPECT_CALL(weather, getCurrentWeather)
-        .WillOnce(InvokeArgument<3>(std::runtime_error{"Error"}));
+    EXPECT_CALL(weather, getWeather).WillOnce(InvokeArgument<2>(std::runtime_error{"Error"}));
 
     auto action = GetRainyStatusAction::create(kIntentName, positioning, speaker, weather);
     ASSERT_TRUE(action);

@@ -39,10 +39,10 @@ WeatherAction::perform()
 
     if (hasTimestamps()) {
         LOGD("[{}]: Time boundaries is available", intent());
-        _weatherClient.getForecastWeather(loc.lat, loc.lon, std::move(onReady), std::move(onError));
+        _weatherClient.getWeatherForecast(loc, std::move(onReady), std::move(onError));
     } else {
         LOGD("[{}]: No time boundaries is available", intent());
-        _weatherClient.getCurrentWeather(loc.lat, loc.lon, std::move(onReady), std::move(onError));
+        _weatherClient.getWeather(loc, std::move(onReady), std::move(onError));
     }
 }
 
@@ -65,9 +65,9 @@ WeatherAction::speaker()
 }
 
 void
-WeatherAction::onWeatherDataReady(CurrentWeatherData weather)
+WeatherAction::onWeatherDataReady(WeatherData weather)
 {
-    LOGD("[{}]: Getting current weather data was succeed", intent());
+    LOGD("[{}]: Getting weather data was succeed", intent());
 
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
@@ -77,9 +77,9 @@ WeatherAction::onWeatherDataReady(CurrentWeatherData weather)
 }
 
 void
-WeatherAction::onWeatherDataReady(ForecastWeatherData weather)
+WeatherAction::onWeatherDataReady(WeatherForecastData weather)
 {
-    LOGD("[{}]: Getting forecast weather data was succeed", intent());
+    LOGD("[{}]: Getting weather forecast data was succeed", intent());
 
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));

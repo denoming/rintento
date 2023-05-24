@@ -15,14 +15,14 @@ namespace krn = std::chrono;
 
 namespace {
 
-CurrentWeatherData
+WeatherData
 getCurrentWeatherData(const int32_t weatherId)
 {
     CustomData d;
     d.assign({
         {"id", weatherId},
     });
-    return CurrentWeatherData{.data = std::move(d)};
+    return WeatherData{.data = std::move(d)};
 }
 
 } // namespace
@@ -41,7 +41,7 @@ TEST_F(GetWeatherStatusActionTest, GetCurrent)
 {
     const auto weatherData{getCurrentWeatherData(801)};
     EXPECT_CALL(speaker, synthesizeSsml(Not(IsEmpty()), Not(IsEmpty())));
-    EXPECT_CALL(weather, getCurrentWeather).WillOnce(InvokeArgument<2>(weatherData));
+    EXPECT_CALL(weather, getWeather).WillOnce(InvokeArgument<1>(weatherData));
 
     auto action = GetWeatherStatusAction::create(kIntentName, positioning, speaker, weather);
     ASSERT_TRUE(action);
@@ -57,8 +57,8 @@ TEST_F(GetWeatherStatusActionTest, GetCurrent)
 
 TEST_F(GetWeatherStatusActionTest, Error)
 {
-    EXPECT_CALL(weather, getCurrentWeather)
-        .WillOnce(InvokeArgument<3>(std::runtime_error{"Error"}));
+    EXPECT_CALL(weather, getWeather)
+        .WillOnce(InvokeArgument<2>(std::runtime_error{"Error"}));
 
     auto action = GetWeatherStatusAction::create(kIntentName, positioning, speaker, weather);
     ASSERT_TRUE(action);

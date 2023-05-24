@@ -66,7 +66,7 @@ GetWeatherTemperatureAction::clone(Entities entities)
 }
 
 void
-GetWeatherTemperatureAction::retrieveResult(const CurrentWeatherData& weather)
+GetWeatherTemperatureAction::retrieveResult(const WeatherData& weather)
 {
     try {
         const int32_t t1 = std::round(weather.data.get<double>("main.temp"));
@@ -86,7 +86,7 @@ GetWeatherTemperatureAction::retrieveResult(const CurrentWeatherData& weather)
 }
 
 void
-GetWeatherTemperatureAction::retrieveResult(const ForecastWeatherData& weather)
+GetWeatherTemperatureAction::retrieveResult(const WeatherForecastData& weather)
 {
     try {
         const wit::DateTimePredicate predicate{timestampFrom(), timestampTo()};

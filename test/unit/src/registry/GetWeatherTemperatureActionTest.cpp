@@ -15,19 +15,19 @@ namespace krn = std::chrono;
 
 namespace {
 
-CurrentWeatherData
-getCurrentWeatherData()
+WeatherData
+getWeatherData()
 {
     CustomData d;
     d.assign({
         {"main.temp", 15.1},
         {"main.tempFeelsLike", 16.1},
     });
-    return CurrentWeatherData{.data = std::move(d)};
+    return WeatherData{.data = std::move(d)};
 }
 
-ForecastWeatherData
-getForecastWeatherData(krn::sys_seconds timestampFrom, krn::sys_seconds timestampTo)
+WeatherForecastData
+getWeatherForecastData(krn::sys_seconds timestampFrom, krn::sys_seconds timestampTo)
 {
     static constexpr auto kStep = krn::hours{3};
     double temp{15.1};
@@ -47,7 +47,7 @@ getForecastWeatherData(krn::sys_seconds timestampFrom, krn::sys_seconds timestam
         tempFeelsLike += 1.0;
         timestampFrom += kStep;
     }
-    return ForecastWeatherData{.data = std::move(dataSet)};
+    return WeatherForecastData{.data = std::move(dataSet)};
 }
 
 } // namespace
@@ -64,9 +64,9 @@ public:
 
 TEST_F(GetWeatherTemperatureActionTest, GetCurrent)
 {
-    const auto weatherData{getCurrentWeatherData()};
+    const auto weatherData{getWeatherData()};
     EXPECT_CALL(speaker, synthesizeSsml(Not(IsEmpty()), Not(IsEmpty())));
-    EXPECT_CALL(weather, getCurrentWeather).WillOnce(InvokeArgument<2>(weatherData));
+    EXPECT_CALL(weather, getWeather).WillOnce(InvokeArgument<1>(weatherData));
 
     auto action = GetWeatherTemperatureAction::create(kIntentName, positioning, speaker, weather);
     ASSERT_TRUE(action);
@@ -92,9 +92,9 @@ TEST_F(GetWeatherTemperatureActionTest, GetForPeriod)
     const krn::sys_seconds t1 = krn::floor<krn::days>(krn::system_clock::now());
     const krn::sys_seconds t2 = t1 + krn::days{1};
 
-    const auto weatherData{getForecastWeatherData(t1, t2)};
+    const auto weatherData{getWeatherForecastData(t1, t2)};
     EXPECT_CALL(speaker, synthesizeSsml(Not(IsEmpty()), Not(IsEmpty())));
-    EXPECT_CALL(weather, getForecastWeather).WillOnce(InvokeArgument<2>(weatherData));
+    EXPECT_CALL(weather, getWeatherForecast).WillOnce(InvokeArgument<1>(weatherData));
 
     DateTimeEntity entity;
     entity.from = DateTimeEntity::Value{
@@ -134,8 +134,7 @@ TEST_F(GetWeatherTemperatureActionTest, GetForPeriod)
 
 TEST_F(GetWeatherTemperatureActionTest, Error)
 {
-    EXPECT_CALL(weather, getCurrentWeather)
-        .WillOnce(InvokeArgument<3>(std::runtime_error{"Error"}));
+    EXPECT_CALL(weather, getWeather).WillOnce(InvokeArgument<2>(std::runtime_error{"Error"}));
 
     auto action = GetWeatherTemperatureAction::create(kIntentName, positioning, speaker, weather);
     ASSERT_TRUE(action);

@@ -41,10 +41,10 @@ private:
                          Entities entities = {});
 
     void
-    retrieveResult(const CurrentWeatherData& weather) final;
+    retrieveResult(const WeatherData& weather) final;
 
     void
-    retrieveResult(const ForecastWeatherData& weather) final;
+    retrieveResult(const WeatherForecastData& weather) final;
 
     void
     setResult(Result result);

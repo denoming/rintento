@@ -6,23 +6,23 @@ namespace jar {
 
 MockWeatherClient::MockWeatherClient()
 {
-    ON_CALL(*this, getCurrentAirQuality)
+    ON_CALL(*this, getAirQuality)
+        .WillByDefault(InvokeArgument<2>(std::runtime_error{"Not supported"}));
+
+    ON_CALL(*this, getAirQualityForecast)
+        .WillByDefault(InvokeArgument<2>(std::runtime_error{"Not supported"}));
+
+    ON_CALL(*this, getUvIndex)
         .WillByDefault(InvokeArgument<3>(std::runtime_error{"Not supported"}));
 
-    ON_CALL(*this, getForecastAirQuality)
-        .WillByDefault(InvokeArgument<3>(std::runtime_error{"Not supported"}));
+    ON_CALL(*this, getUvIndexForecast)
+        .WillByDefault(InvokeArgument<2>(std::runtime_error{"Not supported"}));
 
-    ON_CALL(*this, getCurrentUvIndex)
-        .WillByDefault(InvokeArgument<3>(std::runtime_error{"Not supported"}));
+    ON_CALL(*this, getWeather)
+        .WillByDefault(InvokeArgument<2>(std::runtime_error{"Not supported"}));
 
-    ON_CALL(*this, getForecastUvIndex)
-        .WillByDefault(InvokeArgument<3>(std::runtime_error{"Not supported"}));
-
-    ON_CALL(*this, getCurrentWeather)
-        .WillByDefault(InvokeArgument<3>(std::runtime_error{"Not supported"}));
-
-    ON_CALL(*this, getForecastWeather)
-        .WillByDefault(InvokeArgument<3>(std::runtime_error{"Not supported"}));
+    ON_CALL(*this, getWeatherForecast)
+        .WillByDefault(InvokeArgument<2>(std::runtime_error{"Not supported"}));
 }
 
 } // namespace jar

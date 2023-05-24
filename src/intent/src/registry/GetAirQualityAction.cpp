@@ -4,8 +4,8 @@
 #include "intent/IPositioningClient.hpp"
 #include "intent/WitHelpers.hpp"
 
-#include <jarvis/Logger.hpp>
 #include <jarvis/Formatters.hpp>
+#include <jarvis/Logger.hpp>
 #include <jarvis/weather/Formatters.hpp>
 
 #include <boost/assert.hpp>
@@ -71,19 +71,17 @@ GetAirQualityAction::perform()
 
     if (hasTimestamps()) {
         LOGD("[{}]: Time boundaries is available", intent());
-        _weatherClient.getForecastAirQuality(
-            loc.lat, loc.lon, std::move(onReady), std::move(onError));
+        _weatherClient.getAirQualityForecast(loc, std::move(onReady), std::move(onError));
     } else {
         LOGD("[{}]: No time boundaries is available", intent());
-        _weatherClient.getCurrentAirQuality(
-            loc.lat, loc.lon, std::move(onReady), std::move(onError));
+        _weatherClient.getAirQuality(loc, std::move(onReady), std::move(onError));
     }
 }
 
 void
-GetAirQualityAction::onAirQualityDataReady(CurrentAirQualityData data)
+GetAirQualityAction::onAirQualityDataReady(AirQualityData data)
 {
-    LOGD("[{}]: Getting current air quality data was succeed", intent());
+    LOGD("[{}]: Getting air quality data was succeed", intent());
 
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
@@ -93,9 +91,9 @@ GetAirQualityAction::onAirQualityDataReady(CurrentAirQualityData data)
 }
 
 void
-GetAirQualityAction::onAirQualityDataReady(ForecastAirQualityData data)
+GetAirQualityAction::onAirQualityDataReady(AirQualityForecastData data)
 {
-    LOGD("[{}]: Getting forecast air quality data was succeed", intent());
+    LOGD("[{}]: Getting air quality forecast data was succeed", intent());
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
     } else {
@@ -112,7 +110,7 @@ GetAirQualityAction::onAirQualityDataError(std::runtime_error error)
 }
 
 void
-GetAirQualityAction::retrieveResult(const CurrentAirQualityData& airQuality)
+GetAirQualityAction::retrieveResult(const AirQualityData& airQuality)
 {
     try {
         setResult(AirQualityIndex{airQuality.data.get<int32_t>("aqi")});
@@ -123,7 +121,7 @@ GetAirQualityAction::retrieveResult(const CurrentAirQualityData& airQuality)
 }
 
 void
-GetAirQualityAction::retrieveResult(const ForecastAirQualityData& airQuality)
+GetAirQualityAction::retrieveResult(const AirQualityForecastData& airQuality)
 {
     int32_t aqi1 = std::numeric_limits<int32_t>::min();
     try {

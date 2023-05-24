@@ -53,9 +53,9 @@ TEST_F(GetAirQualityActionTest, CheckTodayAirQuality)
     const krn::sys_seconds t2 = krn::ceil<krn::days>(krn::system_clock::now());
     const auto dataSet{getAirQualityData(1, t1, t2)};
 
-    ForecastAirQualityData airQuality = {.data = std::move(dataSet)};
+    AirQualityForecastData airQuality = {.data = std::move(dataSet)};
     EXPECT_CALL(speaker, synthesizeText(Not(IsEmpty()), Not(IsEmpty())));
-    EXPECT_CALL(weather, getForecastAirQuality).WillOnce(InvokeArgument<2>(airQuality));
+    EXPECT_CALL(weather, getAirQualityForecast).WillOnce(InvokeArgument<1>(airQuality));
 
     DateTimeEntity entity;
     entity.exact = DateTimeEntity::Value{
@@ -94,12 +94,12 @@ TEST_F(GetAirQualityActionTest, CheckWorstAirQuality)
     const auto t6 = t5 + krn::hours{3};
     const auto dataSet3{getAirQualityData(4, t5, t6)};
 
-    ForecastAirQualityData airQuality;
+    AirQualityForecastData airQuality;
     airQuality.data.insert(std::end(airQuality.data), std::begin(dataSet1), std::end(dataSet1));
     airQuality.data.insert(std::end(airQuality.data), std::begin(dataSet2), std::end(dataSet2));
     airQuality.data.insert(std::end(airQuality.data), std::begin(dataSet3), std::end(dataSet3));
     EXPECT_CALL(speaker, synthesizeText(Not(IsEmpty()), Not(IsEmpty())));
-    EXPECT_CALL(weather, getForecastAirQuality).WillOnce(InvokeArgument<2>(airQuality));
+    EXPECT_CALL(weather, getAirQualityForecast).WillOnce(InvokeArgument<1>(airQuality));
 
     DateTimeEntity entity;
     entity.from = DateTimeEntity::Value{
@@ -131,8 +131,7 @@ TEST_F(GetAirQualityActionTest, CheckWorstAirQuality)
 
 TEST_F(GetAirQualityActionTest, Error)
 {
-    EXPECT_CALL(weather, getCurrentAirQuality)
-        .WillOnce(InvokeArgument<3>(std::runtime_error{"Error"}));
+    EXPECT_CALL(weather, getAirQuality).WillOnce(InvokeArgument<2>(std::runtime_error{"Error"}));
 
     auto action = GetAirQualityAction::create(kIntentName, positioning, speaker, weather);
     ASSERT_TRUE(action);

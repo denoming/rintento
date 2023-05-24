@@ -11,50 +11,45 @@ public:
     MockWeatherClient();
 
     MOCK_METHOD(void,
-                getCurrentAirQuality,
-                (double lat,
-                 double lon,
-                 std::function<void(CurrentAirQualityData)> onSuccess,
+                getAirQuality,
+                (const GeoLocation&,
+                 std::function<void(AirQualityData)> onSuccess,
                  std::function<OnError> onError),
                 (override));
 
     MOCK_METHOD(void,
-                getForecastAirQuality,
-                (double lat,
-                 double lon,
-                 std::function<void(ForecastAirQualityData)> onSuccess,
+                getAirQualityForecast,
+                (const GeoLocation&,
+                 std::function<void(AirQualityForecastData)> onSuccess,
                  std::function<OnError> onError),
                 (override));
 
     MOCK_METHOD(void,
-                getCurrentUvIndex,
-                (double lat,
-                 double lon,
-                 std::function<void(CurrentUvIndexData)> onSuccess,
+                getUvIndex,
+                (const GeoLocation&,
+                 const std::string& dateTime,
+                 std::function<void(UvIndexData)> onSuccess,
                  std::function<OnError> onError),
                 (override));
 
     MOCK_METHOD(void,
-                getForecastUvIndex,
-                (double lat,
-                 double lon,
-                 std::function<void(ForecastUvIndexData)> onSuccess,
+                getUvIndexForecast,
+                (const GeoLocation&,
+                 std::function<void(UvIndexForecastData)> onSuccess,
                  std::function<OnError> onError),
                 (override));
 
     MOCK_METHOD(void,
-                getCurrentWeather,
-                (double lat,
-                 double lon,
-                 std::function<void(CurrentWeatherData)> onSuccess,
+                getWeather,
+                (const GeoLocation&,
+                 std::function<void(WeatherData)> onSuccess,
                  std::function<OnError> onError),
                 (override));
 
     MOCK_METHOD(void,
-                getForecastWeather,
-                (double lat,
-                 double lon,
-                 std::function<void(ForecastWeatherData)> onSuccess,
+                getWeatherForecast,
+                (const GeoLocation&,
+                 std::function<void(WeatherForecastData)> onSuccess,
                  std::function<OnError> onError),
                 (override));
 };

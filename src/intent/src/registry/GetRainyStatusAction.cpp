@@ -70,7 +70,7 @@ GetRainyStatusAction::clone(Entities entities)
 }
 
 void
-GetRainyStatusAction::retrieveResult(const CurrentWeatherData& weather)
+GetRainyStatusAction::retrieveResult(const WeatherData& weather)
 {
     try {
         const WeatherGrade grade{weather.data.get<int32_t>("id")};
@@ -82,7 +82,7 @@ GetRainyStatusAction::retrieveResult(const CurrentWeatherData& weather)
 }
 
 void
-GetRainyStatusAction::retrieveResult(const ForecastWeatherData& weather)
+GetRainyStatusAction::retrieveResult(const WeatherForecastData& weather)
 {
     try {
         const wit::DateTimePredicate predicate{timestampFrom(), timestampTo()};

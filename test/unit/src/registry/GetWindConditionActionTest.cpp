@@ -15,17 +15,17 @@ namespace krn = std::chrono;
 
 namespace {
 
-CurrentWeatherData
-getCurrentWeatherData()
+WeatherData
+getWeatherData()
 {
     CustomData d;
     d.assign({
         {"wind.speed", 4.1},
     });
-    return CurrentWeatherData{.data = std::move(d)};
+    return WeatherData{.data = std::move(d)};
 }
 
-ForecastWeatherData
+WeatherForecastData
 getForecastWeatherData(krn::sys_seconds timestampFrom, krn::sys_seconds timestampTo)
 {
     static constexpr auto kStep = krn::hours{3};
@@ -43,7 +43,7 @@ getForecastWeatherData(krn::sys_seconds timestampFrom, krn::sys_seconds timestam
         windSpeed += 10.0;
         timestampFrom += kStep;
     }
-    return ForecastWeatherData{.data = std::move(dataSet)};
+    return WeatherForecastData{.data = std::move(dataSet)};
 }
 
 } // namespace
@@ -60,9 +60,9 @@ public:
 
 TEST_F(GetWindConditionActionTest, GetCurrent)
 {
-    const auto weatherData{getCurrentWeatherData()};
+    const auto weatherData{getWeatherData()};
     EXPECT_CALL(speaker, synthesizeSsml(Not(IsEmpty()), Not(IsEmpty())));
-    EXPECT_CALL(weather, getCurrentWeather).WillOnce(InvokeArgument<2>(weatherData));
+    EXPECT_CALL(weather, getWeather).WillOnce(InvokeArgument<1>(weatherData));
 
     auto action = GetWindConditionAction::create(kIntentName, positioning, speaker, weather);
     ASSERT_TRUE(action);
@@ -87,7 +87,7 @@ TEST_F(GetWindConditionActionTest, GetForPeriod)
 
     const auto weatherData{getForecastWeatherData(t1, t2)};
     EXPECT_CALL(speaker, synthesizeSsml(Not(IsEmpty()), Not(IsEmpty())));
-    EXPECT_CALL(weather, getForecastWeather).WillOnce(InvokeArgument<2>(weatherData));
+    EXPECT_CALL(weather, getWeatherForecast).WillOnce(InvokeArgument<1>(weatherData));
 
     DateTimeEntity entity;
     entity.from = DateTimeEntity::Value{
@@ -123,8 +123,7 @@ TEST_F(GetWindConditionActionTest, GetForPeriod)
 
 TEST_F(GetWindConditionActionTest, Error)
 {
-    EXPECT_CALL(weather, getCurrentWeather)
-        .WillOnce(InvokeArgument<3>(std::runtime_error{"Error"}));
+    EXPECT_CALL(weather, getWeather).WillOnce(InvokeArgument<2>(std::runtime_error{"Error"}));
 
     auto action = GetWindConditionAction::create(kIntentName, positioning, speaker, weather);
     ASSERT_TRUE(action);

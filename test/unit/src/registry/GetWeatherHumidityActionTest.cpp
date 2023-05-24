@@ -15,17 +15,17 @@ namespace krn = std::chrono;
 
 namespace {
 
-CurrentWeatherData
+WeatherData
 getCurrentWeatherData()
 {
     CustomData d;
     d.assign({
         {"main.humidity", 45},
     });
-    return CurrentWeatherData{.data = std::move(d)};
+    return WeatherData{.data = std::move(d)};
 }
 
-ForecastWeatherData
+WeatherForecastData
 getForecastWeatherData(krn::sys_seconds tsFrom, krn::sys_seconds tsTo)
 {
     static constexpr auto kStep = krn::hours{3};
@@ -43,7 +43,7 @@ getForecastWeatherData(krn::sys_seconds tsFrom, krn::sys_seconds tsTo)
         humidity += 5;
         tsFrom += kStep;
     }
-    return ForecastWeatherData{.data = std::move(dataSet)};
+    return WeatherForecastData{.data = std::move(dataSet)};
 }
 
 } // namespace
@@ -62,7 +62,7 @@ TEST_F(GetWeatherHumidityActionTest, GetCurrent)
 {
     const auto weatherData{getCurrentWeatherData()};
     EXPECT_CALL(speaker, synthesizeSsml(Not(IsEmpty()), Not(IsEmpty())));
-    EXPECT_CALL(weather, getCurrentWeather).WillOnce(InvokeArgument<2>(weatherData));
+    EXPECT_CALL(weather, getWeather).WillOnce(InvokeArgument<1>(weatherData));
 
     auto action = GetWeatherHumidityAction::create(kIntentName, positioning, speaker, weather);
     ASSERT_TRUE(action);
@@ -88,7 +88,7 @@ TEST_F(GetWeatherHumidityActionTest, GetForPeriod)
 
     const auto weatherData{getForecastWeatherData(t1, t2)};
     EXPECT_CALL(speaker, synthesizeSsml(Not(IsEmpty()), Not(IsEmpty())));
-    EXPECT_CALL(weather, getForecastWeather).WillOnce(InvokeArgument<2>(weatherData));
+    EXPECT_CALL(weather, getWeatherForecast).WillOnce(InvokeArgument<1>(weatherData));
 
     DateTimeEntity entity;
     entity.from = DateTimeEntity::Value{
@@ -124,8 +124,8 @@ TEST_F(GetWeatherHumidityActionTest, GetForPeriod)
 
 TEST_F(GetWeatherHumidityActionTest, Error)
 {
-    EXPECT_CALL(weather, getCurrentWeather)
-        .WillOnce(InvokeArgument<3>(std::runtime_error{"Error"}));
+    EXPECT_CALL(weather, getWeather)
+        .WillOnce(InvokeArgument<2>(std::runtime_error{"Error"}));
 
     auto action = GetWeatherHumidityAction::create(kIntentName, positioning, speaker, weather);
     ASSERT_TRUE(action);

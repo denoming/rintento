@@ -33,19 +33,19 @@ protected:
     speaker();
 
     virtual void
-    retrieveResult(const CurrentWeatherData& weather)
+    retrieveResult(const WeatherData& weather)
         = 0;
 
     virtual void
-    retrieveResult(const ForecastWeatherData& weather)
+    retrieveResult(const WeatherForecastData& weather)
         = 0;
 
 private:
     void
-    onWeatherDataReady(CurrentWeatherData weather);
+    onWeatherDataReady(WeatherData weather);
 
     void
-    onWeatherDataReady(ForecastWeatherData weather);
+    onWeatherDataReady(WeatherForecastData weather);
 
     void
     onWeatherDataError(std::runtime_error error);

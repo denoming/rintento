@@ -63,7 +63,7 @@ GetWindConditionAction::clone(Entities entities)
 }
 
 void
-GetWindConditionAction::retrieveResult(const CurrentWeatherData& weather)
+GetWindConditionAction::retrieveResult(const WeatherData& weather)
 {
     try {
         const double windSpeed = weather.data.get<double>("wind.speed");
@@ -79,7 +79,7 @@ GetWindConditionAction::retrieveResult(const CurrentWeatherData& weather)
 }
 
 void
-GetWindConditionAction::retrieveResult(const ForecastWeatherData& weather)
+GetWindConditionAction::retrieveResult(const WeatherForecastData& weather)
 {
     try {
         const wit::DateTimePredicate predicate{timestampFrom(), timestampTo()};

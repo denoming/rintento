@@ -43,19 +43,19 @@ private:
                         Entities entities = {});
 
     void
-    onAirQualityDataReady(CurrentAirQualityData data);
+    onAirQualityDataReady(AirQualityData data);
 
     void
-    onAirQualityDataReady(ForecastAirQualityData data);
+    onAirQualityDataReady(AirQualityForecastData data);
 
     void
     onAirQualityDataError(std::runtime_error error);
 
     void
-    retrieveResult(const CurrentAirQualityData& airQuality);
+    retrieveResult(const AirQualityData& airQuality);
 
     void
-    retrieveResult(const ForecastAirQualityData& airQuality);
+    retrieveResult(const AirQualityForecastData& airQuality);
 
     void
     setResult(Result result);

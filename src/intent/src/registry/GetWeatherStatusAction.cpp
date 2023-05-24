@@ -43,7 +43,7 @@ GetWeatherStatusAction::clone(Entities entities)
 }
 
 void
-GetWeatherStatusAction::retrieveResult(const CurrentWeatherData& weather)
+GetWeatherStatusAction::retrieveResult(const WeatherData& weather)
 {
     try {
         const int32_t id = weather.data.get<int32_t>("id");
@@ -55,7 +55,7 @@ GetWeatherStatusAction::retrieveResult(const CurrentWeatherData& weather)
 }
 
 void
-GetWeatherStatusAction::retrieveResult(const ForecastWeatherData& weather)
+GetWeatherStatusAction::retrieveResult(const WeatherForecastData& weather)
 {
 }
 

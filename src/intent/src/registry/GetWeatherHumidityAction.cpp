@@ -64,7 +64,7 @@ GetWeatherHumidityAction::clone(Entities entities)
 }
 
 void
-GetWeatherHumidityAction::retrieveResult(const CurrentWeatherData& weather)
+GetWeatherHumidityAction::retrieveResult(const WeatherData& weather)
 {
     try {
         const auto grade = HumidityGrade{weather.data.get<int32_t>("main.humidity")};
@@ -80,7 +80,7 @@ GetWeatherHumidityAction::retrieveResult(const CurrentWeatherData& weather)
 }
 
 void
-GetWeatherHumidityAction::retrieveResult(const ForecastWeatherData& weather)
+GetWeatherHumidityAction::retrieveResult(const WeatherForecastData& weather)
 {
     try {
         const wit::DateTimePredicate predicate{timestampFrom(), timestampTo()};
