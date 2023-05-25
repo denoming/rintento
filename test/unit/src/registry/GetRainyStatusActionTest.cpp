@@ -64,19 +64,20 @@ TEST_F(GetRainyStatusActionTest, CheckNotRainyForToday)
     EXPECT_CALL(speaker, synthesizeText(Not(IsEmpty()), Not(IsEmpty())));
     EXPECT_CALL(weather, getWeatherForecast).WillOnce(InvokeArgument<1>(weatherData));
 
-    DateTimeEntity entity;
-    entity.valueFrom = entity.valueTo = DateTimeEntity::Value{
-        .grain = DateTimeEntity::Grains::day,
+    wit::DateTimeEntity entity;
+    entity.valueFrom = entity.valueTo = wit::DateTimeEntity::Value{
+        .grain = wit::DateTimeEntity::Grains::day,
         .timestamp = Timestamp::now(),
     };
 
-    auto action = GetRainyStatusAction::create(kIntentName,
-                                               positioning,
-                                               speaker,
-                                               weather,
-                                               {
-                                                   {DateTimeEntity::key(), EntityList{entity}},
-                                               });
+    auto action
+        = GetRainyStatusAction::create(kIntentName,
+                                       positioning,
+                                       speaker,
+                                       weather,
+                                       {
+                                           {wit::DateTimeEntity::key(), wit::EntityList{entity}},
+                                       });
     ASSERT_TRUE(action);
 
     MockFunction<void(std::error_code)> onDone;
@@ -96,23 +97,24 @@ TEST_F(GetRainyStatusActionTest, CheckIsRainyForInterval)
 
     const auto now = krn::ceil<krn::hours>(krn::system_clock::now());
 
-    DateTimeEntity entity;
-    entity.valueFrom = DateTimeEntity::Value{
-        .grain = DateTimeEntity::Grains::hour,
+    wit::DateTimeEntity entity;
+    entity.valueFrom = wit::DateTimeEntity::Value{
+        .grain = wit::DateTimeEntity::Grains::hour,
         .timestamp = Timestamp{now + krn::hours{1}},
     };
-    entity.valueTo = DateTimeEntity::Value{
-        .grain = DateTimeEntity::Grains::hour,
+    entity.valueTo = wit::DateTimeEntity::Value{
+        .grain = wit::DateTimeEntity::Grains::hour,
         .timestamp = Timestamp{now + krn::hours{3}},
     };
 
-    auto action = GetRainyStatusAction::create(kIntentName,
-                                               positioning,
-                                               speaker,
-                                               weather,
-                                               {
-                                                   {DateTimeEntity::key(), EntityList{entity}},
-                                               });
+    auto action
+        = GetRainyStatusAction::create(kIntentName,
+                                       positioning,
+                                       speaker,
+                                       weather,
+                                       {
+                                           {wit::DateTimeEntity::key(), wit::EntityList{entity}},
+                                       });
     ASSERT_TRUE(action);
 
     MockFunction<void(std::error_code)> onDone;
@@ -132,23 +134,24 @@ TEST_F(GetRainyStatusActionTest, CheckNotIsRainy)
 
     const auto now = krn::ceil<krn::days>(krn::system_clock::now());
 
-    DateTimeEntity entity;
-    entity.valueFrom = DateTimeEntity::Value{
-        .grain = DateTimeEntity::Grains::hour,
+    wit::DateTimeEntity entity;
+    entity.valueFrom = wit::DateTimeEntity::Value{
+        .grain = wit::DateTimeEntity::Grains::hour,
         .timestamp = Timestamp{now + krn::hours{1}},
     };
-    entity.valueTo = DateTimeEntity::Value{
-        .grain = DateTimeEntity::Grains::hour,
+    entity.valueTo = wit::DateTimeEntity::Value{
+        .grain = wit::DateTimeEntity::Grains::hour,
         .timestamp = Timestamp{now + krn::hours{3}},
     };
 
-    auto action = GetRainyStatusAction::create(kIntentName,
-                                               positioning,
-                                               speaker,
-                                               weather,
-                                               {
-                                                   {DateTimeEntity::key(), EntityList{entity}},
-                                               });
+    auto action
+        = GetRainyStatusAction::create(kIntentName,
+                                       positioning,
+                                       speaker,
+                                       weather,
+                                       {
+                                           {wit::DateTimeEntity::key(), wit::EntityList{entity}},
+                                       });
     ASSERT_TRUE(action);
 
     MockFunction<void(std::error_code)> onDone;

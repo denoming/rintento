@@ -27,7 +27,7 @@ public:
     intent() const noexcept;
 
     [[nodiscard]] virtual std::shared_ptr<Action>
-    clone(Entities entities) = 0;
+    clone(wit::Entities entities) = 0;
 
     virtual void
     perform()

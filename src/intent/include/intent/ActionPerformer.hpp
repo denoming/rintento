@@ -19,7 +19,7 @@ public:
     create(ActionRegistry& registry);
 
     void
-    perform(Utterances utterances);
+    perform(wit::Utterances utterances);
 
 private:
     ActionPerformer(ActionRegistry& registry);

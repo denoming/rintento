@@ -15,7 +15,7 @@ ActionRegistry::has(const std::string& intent) const
 }
 
 std::shared_ptr<Action>
-ActionRegistry::get(const std::string& intent, Entities entities)
+ActionRegistry::get(const std::string& intent, wit::Entities entities)
 {
     BOOST_ASSERT(!intent.empty());
     if (auto actionIt = _actions.find(intent); actionIt == _actions.cend()) {

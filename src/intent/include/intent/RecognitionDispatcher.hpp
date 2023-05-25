@@ -48,7 +48,7 @@ private:
                      std::error_code error);
 
     void
-    onDone(Utterances utterances, std::error_code error);
+    onDone(wit::Utterances utterances, std::error_code error);
 
     std::shared_ptr<RecognitionHandler>
     getHandler();

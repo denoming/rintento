@@ -8,7 +8,7 @@
 #include <variant>
 #include <vector>
 
-namespace jar {
+namespace jar::wit {
 
 /**
  * The confidence type.
@@ -132,4 +132,4 @@ using Utterances = std::vector<Utterance>;
 bool
 operator==(const Intent& lhs, const Intent& rhs);
 
-} // namespace jar
+} // namespace jar::wit

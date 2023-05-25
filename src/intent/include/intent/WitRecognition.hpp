@@ -13,7 +13,7 @@ namespace jar {
 
 class WitRecognition : public Cancellable {
 public:
-    using OnDone = void(Utterances result, std::error_code error);
+    using OnDone = void(wit::Utterances result, std::error_code error);
     using OnData = void();
 
     WitRecognition();
@@ -38,7 +38,7 @@ protected:
     needData(bool value);
 
     void
-    setResult(Utterances result);
+    setResult(wit::Utterances result);
 
     void
     setError(std::error_code value);

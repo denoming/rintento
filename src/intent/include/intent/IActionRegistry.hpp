@@ -16,7 +16,7 @@ public:
         = 0;
 
     [[nodiscard]] virtual std::shared_ptr<Action>
-    get(const std::string& name, Entities entities) = 0;
+    get(const std::string& name, wit::Entities entities) = 0;
 
     virtual void
     add(std::shared_ptr<Action> intent)

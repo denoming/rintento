@@ -35,7 +35,7 @@ GetWeatherHumidityAction::create(std::string intent,
                                  IPositioningClient& positioningClient,
                                  ISpeakerClient& speakerClient,
                                  IWeatherClient& weatherClient,
-                                 Entities entities)
+                                 wit::Entities entities)
 {
     return std::shared_ptr<GetWeatherHumidityAction>(new GetWeatherHumidityAction{
         std::move(intent), positioningClient, speakerClient, weatherClient, std::move(entities)});
@@ -45,7 +45,7 @@ GetWeatherHumidityAction::GetWeatherHumidityAction(std::string intent,
                                                    IPositioningClient& positioningClient,
                                                    ISpeakerClient& speakerClient,
                                                    IWeatherClient& weatherClient,
-                                                   Entities entities)
+                                                   wit::Entities entities)
     : WeatherAction{
         std::move(intent), positioningClient, speakerClient, weatherClient, std::move(entities)}
 {
@@ -58,7 +58,7 @@ GetWeatherHumidityAction::GetWeatherHumidityAction::result() const
 }
 
 std::shared_ptr<Action>
-GetWeatherHumidityAction::clone(Entities entities)
+GetWeatherHumidityAction::clone(wit::Entities entities)
 {
     return create(intent(), positioning(), speaker(), weather(), std::move(entities));
 }

@@ -105,7 +105,7 @@ RecognitionMessageHandler::onRecognitionError(std::error_code error)
 }
 
 void
-RecognitionMessageHandler::onRecognitionSuccess(Utterances result)
+RecognitionMessageHandler::onRecognitionSuccess(wit::Utterances result)
 {
     LOGD("Submit recognition success: <{}> size", result.size());
     sendResponse(result);

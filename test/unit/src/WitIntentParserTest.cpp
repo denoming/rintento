@@ -241,14 +241,14 @@ TEST(WitIntentParserTest, ParseMessageResult1)
     const auto entries = WitIntentParser::parseMessageResult(kMessageResult1);
     ASSERT_TRUE(entries.has_value());
 
-    EXPECT_THAT(
-        entries.value(),
-        Contains(isUtterance(
-            "what is air quality for tomorrow at 1 PM",
-            Contains(Pair(DateTimeEntity::key(),
-                          Contains(VariantWith<DateTimeEntity>(matchEntityWithExactTime(
-                              DateTimeEntity::Grains::hour, "2023-04-22T13:00:00.000+03:00"))))),
-            Contains(isConfidentIntent("get_air_quality_status", 0.9f)))));
+    EXPECT_THAT(entries.value(),
+                Contains(isUtterance(
+                    "what is air quality for tomorrow at 1 PM",
+                    Contains(Pair(
+                        wit::DateTimeEntity::key(),
+                        Contains(VariantWith<wit::DateTimeEntity>(matchEntityWithExactTime(
+                            wit::DateTimeEntity::Grains::hour, "2023-04-22T13:00:00.000+03:00"))))),
+                    Contains(isConfidentIntent("get_air_quality_status", 0.9f)))));
 }
 
 TEST(WitIntentParserTest, ParseMessageResult2)
@@ -259,9 +259,9 @@ TEST(WitIntentParserTest, ParseMessageResult2)
     EXPECT_THAT(entries.value(),
                 Contains(isUtterance(
                     "what is air quality today from 1 PM to 4 PM",
-                    Contains(Pair(DateTimeEntity::key(),
-                                  Contains(VariantWith<DateTimeEntity>(
-                                      matchEntityWithTimeRange(DateTimeEntity::Grains::hour,
+                    Contains(Pair(wit::DateTimeEntity::key(),
+                                  Contains(VariantWith<wit::DateTimeEntity>(
+                                      matchEntityWithTimeRange(wit::DateTimeEntity::Grains::hour,
                                                                "2023-04-22T13:00:00.000+03:00",
                                                                "2023-04-22T17:00:00.000+03:00"))))),
                     Contains(isConfidentIntent("get_air_quality_status", 0.9f)))));

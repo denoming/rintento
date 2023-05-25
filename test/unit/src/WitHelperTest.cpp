@@ -64,25 +64,25 @@ TEST(WitHelperTest, EntityPredicate)
     const auto ts1 = Timestamp{now + krn::hours{1}};
     const auto ts2 = Timestamp{now + krn::hours{3}};
 
-    DateTimeEntity entity;
-    entity.valueFrom = DateTimeEntity::Value{
-        .grain = DateTimeEntity::Grains::hour,
+    wit::DateTimeEntity entity;
+    entity.valueFrom = wit::DateTimeEntity::Value{
+        .grain = wit::DateTimeEntity::Grains::hour,
         .timestamp = ts1,
     };
-    entity.valueTo = DateTimeEntity::Value{
-        .grain = DateTimeEntity::Grains::hour,
+    entity.valueTo = wit::DateTimeEntity::Value{
+        .grain = wit::DateTimeEntity::Grains::hour,
         .timestamp = ts2,
     };
 
-    Entities entities1{
-        {DateTimeEntity::key(), EntityList{entity}},
+    wit::Entities entities1{
+        {wit::DateTimeEntity::key(), wit::EntityList{entity}},
     };
-    wit::EntityGetter<DateTimeEntity> predicate1{entities1};
+    wit::EntityGetter<wit::DateTimeEntity> predicate1{entities1};
     EXPECT_TRUE(predicate1.has());
     EXPECT_NO_THROW({ [[maybe_unused]] auto& ref = predicate1.get(); });
 
-    Entities entities2;
-    wit::EntityGetter<DateTimeEntity> predicate2{entities2};
+    wit::Entities entities2;
+    wit::EntityGetter<wit::DateTimeEntity> predicate2{entities2};
     EXPECT_FALSE(predicate2.has());
     EXPECT_ANY_THROW({ [[maybe_unused]] auto& ref = predicate2.get(); });
 }

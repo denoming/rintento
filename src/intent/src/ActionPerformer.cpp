@@ -11,11 +11,11 @@ namespace jar {
 
 namespace {
 
-Intents::const_iterator
-mostConfidentIntent(const Intents& intents)
+wit::Intents::const_iterator
+mostConfidentIntent(const wit::Intents& intents)
 {
     return std::max_element(
-        intents.cbegin(), intents.cend(), [](const Intent& n1, const Intent& n2) {
+        intents.cbegin(), intents.cend(), [](const wit::Intent& n1, const wit::Intent& n2) {
             return (n1.confidence < n2.confidence);
         });
 }
@@ -34,11 +34,11 @@ ActionPerformer::ActionPerformer(ActionRegistry& registry)
 }
 
 void
-ActionPerformer::perform(Utterances utterances)
+ActionPerformer::perform(wit::Utterances utterances)
 {
     LOGI("The <{}> utterances are available", utterances.size());
 
-    auto filteredUtterances = utterances | std::views::filter([](const Utterance& u) {
+    auto filteredUtterances = utterances | std::views::filter([](const wit::Utterance& u) {
                                   return u.final && !u.intents.empty();
                               });
 

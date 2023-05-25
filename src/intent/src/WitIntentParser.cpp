@@ -8,6 +8,18 @@ namespace json = boost::json;
 
 namespace jar {
 
+static Timestamp
+tag_invoke(json::value_to_tag<Timestamp>, const json::value& v)
+{
+    if (auto ts = parseZonedDateTime(v.as_string()); ts.has_value()) {
+        return ts.value();
+    } else {
+        throw std::system_error{ts.error()};
+    }
+}
+
+namespace wit {
+
 static Confidence
 tag_invoke(json::value_to_tag<Confidence>, const json::value& v)
 {
@@ -18,16 +30,6 @@ tag_invoke(json::value_to_tag<Confidence>, const json::value& v)
         return {.value = static_cast<float>(*c)};
     }
     throw std::out_of_range{"Invalid confidence value"};
-}
-
-static Timestamp
-tag_invoke(json::value_to_tag<Timestamp>, const json::value& v)
-{
-    if (auto ts = parseZonedDateTime(v.as_string()); ts.has_value()) {
-        return ts.value();
-    } else {
-        throw std::system_error{ts.error()};
-    }
 }
 
 static DateTimeEntity::Grains
@@ -71,9 +73,7 @@ tag_invoke(json::value_to_tag<DateTimeEntity>, const json::value& v)
     return entity;
 }
 
-namespace {
-
-std::optional<EntityAlts>
+static std::optional<EntityAlts>
 toEntity(const json::value& input)
 {
     try {
@@ -88,7 +88,7 @@ toEntity(const json::value& input)
     }
 }
 
-EntityList
+static EntityList
 toEntities(const json::value& input)
 {
     EntityList entityList;
@@ -100,7 +100,7 @@ toEntities(const json::value& input)
     return entityList;
 }
 
-std::optional<Intent>
+static std::optional<Intent>
 toIntent(const json::object& input)
 {
     try {
@@ -112,7 +112,7 @@ toIntent(const json::object& input)
     }
 }
 
-Intents
+static Intents
 toIntents(const json::array& input)
 {
     Intents intents;
@@ -126,7 +126,7 @@ toIntents(const json::array& input)
     return intents;
 }
 
-std::optional<Utterance>
+static std::optional<Utterance>
 toUtterance(const json::object& root, const bool finalByDefault = false)
 {
     try {
@@ -158,9 +158,9 @@ toUtterance(const json::object& root, const bool finalByDefault = false)
     }
 }
 
-} // namespace
+} // namespace wit
 
-std::expected<Utterances, std::error_code>
+std::expected<wit::Utterances, std::error_code>
 WitIntentParser::parseMessageResult(std::string_view input)
 {
     if (input.empty()) {
@@ -173,23 +173,23 @@ WitIntentParser::parseMessageResult(std::string_view input)
         return std::unexpected(error);
     }
 
-    Utterances output;
+    wit::Utterances output;
     if (auto object = value.if_object(); object) {
-        if (auto utterance = toUtterance(*object, true); utterance) {
+        if (auto utterance = wit::toUtterance(*object, true); utterance) {
             output.push_back(std::move(*utterance));
         }
     }
     return output;
 }
 
-std::expected<Utterances, std::error_code>
+std::expected<wit::Utterances, std::error_code>
 WitIntentParser::parseSpeechResult(std::string_view input)
 {
     if (input.empty()) {
         return std::unexpected(std::make_error_code(std::errc::invalid_argument));
     }
 
-    Utterances output;
+    wit::Utterances output;
     json::stream_parser parser;
     std::size_t nextRoot;
     do {
@@ -201,7 +201,7 @@ WitIntentParser::parseSpeechResult(std::string_view input)
             input = input.substr(nextRoot);
             auto value = parser.release();
             if (auto object = value.if_object(); object) {
-                if (auto utterance = toUtterance(*object); utterance) {
+                if (auto utterance = wit::toUtterance(*object); utterance) {
                     output.push_back(std::move(*utterance));
                 }
             }

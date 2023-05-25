@@ -21,20 +21,20 @@ public:
            IPositioningClient& positioningClient,
            ISpeakerClient& speakerClient,
            IWeatherClient& weatherClient,
-           Entities entities = {});
+           wit::Entities entities = {});
 
     [[nodiscard]] const Result&
     result() const;
 
     [[nodiscard]] std::shared_ptr<Action>
-    clone(Entities entities) final;
+    clone(wit::Entities entities) final;
 
 private:
     GetWeatherStatusAction(std::string name,
                            IPositioningClient& positioningClient,
                            ISpeakerClient& speakerClient,
                            IWeatherClient& weatherClient,
-                           Entities entities = {});
+                           wit::Entities entities = {});
 
     void
     retrieveResult(const WeatherData& weather) final;

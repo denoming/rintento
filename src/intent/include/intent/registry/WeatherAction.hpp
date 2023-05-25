@@ -18,13 +18,13 @@ public:
                   IPositioningClient& positioningClient,
                   ISpeakerClient& speakerClient,
                   IWeatherClient& weatherClient,
-                  Entities entities);
+                  wit::Entities entities);
 
     void
     perform() override;
 
 protected:
-    const DateTimeEntity&
+    const wit::DateTimeEntity&
     dateTimeEntity();
 
     IPositioningClient&
@@ -58,7 +58,7 @@ private:
     IPositioningClient& _positioningClient;
     ISpeakerClient& _speakerClient;
     IWeatherClient& _weatherClient;
-    DateTimeEntity _dateTimeEntity;
+    wit::DateTimeEntity _dateTimeEntity;
 };
 
 } // namespace jar

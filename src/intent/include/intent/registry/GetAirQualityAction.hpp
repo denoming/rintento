@@ -24,13 +24,13 @@ public:
            IPositioningClient& positioningClient,
            ISpeakerClient& speakerClient,
            IWeatherClient& weatherClient,
-           Entities entities = {});
+           wit::Entities entities = {});
 
     [[nodiscard]] const Result&
     result() const;
 
     std::shared_ptr<Action>
-    clone(Entities entities) final;
+    clone(wit::Entities entities) final;
 
     void
     perform() final;
@@ -40,7 +40,7 @@ private:
                         IPositioningClient& positioningClient,
                         ISpeakerClient& speakerClient,
                         IWeatherClient& weatherClient,
-                        Entities entities = {});
+                        wit::Entities entities = {});
 
     void
     onAirQualityDataReady(AirQualityData data);
@@ -67,7 +67,7 @@ private:
     IPositioningClient& _positioningClient;
     ISpeakerClient& _speakerClient;
     IWeatherClient& _weatherClient;
-    DateTimeEntity _dateTimeEntity;
+    wit::DateTimeEntity _dateTimeEntity;
     Result _result;
 };
 

@@ -90,23 +90,24 @@ TEST_F(GetWeatherHumidityActionTest, GetForPeriod)
     EXPECT_CALL(speaker, synthesizeSsml(Not(IsEmpty()), Not(IsEmpty())));
     EXPECT_CALL(weather, getWeatherForecast).WillOnce(InvokeArgument<1>(weatherData));
 
-    DateTimeEntity entity;
-    entity.valueFrom = DateTimeEntity::Value{
-        .grain = DateTimeEntity::Grains::hour,
+    wit::DateTimeEntity entity;
+    entity.valueFrom = wit::DateTimeEntity::Value{
+        .grain = wit::DateTimeEntity::Grains::hour,
         .timestamp = Timestamp{t1},
     };
-    entity.valueTo = DateTimeEntity::Value{
-        .grain = DateTimeEntity::Grains::hour,
+    entity.valueTo = wit::DateTimeEntity::Value{
+        .grain = wit::DateTimeEntity::Grains::hour,
         .timestamp = Timestamp{t2},
     };
 
-    auto action = GetWeatherHumidityAction::create(kIntentName,
-                                                   positioning,
-                                                   speaker,
-                                                   weather,
-                                                   {
-                                                       {DateTimeEntity::key(), EntityList{entity}},
-                                                   });
+    auto action = GetWeatherHumidityAction::create(
+        kIntentName,
+        positioning,
+        speaker,
+        weather,
+        {
+            {wit::DateTimeEntity::key(), wit::EntityList{entity}},
+        });
     ASSERT_TRUE(action);
 
     MockFunction<void(std::error_code)> onDone;
@@ -124,8 +125,7 @@ TEST_F(GetWeatherHumidityActionTest, GetForPeriod)
 
 TEST_F(GetWeatherHumidityActionTest, Error)
 {
-    EXPECT_CALL(weather, getWeather)
-        .WillOnce(InvokeArgument<2>(std::runtime_error{"Error"}));
+    EXPECT_CALL(weather, getWeather).WillOnce(InvokeArgument<2>(std::runtime_error{"Error"}));
 
     auto action = GetWeatherHumidityAction::create(kIntentName, positioning, speaker, weather);
     ASSERT_TRUE(action);

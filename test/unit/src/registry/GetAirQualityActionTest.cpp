@@ -57,19 +57,20 @@ TEST_F(GetAirQualityActionTest, CheckTodayAirQuality)
     EXPECT_CALL(speaker, synthesizeText(Not(IsEmpty()), Not(IsEmpty())));
     EXPECT_CALL(weather, getAirQualityForecast).WillOnce(InvokeArgument<1>(airQuality));
 
-    DateTimeEntity entity;
-    entity.valueFrom = entity.valueTo = DateTimeEntity::Value{
-        .grain = DateTimeEntity::Grains::day,
+    wit::DateTimeEntity entity;
+    entity.valueFrom = entity.valueTo = wit::DateTimeEntity::Value{
+        .grain = wit::DateTimeEntity::Grains::day,
         .timestamp = Timestamp::now(),
     };
 
-    auto action = GetAirQualityAction::create(kIntentName,
-                                              positioning,
-                                              speaker,
-                                              weather,
-                                              {
-                                                  {DateTimeEntity::key(), EntityList{entity}},
-                                              });
+    auto action
+        = GetAirQualityAction::create(kIntentName,
+                                      positioning,
+                                      speaker,
+                                      weather,
+                                      {
+                                          {wit::DateTimeEntity::key(), wit::EntityList{entity}},
+                                      });
     ASSERT_TRUE(action);
 
     MockFunction<void(std::error_code)> onDone;
@@ -101,23 +102,24 @@ TEST_F(GetAirQualityActionTest, CheckWorstAirQuality)
     EXPECT_CALL(speaker, synthesizeText(Not(IsEmpty()), Not(IsEmpty())));
     EXPECT_CALL(weather, getAirQualityForecast).WillOnce(InvokeArgument<1>(airQuality));
 
-    DateTimeEntity entity;
-    entity.valueFrom = DateTimeEntity::Value{
-        .grain = DateTimeEntity::Grains::hour,
+    wit::DateTimeEntity entity;
+    entity.valueFrom = wit::DateTimeEntity::Value{
+        .grain = wit::DateTimeEntity::Grains::hour,
         .timestamp = Timestamp{krn::floor<krn::days>(now)},
     };
-    entity.valueTo = DateTimeEntity::Value{
-        .grain = DateTimeEntity::Grains::hour,
+    entity.valueTo = wit::DateTimeEntity::Value{
+        .grain = wit::DateTimeEntity::Grains::hour,
         .timestamp = Timestamp{krn::ceil<krn::days>(now)},
     };
 
-    auto action = GetAirQualityAction::create(kIntentName,
-                                              positioning,
-                                              speaker,
-                                              weather,
-                                              {
-                                                  {DateTimeEntity::key(), EntityList{entity}},
-                                              });
+    auto action
+        = GetAirQualityAction::create(kIntentName,
+                                      positioning,
+                                      speaker,
+                                      weather,
+                                      {
+                                          {wit::DateTimeEntity::key(), wit::EntityList{entity}},
+                                      });
     ASSERT_TRUE(action);
 
     MockFunction<void(std::error_code)> onDone;

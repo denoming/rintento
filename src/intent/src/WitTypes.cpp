@@ -1,6 +1,6 @@
 #include "intent/WitTypes.hpp"
 
-namespace jar {
+namespace jar::wit {
 
 bool
 operator==(const Intent& lhs, const Intent& rhs)

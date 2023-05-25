@@ -13,13 +13,13 @@ WeatherAction::WeatherAction(std::string intent,
                              IPositioningClient& positioningClient,
                              ISpeakerClient& speakerClient,
                              IWeatherClient& weatherClient,
-                             Entities entities)
+                             wit::Entities entities)
     : Action{std::move(intent)}
     , _positioningClient{positioningClient}
     , _speakerClient{speakerClient}
     , _weatherClient{weatherClient}
 {
-    wit::EntityGetter<DateTimeEntity> getter{entities};
+    wit::EntityGetter<wit::DateTimeEntity> getter{entities};
     if (getter.has()) {
         _dateTimeEntity = getter.get();
     }
@@ -51,7 +51,7 @@ WeatherAction::perform()
     }
 }
 
-const DateTimeEntity&
+const wit::DateTimeEntity&
 WeatherAction::dateTimeEntity()
 {
     return _dateTimeEntity;

@@ -9,13 +9,13 @@ using namespace jar;
 
 class TestAction final : public jar::Action {
 public:
-    TestAction(std::string intent, Entities entities = {})
+    TestAction(std::string intent, wit::Entities entities = {})
         : Action{std::move(intent)}
     {
     }
 
     std::shared_ptr<Action>
-    clone(Entities entities) final
+    clone(wit::Entities entities) final
     {
         return std::make_shared<TestAction>(intent(), std::move(entities));
     }

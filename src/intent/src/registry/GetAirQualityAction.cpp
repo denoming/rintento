@@ -21,7 +21,7 @@ GetAirQualityAction::create(std::string intent,
                             IPositioningClient& positioningClient,
                             ISpeakerClient& speakerClient,
                             IWeatherClient& weatherClient,
-                            Entities entities)
+                            wit::Entities entities)
 {
     return std::shared_ptr<GetAirQualityAction>(new GetAirQualityAction{
         std::move(intent), positioningClient, speakerClient, weatherClient, std::move(entities)});
@@ -31,13 +31,13 @@ GetAirQualityAction::GetAirQualityAction(std::string intent,
                                          IPositioningClient& positioningClient,
                                          ISpeakerClient& speakerClient,
                                          IWeatherClient& weatherClient,
-                                         Entities entities)
+                                         wit::Entities entities)
     : Action{std::move(intent)}
     , _positioningClient{positioningClient}
     , _speakerClient{speakerClient}
     , _weatherClient{weatherClient}
 {
-    wit::EntityGetter<DateTimeEntity> getter{entities};
+    wit::EntityGetter<wit::DateTimeEntity> getter{entities};
     if (getter.has()) {
         _dateTimeEntity = getter.get();
     }
@@ -50,7 +50,7 @@ GetAirQualityAction::result() const
 }
 
 std::shared_ptr<Action>
-GetAirQualityAction::clone(Entities entities)
+GetAirQualityAction::clone(wit::Entities entities)
 {
     return create(
         intent(), _positioningClient, _speakerClient, _weatherClient, std::move(entities));
