@@ -6,8 +6,8 @@
 
 namespace jar {
 
-DateTimeAction::DateTimeAction(std::string intent, Entities entities)
-    : Action{std::move(intent), std::move(entities)}
+DateTimeAction::DateTimeAction(std::string intent)
+    : Action{std::move(intent)}
 {
     retrieveTimestamps();
 }
@@ -33,21 +33,21 @@ DateTimeAction::timestampTo() const
 void
 DateTimeAction::retrieveTimestamps()
 {
-    wit::EntityPredicate<DateTimeEntity> predicate{entities()};
-    if (!predicate.has()) {
-        LOGD("[{}]: No target entity is available", intent());
-        return;
-    }
+//    wit::EntityPredicate<DateTimeEntity> predicate{entities()};
+//    if (!predicate.has()) {
+//        LOGD("[{}]: No target entity is available", intent());
+//        return;
+//    }
 
-    const auto& entity = predicate.get();
-    if (entity.from && entity.to) {
-        _tsFrom = entity.from->timestamp;
-        _tsTo = entity.to->timestamp;
-    } else if (entity.exact) {
-        _tsFrom = _tsTo = entity.exact->timestamp;
-    } else {
-        LOGE("[{}]: Invalid entity content", intent());
-    }
+//    const auto& entity = predicate.get();
+//    if (entity.from && entity.to) {
+//        _tsFrom = entity.from->timestamp;
+//        _tsTo = entity.to->timestamp;
+//    } else if (entity.exact) {
+//        _tsFrom = _tsTo = entity.exact->timestamp;
+//    } else {
+//        LOGE("[{}]: Invalid entity content", intent());
+//    }
 }
 
 } // namespace jar

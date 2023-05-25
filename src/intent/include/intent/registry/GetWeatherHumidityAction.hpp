@@ -1,6 +1,5 @@
 #pragma once
 
-#include "intent/WitTypes.hpp"
 #include "intent/registry/WeatherAction.hpp"
 
 #include <jarvis/speaker/ISpeakerClient.hpp>

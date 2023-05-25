@@ -32,11 +32,15 @@ GetAirQualityAction::GetAirQualityAction(std::string intent,
                                          ISpeakerClient& speakerClient,
                                          IWeatherClient& weatherClient,
                                          Entities entities)
-    : DateTimeAction{std::move(intent), std::move(entities)}
+    : Action{std::move(intent)}
     , _positioningClient{positioningClient}
     , _speakerClient{speakerClient}
     , _weatherClient{weatherClient}
 {
+    wit::EntityGetter<DateTimeEntity> getter{entities};
+    if (getter.has()) {
+        _dateTimeEntity = getter.get();
+    }
 }
 
 const GetAirQualityAction::Result&
@@ -69,7 +73,7 @@ GetAirQualityAction::perform()
         }
     };
 
-    if (hasTimestamps()) {
+    if (_dateTimeEntity.hasValue()) {
         LOGD("[{}]: Time boundaries is available", intent());
         _weatherClient.getAirQualityForecast(loc, std::move(onReady), std::move(onError));
     } else {
@@ -125,7 +129,8 @@ GetAirQualityAction::retrieveResult(const AirQualityForecastData& airQuality)
 {
     int32_t aqi1 = std::numeric_limits<int32_t>::min();
     try {
-        const wit::DateTimePredicate predicate{timestampFrom(), timestampTo()};
+        const wit::DateTimePredicate predicate{_dateTimeEntity.timestampFrom(),
+                                               _dateTimeEntity.timestampTo()};
         std::ranges::for_each(airQuality.data | std::views::filter(predicate),
                               [&](const CustomData& d) {
                                   if (const auto aqi2 = d.get<int32_t>("aqi"); aqi2 > aqi1) {

@@ -4,6 +4,7 @@
 #include "intent/WitHelpers.hpp"
 
 #include <jarvis/Logger.hpp>
+#include <jarvis/weather/Grades.hpp>
 
 #include <boost/assert.hpp>
 #include <fmt/core.h>
@@ -85,7 +86,8 @@ void
 GetRainyStatusAction::retrieveResult(const WeatherForecastData& weather)
 {
     try {
-        const wit::DateTimePredicate predicate{timestampFrom(), timestampTo()};
+        const wit::DateTimePredicate predicate{dateTimeEntity().timestampFrom(),
+                                               dateTimeEntity().timestampTo()};
         const bool willBeRainy = std::ranges::any_of(
             weather.data | std::views::filter(predicate), [](const CustomData& d) {
                 const WeatherGrade grade{d.get<int32_t>("id")};

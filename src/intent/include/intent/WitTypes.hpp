@@ -10,15 +10,25 @@
 
 namespace jar {
 
+/**
+ * The confidence type.
+ */
 struct Confidence {
     float value{};
 };
 
+/**
+ * The base for all entities.
+ */
 struct Entity {
     Confidence confidence{};
 };
 
-struct DateTimeEntity {
+/**
+ * Date and time entity type
+ * (used to store recognized date and time in a speech)
+ */
+struct DateTimeEntity : Entity {
     inline static const std::string_view kName{"wit$datetime"};
     inline static const std::string_view kRole{"datetime"};
 
@@ -29,22 +39,70 @@ struct DateTimeEntity {
         Timestamp timestamp;
     };
 
+    [[nodiscard]] static std::string
+    key()
+    {
+        return std::string{kName} + ':' + std::string{kRole};
+    }
+
+    [[nodiscard]] bool
+    hasValue() const
+    {
+        return (valueFrom && valueTo);
+    }
+
+    [[nodiscard]] const Timestamp&
+    timestampFrom() const
+    {
+        return valueFrom->timestamp;
+    }
+
+    [[nodiscard]] const Timestamp&
+    timestampTo() const
+    {
+        return valueTo->timestamp;
+    }
+
+    std::optional<Value> valueFrom;
+    std::optional<Value> valueTo;
+};
+
+/**
+ * Ordinary entity type
+ * (used to store recognized ordinary number in a speech)
+ */
+struct OrdinaryEntity : Entity {
+    inline static const std::string_view kName{"wit$ordinal"};
+    inline static const std::string_view kRole{"ordinal"};
+
     static std::string
     key()
     {
         return std::string{kName} + ':' + std::string{kRole};
     }
 
-    Confidence confidence;
-    std::optional<Value> from;
-    std::optional<Value> to;
-    std::optional<Value> exact;
+    [[nodiscard]] bool
+    hasValue() const
+    {
+        return bool(value);
+    }
+
+    [[nodiscard]] int32_t
+    number() const
+    {
+        return *value;
+    }
+
+    std::optional<int32_t> value;
 };
 
-using EntityAlts = std::variant<std::monostate, DateTimeEntity>;
+/* The type represents all possible entity types */
+using EntityAlts = std::variant<std::monostate, DateTimeEntity, OrdinaryEntity>;
 
+/* The list of all recognized entities */
 using EntityList = std::vector<EntityAlts>;
 
+/* The list of all recognized entities indexed by key */
 using Entities = std::unordered_map<std::string, EntityList>;
 
 /**

@@ -18,11 +18,15 @@ isConfidentIntent(std::string_view name, float threshold)
 inline Matcher<const jar::DateTimeEntity&>
 matchEntityWithExactTime(jar::DateTimeEntity::Grains grain, std::string_view dateTime)
 {
-    return Field("value",
-                 &jar::DateTimeEntity::exact,
-                 Optional(AllOf(Field(&jar::DateTimeEntity::Value::grain, grain),
-                                Field(&jar::DateTimeEntity::Value::timestamp,
-                                      jar::parseZonedDateTime(dateTime)))));
+    const auto timestamp = jar::parseZonedDateTime(dateTime);
+    return AllOf(Field("valueFrom",
+                       &jar::DateTimeEntity::valueFrom,
+                       Optional(AllOf(Field(&jar::DateTimeEntity::Value::grain, grain),
+                                      Field(&jar::DateTimeEntity::Value::timestamp, timestamp)))),
+                 Field("valueTo",
+                       &jar::DateTimeEntity::valueTo,
+                       Optional(AllOf(Field(&jar::DateTimeEntity::Value::grain, grain),
+                                      Field(&jar::DateTimeEntity::Value::timestamp, timestamp)))));
 }
 
 inline Matcher<const jar::DateTimeEntity&>
@@ -30,13 +34,13 @@ matchEntityWithTimeRange(jar::DateTimeEntity::Grains grain,
                          std::string_view from,
                          std::string_view to)
 {
-    return AllOf(Field("from",
-                       &jar::DateTimeEntity::from,
+    return AllOf(Field("valueFrom",
+                       &jar::DateTimeEntity::valueFrom,
                        Optional(AllOf(Field(&jar::DateTimeEntity::Value::grain, grain),
                                       Field(&jar::DateTimeEntity::Value::timestamp,
                                             jar::parseZonedDateTime(from))))),
-                 Field("to",
-                       &jar::DateTimeEntity::to,
+                 Field("valueTo",
+                       &jar::DateTimeEntity::valueTo,
                        Optional(AllOf(Field(&jar::DateTimeEntity::Value::grain, grain),
                                       Field(&jar::DateTimeEntity::Value::timestamp,
                                             jar::parseZonedDateTime(to))))));

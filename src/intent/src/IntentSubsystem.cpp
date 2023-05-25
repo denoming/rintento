@@ -7,8 +7,8 @@
 #include "intent/RecognitionServer.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 #include "intent/registry/GetAirQualityAction.hpp"
-#include "intent/registry/GetRainyStatusAction.hpp"
-#include "intent/registry/GetWeatherTemperatureAction.hpp"
+//#include "intent/registry/GetRainyStatusAction.hpp"
+//#include "intent/registry/GetWeatherTemperatureAction.hpp"
 
 #include <jarvis/Application.hpp>
 #include <jarvis/Logger.hpp>
@@ -154,12 +154,12 @@ private:
             return;
         }
 
-        _registry->add(GetRainyStatusAction::create(
-            "get_rainy_status", *_positioningClient, *_speakerClient, *_weatherClient));
-        _registry->add(GetAirQualityAction::create(
-            "get_air_quality_status", *_positioningClient, *_speakerClient, *_weatherClient));
-        _registry->add(GetWeatherTemperatureAction::create(
-            "get_weather_temperature", *_positioningClient, *_speakerClient, *_weatherClient));
+//        _registry->add(GetRainyStatusAction::create(
+//            "get_rainy_status", *_positioningClient, *_speakerClient, *_weatherClient));
+//        _registry->add(GetAirQualityAction::create(
+//            "get_air_quality_status", *_positioningClient, *_speakerClient, *_weatherClient));
+//        _registry->add(GetWeatherTemperatureAction::create(
+//            "get_weather_temperature", *_positioningClient, *_speakerClient, *_weatherClient));
     }
 
 private:

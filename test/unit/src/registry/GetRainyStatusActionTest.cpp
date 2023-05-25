@@ -65,7 +65,7 @@ TEST_F(GetRainyStatusActionTest, CheckNotRainyForToday)
     EXPECT_CALL(weather, getWeatherForecast).WillOnce(InvokeArgument<1>(weatherData));
 
     DateTimeEntity entity;
-    entity.exact = DateTimeEntity::Value{
+    entity.valueFrom = entity.valueTo = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::day,
         .timestamp = Timestamp::now(),
     };
@@ -97,11 +97,11 @@ TEST_F(GetRainyStatusActionTest, CheckIsRainyForInterval)
     const auto now = krn::ceil<krn::hours>(krn::system_clock::now());
 
     DateTimeEntity entity;
-    entity.from = DateTimeEntity::Value{
+    entity.valueFrom = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::hour,
         .timestamp = Timestamp{now + krn::hours{1}},
     };
-    entity.to = DateTimeEntity::Value{
+    entity.valueTo = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::hour,
         .timestamp = Timestamp{now + krn::hours{3}},
     };
@@ -133,11 +133,11 @@ TEST_F(GetRainyStatusActionTest, CheckNotIsRainy)
     const auto now = krn::ceil<krn::days>(krn::system_clock::now());
 
     DateTimeEntity entity;
-    entity.from = DateTimeEntity::Value{
+    entity.valueFrom = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::hour,
         .timestamp = Timestamp{now + krn::hours{1}},
     };
-    entity.to = DateTimeEntity::Value{
+    entity.valueTo = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::hour,
         .timestamp = Timestamp{now + krn::hours{3}},
     };

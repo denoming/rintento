@@ -6,7 +6,7 @@ namespace jar {
 
 class DateTimeAction : public Action {
 public:
-    DateTimeAction(std::string intent, Entities entities);
+    DateTimeAction(std::string intent);
 
 protected:
     [[nodiscard]] bool

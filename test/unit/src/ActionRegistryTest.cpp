@@ -10,7 +10,7 @@ using namespace jar;
 class TestAction final : public jar::Action {
 public:
     TestAction(std::string intent, Entities entities = {})
-        : Action{std::move(intent), std::move(entities)}
+        : Action{std::move(intent)}
     {
     }
 

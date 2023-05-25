@@ -1,6 +1,7 @@
 #pragma once
 
-#include "intent/registry/DateTimeAction.hpp"
+#include "intent/Action.hpp"
+#include "intent/WitTypes.hpp"
 
 #include <jarvis/speaker/ISpeakerClient.hpp>
 #include <jarvis/weather/IWeatherClient.hpp>
@@ -11,7 +12,7 @@ namespace jar {
 
 class IPositioningClient;
 
-class WeatherAction : public DateTimeAction, public std::enable_shared_from_this<WeatherAction> {
+class WeatherAction : public Action, public std::enable_shared_from_this<WeatherAction> {
 public:
     WeatherAction(std::string intent,
                   IPositioningClient& positioningClient,
@@ -23,6 +24,9 @@ public:
     perform() override;
 
 protected:
+    const DateTimeEntity&
+    dateTimeEntity();
+
     IPositioningClient&
     positioning();
 
@@ -54,6 +58,7 @@ private:
     IPositioningClient& _positioningClient;
     ISpeakerClient& _speakerClient;
     IWeatherClient& _weatherClient;
+    DateTimeEntity _dateTimeEntity;
 };
 
 } // namespace jar

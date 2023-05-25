@@ -58,7 +58,7 @@ TEST_F(GetAirQualityActionTest, CheckTodayAirQuality)
     EXPECT_CALL(weather, getAirQualityForecast).WillOnce(InvokeArgument<1>(airQuality));
 
     DateTimeEntity entity;
-    entity.exact = DateTimeEntity::Value{
+    entity.valueFrom = entity.valueTo = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::day,
         .timestamp = Timestamp::now(),
     };
@@ -102,11 +102,11 @@ TEST_F(GetAirQualityActionTest, CheckWorstAirQuality)
     EXPECT_CALL(weather, getAirQualityForecast).WillOnce(InvokeArgument<1>(airQuality));
 
     DateTimeEntity entity;
-    entity.from = DateTimeEntity::Value{
+    entity.valueFrom = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::hour,
         .timestamp = Timestamp{krn::floor<krn::days>(now)},
     };
-    entity.to = DateTimeEntity::Value{
+    entity.valueTo = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::hour,
         .timestamp = Timestamp{krn::ceil<krn::days>(now)},
     };

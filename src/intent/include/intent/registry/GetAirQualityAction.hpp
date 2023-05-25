@@ -1,7 +1,7 @@
 #pragma once
 
+#include "intent/Action.hpp"
 #include "intent/WitTypes.hpp"
-#include "intent/registry/DateTimeAction.hpp"
 
 #include <jarvis/speaker/ISpeakerClient.hpp>
 #include <jarvis/weather/Grades.hpp>
@@ -14,7 +14,7 @@ namespace jar {
 
 class IPositioningClient;
 
-class GetAirQualityAction final : public DateTimeAction,
+class GetAirQualityAction final : public Action,
                                   public std::enable_shared_from_this<GetAirQualityAction> {
 public:
     using Result = std::optional<AirQualityIndex>;
@@ -67,6 +67,7 @@ private:
     IPositioningClient& _positioningClient;
     ISpeakerClient& _speakerClient;
     IWeatherClient& _weatherClient;
+    DateTimeEntity _dateTimeEntity;
     Result _result;
 };
 

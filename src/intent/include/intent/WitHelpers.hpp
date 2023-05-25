@@ -34,32 +34,24 @@ private:
 };
 
 /**
- * Predicate to filter entity by specific type.
+ * Getter for retrieving particular entity type.
  *
  * @tparam T The type of entity (e.g. DataTimeEntity)
  */
 template<typename T>
-class EntityPredicate {
+class EntityGetter {
 public:
-    EntityPredicate(const Entities& entities)
+    EntityGetter(const Entities& entities)
         : _entities{entities}
     {
     }
 
-    /**
-     * Checks if entities contains entity with specific type using \c key value.
-     * @return \c true iff entities contains entity with specific type
-     */
     bool
     has()
     {
         return _entities.contains(T::key());
     }
 
-    /**
-     * Returns a reference to entity with specific type.
-     * @return a reference to entity with specific type.
-     */
     const T&
     get()
     {
@@ -74,5 +66,7 @@ public:
 private:
     const Entities& _entities;
 };
+
+
 
 } // namespace jar::wit

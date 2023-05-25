@@ -2,9 +2,10 @@
 
 #include "intent/Formatters.hpp"
 #include "intent/IPositioningClient.hpp"
+#include "intent/WitHelpers.hpp"
 
-#include <jarvis/Logger.hpp>
 #include <jarvis/Formatters.hpp>
+#include <jarvis/Logger.hpp>
 
 namespace jar {
 
@@ -13,11 +14,15 @@ WeatherAction::WeatherAction(std::string intent,
                              ISpeakerClient& speakerClient,
                              IWeatherClient& weatherClient,
                              Entities entities)
-    : DateTimeAction{std::move(intent), std::move(entities)}
+    : Action{std::move(intent)}
     , _positioningClient{positioningClient}
     , _speakerClient{speakerClient}
     , _weatherClient{weatherClient}
 {
+    wit::EntityGetter<DateTimeEntity> getter{entities};
+    if (getter.has()) {
+        _dateTimeEntity = getter.get();
+    }
 }
 
 void
@@ -37,13 +42,19 @@ WeatherAction::perform()
         }
     };
 
-    if (hasTimestamps()) {
+    if (dateTimeEntity().hasValue()) {
         LOGD("[{}]: Time boundaries is available", intent());
         _weatherClient.getWeatherForecast(loc, std::move(onReady), std::move(onError));
     } else {
         LOGD("[{}]: No time boundaries is available", intent());
         _weatherClient.getWeather(loc, std::move(onReady), std::move(onError));
     }
+}
+
+const DateTimeEntity&
+WeatherAction::dateTimeEntity()
+{
+    return _dateTimeEntity;
 }
 
 IPositioningClient&

@@ -19,15 +19,12 @@ public:
     /* Signals */
     using OnDoneSignal = sigc::signal<OnDone>;
 
-    Action(std::string intent, Entities entities = {});
+    Action(std::string intent);
 
     virtual ~Action() = default;
 
     [[nodiscard]] const std::string&
     intent() const noexcept;
-
-    [[nodiscard]] const Entities&
-    entities() const noexcept;
 
     [[nodiscard]] virtual std::shared_ptr<Action>
     clone(Entities entities) = 0;
@@ -48,7 +45,6 @@ protected:
 
 private:
     std::string _intent;
-    Entities _entities;
     OnDoneSignal _onDoneSig;
 };
 

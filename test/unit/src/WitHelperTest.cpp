@@ -65,11 +65,11 @@ TEST(WitHelperTest, EntityPredicate)
     const auto ts2 = Timestamp{now + krn::hours{3}};
 
     DateTimeEntity entity;
-    entity.from = DateTimeEntity::Value{
+    entity.valueFrom = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::hour,
         .timestamp = ts1,
     };
-    entity.to = DateTimeEntity::Value{
+    entity.valueTo = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::hour,
         .timestamp = ts2,
     };
@@ -77,12 +77,12 @@ TEST(WitHelperTest, EntityPredicate)
     Entities entities1{
         {DateTimeEntity::key(), EntityList{entity}},
     };
-    wit::EntityPredicate<DateTimeEntity> predicate1{entities1};
+    wit::EntityGetter<DateTimeEntity> predicate1{entities1};
     EXPECT_TRUE(predicate1.has());
     EXPECT_NO_THROW({ [[maybe_unused]] auto& ref = predicate1.get(); });
 
     Entities entities2;
-    wit::EntityPredicate<DateTimeEntity> predicate2{entities2};
+    wit::EntityGetter<DateTimeEntity> predicate2{entities2};
     EXPECT_FALSE(predicate2.has());
     EXPECT_ANY_THROW({ [[maybe_unused]] auto& ref = predicate2.get(); });
 }

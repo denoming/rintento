@@ -90,11 +90,11 @@ TEST_F(GetWindConditionActionTest, GetForPeriod)
     EXPECT_CALL(weather, getWeatherForecast).WillOnce(InvokeArgument<1>(weatherData));
 
     DateTimeEntity entity;
-    entity.from = DateTimeEntity::Value{
+    entity.valueFrom = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::hour,
         .timestamp = Timestamp{t1},
     };
-    entity.to = DateTimeEntity::Value{
+    entity.valueTo = DateTimeEntity::Value{
         .grain = DateTimeEntity::Grains::hour,
         .timestamp = Timestamp{t2},
     };

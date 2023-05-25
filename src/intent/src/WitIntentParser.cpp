@@ -58,13 +58,14 @@ tag_invoke(json::value_to_tag<DateTimeEntity>, const json::value& v)
     DateTimeEntity entity;
     const auto& object = v.as_object();
     if (const auto& value = object.if_contains("value"); value) {
-        entity.exact = json::value_to<DateTimeEntity::Value>(v);
-    }
-    if (const auto& value = object.if_contains("from"); value) {
-        entity.from = json::value_to<DateTimeEntity::Value>(object.at("from"));
-    }
-    if (const auto& value = object.if_contains("to"); value) {
-        entity.to = json::value_to<DateTimeEntity::Value>(object.at("to"));
+        entity.valueFrom = entity.valueTo = json::value_to<DateTimeEntity::Value>(v);
+    } else {
+        if (const auto& from = object.if_contains("from"); from) {
+            entity.valueFrom = json::value_to<DateTimeEntity::Value>(*from);
+        }
+        if (const auto& to = object.if_contains("to"); to) {
+            entity.valueTo = json::value_to<DateTimeEntity::Value>(*to);
+        }
     }
     entity.confidence = json::value_to<Confidence>(object.at("confidence"));
     return entity;

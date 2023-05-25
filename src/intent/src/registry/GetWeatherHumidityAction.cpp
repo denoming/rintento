@@ -83,7 +83,8 @@ void
 GetWeatherHumidityAction::retrieveResult(const WeatherForecastData& weather)
 {
     try {
-        const wit::DateTimePredicate predicate{timestampFrom(), timestampTo()};
+        const wit::DateTimePredicate predicate{dateTimeEntity().timestampFrom(),
+                                               dateTimeEntity().timestampTo()};
         int32_t count{};
         int32_t min{std::numeric_limits<int32_t>::max()};
         int32_t max{std::numeric_limits<int32_t>::min()};
