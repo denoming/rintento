@@ -12,20 +12,23 @@ namespace jar {
 
 class IPositioningClient;
 
-class WeatherAction : public Action, public std::enable_shared_from_this<WeatherAction> {
+class UvIndexAction : public Action, public std::enable_shared_from_this<UvIndexAction> {
 public:
-    WeatherAction(std::string intent,
+    void
+    perform() override;
+
+protected:
+    UvIndexAction(std::string intent,
                   IPositioningClient& positioningClient,
                   ISpeakerClient& speakerClient,
                   IWeatherClient& weatherClient,
                   wit::Entities entities);
 
-    void
-    perform() override;
-
-protected:
     const wit::DateTimeEntity&
     dateTimeEntity() const;
+
+    const wit::OrdinaryEntity&
+    ordinaryEntity() const;
 
     IPositioningClient&
     positioning();
@@ -37,28 +40,29 @@ protected:
     speaker();
 
     virtual void
-    retrieveResult(const WeatherData& weather)
+    retrieveResult(const UvIndexData& data)
         = 0;
 
     virtual void
-    retrieveResult(const WeatherForecastData& weather)
+    retrieveResult(const UvIndexForecastData& data)
         = 0;
 
 private:
     void
-    onWeatherDataReady(WeatherData data);
+    onUvIndexDataReady(UvIndexData data);
 
     void
-    onWeatherDataReady(WeatherForecastData data);
+    onUvIndexDataReady(UvIndexForecastData data);
 
     void
-    onWeatherDataError(std::runtime_error error);
+    onUvIndexDataError(std::runtime_error error);
 
 private:
     IPositioningClient& _positioningClient;
     ISpeakerClient& _speakerClient;
     IWeatherClient& _weatherClient;
     wit::DateTimeEntity _dateTimeEntity;
+    wit::OrdinaryEntity _ordinaryEntity;
 };
 
 } // namespace jar

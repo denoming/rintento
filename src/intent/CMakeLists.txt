@@ -42,12 +42,15 @@ target_sources(${TARGET}
             src/ActionRegistry.cpp
             src/PositioningClient.cpp
             src/registry/WeatherAction.cpp
+            src/registry/UvIndexAction.cpp
             src/registry/GetRainyStatusAction.cpp
             src/registry/GetAirQualityAction.cpp
             src/registry/GetWeatherTemperatureAction.cpp
             src/registry/GetWeatherHumidityAction.cpp
             src/registry/GetWindConditionAction.cpp
             src/registry/GetWeatherStatusAction.cpp
+            src/registry/GetUvStatusAction.cpp
+            src/registry/GetUvSafeTimeAction.cpp
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_23)

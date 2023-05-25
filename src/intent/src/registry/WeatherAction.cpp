@@ -52,7 +52,7 @@ WeatherAction::perform()
 }
 
 const wit::DateTimeEntity&
-WeatherAction::dateTimeEntity()
+WeatherAction::dateTimeEntity() const
 {
     return _dateTimeEntity;
 }
@@ -76,26 +76,26 @@ WeatherAction::speaker()
 }
 
 void
-WeatherAction::onWeatherDataReady(WeatherData weather)
+WeatherAction::onWeatherDataReady(WeatherData data)
 {
     LOGD("[{}]: Getting weather data was succeed", intent());
 
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
     } else {
-        retrieveResult(weather);
+        retrieveResult(data);
     }
 }
 
 void
-WeatherAction::onWeatherDataReady(WeatherForecastData weather)
+WeatherAction::onWeatherDataReady(WeatherForecastData data)
 {
     LOGD("[{}]: Getting weather forecast data was succeed", intent());
 
     if (cancelled()) {
         setError(std::make_error_code(std::errc::operation_canceled));
     } else {
-        retrieveResult(weather);
+        retrieveResult(data);
     }
 }
 
