@@ -1,15 +1,12 @@
-set(TARGET jarvis-executor-test-common)
+set(TARGET rintento-test-common)
 
 add_library(${TARGET} STATIC "")
-add_library(Jarvis::Executor::Test ALIAS ${TARGET})
+add_library(Rintento::Test ALIAS ${TARGET})
 
 target_sources(${TARGET}
     PRIVATE src/TestMain.cpp
             src/TestWaiter.cpp
             src/Utils.cpp
-            src/MockPositioningClient.cpp
-            src/MockSpeakerClient.cpp
-            src/MockWeatherClient.cpp
 )
 
 target_include_directories(${TARGET}
@@ -17,11 +14,10 @@ target_include_directories(${TARGET}
 )
 
 target_link_libraries(${TARGET}
-    PUBLIC GTest::gtest GTest::gmock
-           Jarvis::Executor::Common
-           Jarvis::Executor::Intent
-           Jarvis::Speaker
-           Jarvis::Weather
+    PUBLIC GTest::gtest
+           GTest::gmock
+           Rintento::Common
+           Rintento::Intent
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_23)

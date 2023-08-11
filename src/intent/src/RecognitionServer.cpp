@@ -4,7 +4,7 @@
 #include "intent/RecognitionDispatcher.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 
-#include <jarvis/Logger.hpp>
+#include <jarvisto/Logger.hpp>
 
 namespace jar {
 

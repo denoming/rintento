@@ -1,9 +1,9 @@
 include(GNUInstallDirs)
 
-set(TARGET jarvis-executor-cli)
+set(TARGET rintento-cli)
 
 add_executable(${TARGET} "")
-add_executable(Jarvis::Executor::Cli ALIAS ${TARGET})
+add_executable(Rintento::Cli ALIAS ${TARGET})
 
 target_sources(${TARGET}
     PRIVATE
@@ -18,14 +18,14 @@ target_include_directories(${TARGET}
 target_link_libraries(${TARGET}
     PRIVATE Boost::headers
             Boost::program_options
-    PRIVATE Jarvis::Common
-            Jarvis::Executor::Common
-            Jarvis::Executor::Intent
+    PRIVATE Jarvisto::Jarvisto
+            Rintento::Common
+            Rintento::Intent
 )
 
 target_compile_features(${TARGET} PRIVATE cxx_std_23)
 
 install(
     TARGETS ${TARGET}
-    COMPONENT JarvisExecutorRuntime
+    COMPONENT RintentoExecutorRuntime
 )

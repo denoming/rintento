@@ -2,7 +2,7 @@
 
 #include "intent/WitTypes.hpp"
 
-#include <jarvis/Cancellable.hpp>
+#include <jarvisto/Cancellable.hpp>
 
 #include <atomic>
 #include <condition_variable>

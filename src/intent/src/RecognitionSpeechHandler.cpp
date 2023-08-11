@@ -1,6 +1,6 @@
 #include "intent/RecognitionSpeechHandler.hpp"
 
-#include <jarvis/Logger.hpp>
+#include <jarvisto/Logger.hpp>
 
 #include "intent/RecognitionConnection.hpp"
 #include "intent/Utils.hpp"

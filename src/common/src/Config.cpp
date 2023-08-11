@@ -3,7 +3,7 @@
 #include "common/Constants.hpp"
 #include "common/Utils.hpp"
 
-#include <jarvis/Logger.hpp>
+#include <jarvisto/Logger.hpp>
 
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -64,11 +64,11 @@ bool
 Config::load()
 {
     bool rv{false};
-    if (const auto filePathOpt = getEnvVar("JARVIS_EXECUTOR_CONFIG"); filePathOpt) {
+    if (const auto filePathOpt = getEnvVar("RINTENTO_EXECUTOR_CONFIG"); filePathOpt) {
         fs::path filePath{*filePathOpt};
         rv = load(filePath);
     } else {
-        LOGE("Set the path to config file using JARVIS_EXECUTOR_CONFIG env variable");
+        LOGE("Set the path to config file using RINTENTO_EXECUTOR_CONFIG env variable");
     }
     return rv;
 }

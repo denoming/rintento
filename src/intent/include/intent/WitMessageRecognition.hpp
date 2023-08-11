@@ -2,7 +2,7 @@
 
 #include "intent/WitRecognition.hpp"
 
-#include <jarvis/Network.hpp>
+#include <jarvisto/Network.hpp>
 
 #include <memory>
 #include <string_view>

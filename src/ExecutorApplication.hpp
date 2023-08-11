@@ -1,6 +1,6 @@
 #pragma once
 
-#include <jarvis/Application.hpp>
+#include <jarvisto/Application.hpp>
 
 #include <memory>
 
@@ -16,12 +16,6 @@ public:
     name() const final;
 
 private:
-    const char*
-    contextId() final;
-
-    virtual const char*
-    contextDesc() final;
-
     void
     initialize(Application& application) override;
 

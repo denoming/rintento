@@ -1,4 +1,4 @@
-set(TARGET jarvis-executor-unit-test)
+set(TARGET rintento-unit-test)
 
 add_executable(${TARGET} "")
 
@@ -8,25 +8,16 @@ target_sources(${TARGET}
             src/WitSpeechRecognitionTest.cpp
             src/UtilsTest.cpp
             src/ActionRegistryTest.cpp
-            src/WitHelperTest.cpp
-            src/registry/GetRainyStatusActionTest.cpp
-            src/registry/GetAirQualityActionTest.cpp
-            src/registry/GetWeatherTemperatureActionTest.cpp
-            src/registry/GetWindConditionActionTest.cpp
-            src/registry/GetWeatherHumidityActionTest.cpp
-            src/registry/GetWeatherStatusActionTest.cpp
-            src/registry/GetUvStatusActionTest.cpp
-            src/registry/GetUvSafeTimeActionTest.cpp
 )
 
 target_link_libraries(${TARGET}
-    PRIVATE Jarvis::Executor::Intent
-            Jarvis::Executor::Test
+    PRIVATE Rintento::Intent
+            Rintento::Test
 )
 
 install(
     TARGETS ${TARGET}
-    COMPONENT JarvisExecutorRuntime
+    COMPONENT RintentoExecutorRuntime
 )
 
 if (NOT CMAKE_CROSSCOMPILING)

@@ -3,59 +3,16 @@
 #include "common/Config.hpp"
 #include "intent/ActionPerformer.hpp"
 #include "intent/ActionRegistry.hpp"
-#include "intent/PositioningClient.hpp"
 #include "intent/RecognitionServer.hpp"
 #include "intent/WitRecognitionFactory.hpp"
-#include "intent/registry/GetAirQualityAction.hpp"
-//#include "intent/registry/GetRainyStatusAction.hpp"
-//#include "intent/registry/GetWeatherTemperatureAction.hpp"
 
-#include <jarvis/Application.hpp>
-#include <jarvis/Logger.hpp>
-#include <jarvis/Worker.hpp>
-#include <jarvis/speaker/SpeakerClient.hpp>
-#include <jarvis/weather/WeatherClient.hpp>
+#include <jarvisto/Application.hpp>
+#include <jarvisto/Logger.hpp>
+#include <jarvisto/Worker.hpp>
 
 #include <boost/assert.hpp>
 
 namespace jar {
-
-namespace {
-
-std::unique_ptr<SpeakerClient>
-getSpeakerClient()
-{
-    try {
-        return std::make_unique<SpeakerClient>();
-    } catch (const std::exception& e) {
-        LOGE("Error on create speaker client: {}", e.what());
-        return {};
-    }
-}
-
-std::unique_ptr<WeatherClient>
-getWeatherClient()
-{
-    try {
-        return std::make_unique<WeatherClient>();
-    } catch (const std::exception& e) {
-        LOGE("Error on create weather client: {}", e.what());
-        return {};
-    }
-}
-
-std::unique_ptr<PositioningClient>
-getPositioningClient()
-{
-    try {
-        return std::make_unique<PositioningClient>();
-    } catch (const std::exception& e) {
-        LOGE("Error on create positioning client: {}", e.what());
-        return {};
-    }
-}
-
-} // namespace
 
 class IntentSubsystem::Impl {
 public:
@@ -73,10 +30,6 @@ public:
         _registry = std::make_unique<ActionRegistry>();
         _performer = ActionPerformer::create(*_registry);
         _server = RecognitionServer::create(_proxyWorker.executor(), _performer, _factory);
-
-        _positioningClient = getPositioningClient();
-        _speakerClient = getSpeakerClient();
-        _weatherClient = getWeatherClient();
     }
 
     void
@@ -84,8 +37,6 @@ public:
     {
         _proxyWorker.start();
         _recognizeWorker.start();
-
-        registerIntents();
 
         const auto port = _config->proxyServerPort();
         BOOST_ASSERT(_server);
@@ -110,56 +61,10 @@ public:
     void
     finalize()
     {
-        _speakerClient.reset();
-        _weatherClient.reset();
-        _positioningClient.reset();
         _server.reset();
         _performer.reset();
         _registry.reset();
         _factory.reset();
-    }
-
-private:
-    [[nodiscard]] bool
-    hasSpeakerService() const
-    {
-        return bool(_speakerClient);
-    }
-
-    [[nodiscard]] bool
-    hasWeatherService() const
-    {
-        return bool(_weatherClient);
-    }
-
-    [[nodiscard]] bool
-    hasPositioningService() const
-    {
-        return bool(_positioningClient);
-    }
-
-    void
-    registerIntents()
-    {
-        if (!hasWeatherService()) {
-            LOGE("Weather service is not available");
-            return;
-        }
-        if (!hasSpeakerService()) {
-            LOGE("Speaker service is not available");
-            return;
-        }
-        if (!hasPositioningService()) {
-            LOGE("Positioning service is not available");
-            return;
-        }
-
-//        _registry->add(GetRainyStatusAction::create(
-//            "get_rainy_status", *_positioningClient, *_speakerClient, *_weatherClient));
-//        _registry->add(GetAirQualityAction::create(
-//            "get_air_quality_status", *_positioningClient, *_speakerClient, *_weatherClient));
-//        _registry->add(GetWeatherTemperatureAction::create(
-//            "get_weather_temperature", *_positioningClient, *_speakerClient, *_weatherClient));
     }
 
 private:
@@ -170,9 +75,6 @@ private:
     std::shared_ptr<WitRecognitionFactory> _factory;
     std::shared_ptr<ActionPerformer> _performer;
     std::shared_ptr<RecognitionServer> _server;
-    std::unique_ptr<PositioningClient> _positioningClient;
-    std::unique_ptr<SpeakerClient> _speakerClient;
-    std::unique_ptr<WeatherClient> _weatherClient;
 };
 
 IntentSubsystem::IntentSubsystem(std::shared_ptr<Config> config)

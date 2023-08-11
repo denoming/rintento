@@ -3,7 +3,7 @@
 #include "intent/Action.hpp"
 #include "intent/ActionRegistry.hpp"
 
-#include <jarvis/Logger.hpp>
+#include <jarvisto/Logger.hpp>
 
 #include <ranges>
 

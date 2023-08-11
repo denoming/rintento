@@ -4,7 +4,7 @@
 #include "intent/Utils.hpp"
 #include "intent/WitIntentParser.hpp"
 
-#include <jarvis/Logger.hpp>
+#include <jarvisto/Logger.hpp>
 
 #include <boost/assert.hpp>
 

@@ -9,8 +9,8 @@
 #include "test/TestWaiter.hpp"
 #include "test/Utils.hpp"
 
-#include <jarvis/Logger.hpp>
-#include <jarvis/Worker.hpp>
+#include <jarvisto/Logger.hpp>
+#include <jarvisto/Worker.hpp>
 
 using namespace testing;
 using namespace jar;

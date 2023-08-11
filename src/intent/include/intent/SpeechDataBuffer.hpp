@@ -1,6 +1,6 @@
 #pragma once
 
-#include <jarvis/Network.hpp>
+#include <jarvisto/Network.hpp>
 
 #include <boost/circular_buffer.hpp>
 

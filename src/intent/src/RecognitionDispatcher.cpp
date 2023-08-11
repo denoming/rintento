@@ -8,7 +8,7 @@
 #include "intent/Utils.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 
-#include <jarvis/Logger.hpp>
+#include <jarvisto/Logger.hpp>
 
 #include <boost/assert.hpp>
 

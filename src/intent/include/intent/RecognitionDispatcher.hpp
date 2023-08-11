@@ -2,7 +2,7 @@
 
 #include "intent/WitTypes.hpp"
 
-#include <jarvis/Network.hpp>
+#include <jarvisto/Network.hpp>
 
 #include <functional>
 #include <memory>

@@ -2,7 +2,7 @@
 
 #include "intent/Utils.hpp"
 
-#include <jarvis/Logger.hpp>
+#include <jarvisto/Logger.hpp>
 
 #include <boost/json.hpp>
 
@@ -159,7 +159,7 @@ recognizeSpeech(io::any_io_executor executor,
         constexpr const std::size_t kBufferSize{5 * 1024};
         std::array<char, kBufferSize> buffer = {0};
 
-        auto totalSize = is.tellg();
+        auto totalSize = int(is.tellg());
         LOGD("The size of <{}> speech file is <{}> bytes", speechFile, totalSize);
         is.seekg(0);
 

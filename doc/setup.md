@@ -1,7 +1,7 @@
 # Setup
 
 Configuration file represents a JSON file.
-The path to this file should be specified by `JARVIS_EXECUTOR_CONFIG` environment variable.
+The path to this file should be specified by `RINTENTO_EXECUTOR_CONFIG` environment variable.
 
 ## Description
 

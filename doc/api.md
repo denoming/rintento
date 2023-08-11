@@ -1,6 +1,6 @@
 # Introduction
 
-J.A.R.V.I.S executor service API represents HTTP API.
+The `Rintento` service API represents HTTP API.
 
 # Example
 

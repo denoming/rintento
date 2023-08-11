@@ -2,7 +2,7 @@
 
 set -e
 
-DOCKER_IMAGE_NAME=my/jarvis-dev-image:executor
+DOCKER_IMAGE_NAME=my/rintento-dev-image
 
 USER_NAME=${USER}
 USER_UID=$(id -u)
@@ -38,10 +38,10 @@ run_image() {
   --rm \
   --user="${USER_UID}:${USER_GID}" \
   --volume="${PROJECT_DIR}:${PROJECT_DIR}:rw" \
-  --volume="$HOME/.local/share/jarvis:$HOME/.local/share/jarvis" \
+  --volume="$HOME/.local/share/rintento:$HOME/.local/share/rintento" \
   --network=bridge \
   --workdir="${PROJECT_DIR}" \
-  --env JARVIS_EXECUTOR_CONFIG="$HOME/.local/share/jarvis/jarvis-executor-config.json" \
+  --env RINTENTO_EXECUTOR_CONFIG="$HOME/.local/share/rintento/rintento-config.json" \
   "${DOCKER_IMAGE_NAME}")
 
   if [ -n "$(docker images -q ${DOCKER_IMAGE_NAME})" ]; then

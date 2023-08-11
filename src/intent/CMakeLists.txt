@@ -1,17 +1,15 @@
-set(TARGET jarvis-executor-intent)
+set(TARGET rintento-intent)
 
 add_library(${TARGET} STATIC)
-add_library(Jarvis::Executor::Intent ALIAS ${TARGET})
+add_library(Rintento::Intent ALIAS ${TARGET})
 
 target_include_directories(${TARGET}
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
 )
 
 target_link_libraries(${TARGET}
-    PUBLIC Jarvis::Common
-           Jarvis::Speaker
-           Jarvis::Weather
-           Jarvis::Executor::Common
+    PUBLIC Jarvisto::Jarvisto
+           Rintento::Common
            PkgConfig::SigCpp
            Boost::headers
            Boost::json
@@ -27,7 +25,6 @@ target_sources(${TARGET}
             src/WitIntentParser.cpp
             src/WitRecognitionFactory.cpp
             src/WitTypes.cpp
-            src/WitHelpers.cpp
             src/RecognitionServer.cpp
             src/RecognitionDispatcher.cpp
             src/ActionPerformer.cpp
@@ -40,17 +37,6 @@ target_sources(${TARGET}
             src/Utils.cpp
             src/Action.cpp
             src/ActionRegistry.cpp
-            src/PositioningClient.cpp
-            src/registry/WeatherAction.cpp
-            src/registry/UvIndexAction.cpp
-            src/registry/GetRainyStatusAction.cpp
-            src/registry/GetAirQualityAction.cpp
-            src/registry/GetWeatherTemperatureAction.cpp
-            src/registry/GetWeatherHumidityAction.cpp
-            src/registry/GetWindConditionAction.cpp
-            src/registry/GetWeatherStatusAction.cpp
-            src/registry/GetUvStatusAction.cpp
-            src/registry/GetUvSafeTimeAction.cpp
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_23)

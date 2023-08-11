@@ -3,10 +3,10 @@
 #include "cli/Clients.hpp"
 #include "common/Constants.hpp"
 
-#include <jarvis/Logger.hpp>
-#include <jarvis/LoggerInitializer.hpp>
-#include <jarvis/Network.hpp>
-#include <jarvis/Worker.hpp>
+#include <jarvisto/Logger.hpp>
+#include <jarvisto/LoggerInitializer.hpp>
+#include <jarvisto/Network.hpp>
+#include <jarvisto/Worker.hpp>
 
 #include <boost/program_options.hpp>
 

@@ -7,7 +7,7 @@
 #include "test/Matchers.hpp"
 #include "test/TestWaiter.hpp"
 
-#include <jarvis/Worker.hpp>
+#include <jarvisto/Worker.hpp>
 
 #include <filesystem>
 #include <thread>

@@ -3,7 +3,7 @@
 #include "common/Config.hpp"
 #include "intent/IntentSubsystem.hpp"
 
-#include <jarvis/Logger.hpp>
+#include <jarvisto/Logger.hpp>
 
 #include <optional>
 
@@ -13,18 +13,6 @@ const char*
 ExecutorApplication::name() const
 {
     return "Executor";
-}
-
-const char*
-ExecutorApplication::contextId()
-{
-    return "EXEC";
-}
-
-const char*
-ExecutorApplication::contextDesc()
-{
-    return "J.A.R.V.I.S Executor Context";
 }
 
 void

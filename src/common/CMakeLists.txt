@@ -1,14 +1,14 @@
-set(TARGET jarvis-executor-common)
+set(TARGET rintento-common)
 
 add_library(${TARGET} STATIC)
-add_library(Jarvis::Executor::Common ALIAS ${TARGET})
+add_library(Rintento::Common ALIAS ${TARGET})
 
 target_include_directories(${TARGET}
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
 )
 
 target_link_libraries(${TARGET}
-    PUBLIC Jarvis::Common
+    PUBLIC Jarvisto::Jarvisto
     PUBLIC Boost::headers
 )
 
