@@ -16,27 +16,29 @@ namespace jar {
 
 class IntentSubsystem::Impl {
 public:
-    Impl(std::shared_ptr<Config> config)
-        : _config{config}
-        , _proxyWorker{config.get()->proxyServerThreads()}
-        , _recognizeWorker{config->recognizeThreads()}
+    explicit Impl(std::shared_ptr<Config> config)
+        : _config{std::move(config)}
     {
     }
 
     void
     initialize(Application& /*application*/)
     {
-        _factory = std::make_unique<WitRecognitionFactory>(_config, _recognizeWorker.executor());
+        _proxyWorker = std::make_unique<Worker>(_config->proxyServerThreads());
+        _recognizeWorker = std::make_unique<Worker>(_config->recognizeThreads());
+        _factory = std::make_unique<WitRecognitionFactory>(_config, _recognizeWorker->executor());
         _registry = std::make_unique<ActionRegistry>();
         _performer = ActionPerformer::create(*_registry);
-        _server = RecognitionServer::create(_proxyWorker.executor(), _performer, _factory);
+        _server = RecognitionServer::create(_proxyWorker->executor(), _performer, _factory);
     }
 
     void
     setUp(Application& /*application*/)
     {
-        _proxyWorker.start();
-        _recognizeWorker.start();
+        BOOST_ASSERT(_proxyWorker);
+        _proxyWorker->start();
+        BOOST_ASSERT(_recognizeWorker);
+        _recognizeWorker->start();
 
         const auto port = _config->proxyServerPort();
         BOOST_ASSERT(_server);
@@ -54,8 +56,12 @@ public:
             _server->shutdown();
         }
 
-        _proxyWorker.stop();
-        _recognizeWorker.stop();
+        if (_proxyWorker) {
+            _proxyWorker->stop();
+        }
+        if (_recognizeWorker) {
+            _recognizeWorker->stop();
+        }
     }
 
     void
@@ -65,11 +71,13 @@ public:
         _performer.reset();
         _registry.reset();
         _factory.reset();
+        _recognizeWorker.reset();
+        _proxyWorker.reset();
     }
 
 private:
-    Worker _proxyWorker;
-    Worker _recognizeWorker;
+    std::unique_ptr<Worker> _proxyWorker;
+    std::unique_ptr<Worker> _recognizeWorker;
     std::shared_ptr<Config> _config;
     std::unique_ptr<ActionRegistry> _registry;
     std::shared_ptr<WitRecognitionFactory> _factory;
