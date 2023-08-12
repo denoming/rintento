@@ -13,11 +13,9 @@ RecognitionServer::create(io::any_io_executor executor,
                           std::shared_ptr<ActionPerformer> performer,
                           std::shared_ptr<WitRecognitionFactory> factory)
 {
-    // clang-format off
     return std::shared_ptr<RecognitionServer>(
         new RecognitionServer{std::move(executor), std::move(performer), std::move(factory)}
     );
-    // clang-format on
 }
 
 RecognitionServer::RecognitionServer(io::any_io_executor executor,
@@ -26,7 +24,7 @@ RecognitionServer::RecognitionServer(io::any_io_executor executor,
     : _executor{std::move(executor)}
     , _performer{std::move(performer)}
     , _acceptor{io::make_strand(_executor)}
-    , _factory{factory}
+    , _factory{std::move(factory)}
     , _shutdownReady{false}
     , _acceptorReady{false}
 {
@@ -35,42 +33,49 @@ RecognitionServer::RecognitionServer(io::any_io_executor executor,
 bool
 RecognitionServer::listen(io::ip::port_type port)
 {
-    tcp::endpoint endpoint{io::ip::address_v4::any(), port};
-    return listen(endpoint);
+    return listen(tcp::endpoint{tcp::v4(), port});
 }
 
 bool
-RecognitionServer::listen(tcp::endpoint endpoint)
+RecognitionServer::listen(const tcp::endpoint& endpoint)
+{
+    if (not doListen(endpoint)) {
+        LOGE("Unable to start listening");
+        return false;
+    }
+    doAccept();
+    return true;
+}
+
+bool
+RecognitionServer::doListen(const tcp::endpoint& endpoint)
 {
     _shutdownReady = false;
 
     sys::error_code error;
     _acceptor.open(endpoint.protocol(), error);
     if (error) {
-        LOGE("Failed to open acceptor: <{}>", error.message());
+        LOGE("Unable to open acceptor: <{}>", error.message());
         return false;
     }
 
     _acceptor.set_option(io::socket_base::reuse_address(true), error);
     if (error) {
-        LOGE("Failed to set option: <{}>", error.message());
+        LOGE("Unable to set option: <{}>", error.message());
         return false;
     }
 
     _acceptor.bind(endpoint, error);
     if (error) {
-        LOGE("Failed to bind: <{}>", error.message());
+        LOGE("Unable to bind: <{}>", error.message());
         return false;
     }
 
     _acceptor.listen(io::socket_base::max_listen_connections, error);
     if (error) {
-        LOGE("Failed to listen: <{}>", error.message());
+        LOGE("Unable to listen: <{}>", error.message());
         return false;
     }
-
-    io::dispatch(_acceptor.get_executor(),
-                 beast::bind_front_handler(&RecognitionServer::accept, shared_from_this()));
 
     return true;
 }
@@ -90,7 +95,7 @@ RecognitionServer::shutdown()
 }
 
 void
-RecognitionServer::accept()
+RecognitionServer::doAccept()
 {
     _acceptor.async_accept(
         io::make_strand(_executor),
@@ -109,7 +114,7 @@ RecognitionServer::onAcceptDone(std::error_code error, tcp::socket socket)
         }
     }
 
-    accept();
+    doAccept();
 }
 
 void

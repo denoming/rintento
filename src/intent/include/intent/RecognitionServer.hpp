@@ -24,10 +24,10 @@ public:
            std::shared_ptr<WitRecognitionFactory> factory);
 
     bool
-    listen(io::ip::port_type port = kDefaultProxyServerPort);
+    listen(io::ip::port_type port);
 
     bool
-    listen(tcp::endpoint endpoint);
+    listen(const tcp::endpoint& endpoint);
 
     void
     shutdown();
@@ -37,8 +37,11 @@ private:
                       std::shared_ptr<ActionPerformer> performer,
                       std::shared_ptr<WitRecognitionFactory> factory);
 
+    bool
+    doListen(const tcp::endpoint& endpoint);
+
     void
-    accept();
+    doAccept();
 
     void
     onAcceptDone(std::error_code error, tcp::socket socket);

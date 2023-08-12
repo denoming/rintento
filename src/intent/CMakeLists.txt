@@ -40,3 +40,7 @@ target_sources(${TARGET}
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_23)
+
+target_compile_definitions(${TARGET}
+    PRIVATE BOOST_ASIO_NO_DEPRECATED=1
+)
