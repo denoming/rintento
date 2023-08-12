@@ -6,7 +6,7 @@ add_executable(${TARGET} "")
 add_executable(Rintento::Rintento ALIAS ${TARGET})
 
 target_sources(${TARGET}
-    PRIVATE ExecutorApplication.cpp
+    PRIVATE ServiceApplication.cpp
 )
 
 target_link_libraries(${TARGET}

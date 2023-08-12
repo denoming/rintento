@@ -8,11 +8,11 @@ namespace jar {
 
 class Config;
 
-class ExecutorApplication final : public Application {
+class ServiceApplication final : public Application {
 public:
-    ExecutorApplication() = default;
+    ServiceApplication() = default;
 
-    const char*
+    [[nodiscard]] const char*
     name() const final;
 
 private:

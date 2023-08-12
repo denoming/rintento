@@ -1,22 +1,20 @@
-#include "ExecutorApplication.hpp"
+#include "ServiceApplication.hpp"
 
 #include "common/Config.hpp"
 #include "intent/IntentSubsystem.hpp"
 
 #include <jarvisto/Logger.hpp>
 
-#include <optional>
-
 namespace jar {
 
 const char*
-ExecutorApplication::name() const
+ServiceApplication::name() const
 {
-    return "Executor";
+    return "Rintento";
 }
 
 void
-ExecutorApplication::initialize(Application& application)
+ServiceApplication::initialize(Application& application)
 {
     _config = std::make_shared<Config>();
 
@@ -31,4 +29,4 @@ ExecutorApplication::initialize(Application& application)
 
 } // namespace jar
 
-APP_MAIN(jar::ExecutorApplication)
+APP_MAIN(jar::ServiceApplication)
