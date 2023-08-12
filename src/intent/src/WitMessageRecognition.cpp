@@ -17,7 +17,7 @@ WitMessageRecognition::create(std::shared_ptr<Config> config,
 {
     // clang-format off
     return std::shared_ptr<WitMessageRecognition>(
-        new WitMessageRecognition(config, context, std::move(executor))
+        new WitMessageRecognition(std::move(config), context, std::move(executor))
     );
     // clang-format on
 }
@@ -131,7 +131,7 @@ WitMessageRecognition::onResolveDone(std::error_code error,
     } else {
         LOGD("The <{}> endpoints was resolved", result.size());
         connect(result);
-    };
+    }
 }
 
 void
@@ -264,9 +264,7 @@ WitMessageRecognition::onReadDone(std::error_code error, std::size_t bytesTransf
     }
 
     LOGD("Reading response from the stream has succeeded: <{}> bytes", bytesTransferred);
-
-    WitIntentParser parser;
-    if (auto result = parser.parseMessageResult(_res.body()); result) {
+    if (auto result = jar::WitIntentParser::parseMessageResult(_res.body()); result) {
         setResult(std::move(result.value()));
     } else {
         setError(result.error());

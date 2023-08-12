@@ -17,7 +17,7 @@ WitSpeechRecognition::create(std::shared_ptr<Config> config,
 {
     // clang-format off
     return std::shared_ptr<WitSpeechRecognition>(
-        new WitSpeechRecognition(std::move(config), context, executor)
+        new WitSpeechRecognition(std::move(config), context, std::move(executor))
     );
     // clang-format on
 }
@@ -363,9 +363,7 @@ WitSpeechRecognition::onReadDone(std::error_code error, std::size_t bytesTransfe
     }
 
     LOGD("Reading recognition result has succeeded: <{}> bytes", bytesTransferred);
-
-    WitIntentParser parser;
-    if (auto result = parser.parseSpeechResult(_res.body()); result) {
+    if (auto result = jar::WitIntentParser::parseSpeechResult(_res.body()); result) {
         setResult(std::move(result.value()));
     } else {
         setError(result.error());
