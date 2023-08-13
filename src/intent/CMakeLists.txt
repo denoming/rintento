@@ -10,12 +10,11 @@ target_include_directories(${TARGET}
 target_link_libraries(${TARGET}
     PUBLIC Jarvisto::Jarvisto
            Rintento::Common
-           PkgConfig::SigCpp
            Boost::headers
-           Boost::json
     PRIVATE OpenSSL::SSL
             OpenSSL::Crypto
             Boost::url
+            Boost::json
 )
 
 target_sources(${TARGET}

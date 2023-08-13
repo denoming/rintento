@@ -16,7 +16,6 @@ target_include_directories(${TARGET}
 target_link_libraries(${TARGET}
     PUBLIC GTest::gtest
            GTest::gmock
-           Rintento::Common
            Rintento::Intent
 )
 

@@ -23,7 +23,6 @@ endif()
 include(AddBoost)
 include(AddOpenSsl)
 include(AddSpdLog)
-include(AddSigCpp)
 include(AddJarvisto)
 
 include(EnableCcache)

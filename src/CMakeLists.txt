@@ -10,9 +10,7 @@ target_sources(${TARGET}
 )
 
 target_link_libraries(${TARGET}
-    PRIVATE Jarvisto::Jarvisto
-            Rintento::Common
-            Rintento::Intent
+    PRIVATE Rintento::Intent
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_23)

@@ -7,7 +7,6 @@
 
 namespace jar {
 
-class RecognitionConnection;
 class WitRecognitionFactory;
 class WitMessageRecognition;
 

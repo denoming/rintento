@@ -8,8 +8,8 @@ target_include_directories(${TARGET}
 )
 
 target_link_libraries(${TARGET}
-    PUBLIC Jarvisto::Jarvisto
-    PUBLIC Boost::headers
+    PRIVATE Boost::headers
+            Jarvisto::Jarvisto
 )
 
 target_sources(${TARGET}
