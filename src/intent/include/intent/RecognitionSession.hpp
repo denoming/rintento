@@ -40,7 +40,7 @@ private:
     onReadHeaderDone(sys::error_code ec, std::size_t bytes);
 
     void
-    onDone(wit::Utterances utterances, std::error_code ec);
+    onComplete(wit::Utterances utterances, std::error_code ec);
 
     std::shared_ptr<RecognitionHandler>
     getHandler();

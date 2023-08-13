@@ -88,7 +88,7 @@ RecognitionSession::onReadHeaderDone(sys::error_code ec, std::size_t bytes)
 }
 
 void
-RecognitionSession::onDone(wit::Utterances utterances, std::error_code ec)
+RecognitionSession::onComplete(wit::Utterances utterances, std::error_code ec)
 {
     if (ec) {
         LOGE("The <{}> session has failed: error<{}>", _id, ec.message());
@@ -103,27 +103,27 @@ std::shared_ptr<RecognitionHandler>
 RecognitionSession::getHandler()
 {
     auto handler1 = RecognitionMessageHandler::create(_stream, _buffer, _parser, _factory);
-    handler1->onDone(
+    handler1->onComplete(
         [weakSelf = weak_from_this(), id = _id](wit::Utterances result, std::error_code ec) {
             if (auto self = weakSelf.lock()) {
                 LOGD("Message handler of <{}> session is complete: success<{}>", id, !ec);
-                self->onDone(std::move(result), ec);
+                self->onComplete(std::move(result), ec);
             }
         });
     auto handler2 = RecognitionSpeechHandler::create(_stream, _buffer, _parser, _factory);
-    handler2->onDone(
+    handler2->onComplete(
         [weakSelf = weak_from_this(), id = _id](wit::Utterances result, std::error_code ec) {
             if (auto self = weakSelf.lock()) {
                 LOGD("Speech handler of <{}> session is complete: success<{}>", id, !ec);
-                self->onDone(std::move(result), ec);
+                self->onComplete(std::move(result), ec);
             }
         });
     auto handler3 = RecognitionTerminalHandler::create(_stream);
-    handler3->onDone(
+    handler3->onComplete(
         [weakSelf = weak_from_this(), id = _id](wit::Utterances result, std::error_code ec) {
             if (auto self = weakSelf.lock()) {
                 LOGD("Terminal handler of <{}> session is complete", id);
-                self->onDone(std::move(result), ec);
+                self->onComplete(std::move(result), ec);
             }
         });
     handler2->setNext(std::move(handler3));

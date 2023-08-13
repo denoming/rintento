@@ -1,9 +1,7 @@
 # Introduction
 
-Intent component is a main component of executor service. This component includes server, recognition handlers and
+Intent component is a main component of the `Rintento` service. This component includes server, recognition handlers and
 backend clients.
-Additionally multiple known intents are present.
-Each of the known intents represents some actions needed to be done upon client request.
 
 # Purpose
 
@@ -11,7 +9,7 @@ The purpose is recognizing known intent by text message or audio speech and perf
 
 # Use Cases
 
-* Recognize intent
+* Intent recognizing
 
 ```plantuml
 @startuml
@@ -37,12 +35,7 @@ UC2 --> Server
 
 | Name                       | Description                                                         |
 |----------------------------|---------------------------------------------------------------------|
-| Action                     | Represents base class for actions                                   |
-| ActionPerformer            | The performer to accomplish action                                  |
-| ActionRegistry             | The registry to store all currently supported actions               |
-| PositioningClient          | The client to provide current location                              |
-| RecognitionConnection      | The wrapper to handle operations upon client connection             |
-| RecognitionSession      | The dispatcher to handle recognition sent to backend                |
+| RecognitionSession         | The dispatcher to handle recognition sent to backend                |
 | RecognitionHandler         | Represents base class for recognition handler                       |
 | RecognitionMessageHandler  | The message recognition handler to handle particular client request |
 | RecognitionSpeechHandler   | The speech recognition handler to handle particular client request  |
@@ -62,7 +55,6 @@ UC2 --> Server
 
 ```plantuml
 @startuml
-
 abstract class Subsystem
 
 interface IConfig {
@@ -79,14 +71,8 @@ IConfig <|- Config
 
 IntentSubsystem o-- Worker : 2
 IntentSubsystem o-- Config
-IntentSubsystem o-- ActionRegistry
-IntentSubsystem o-- ActionPerformer
 IntentSubsystem o-- RecognitionServer
-IntentSubsystem o-- PositioningClient
-IntentSubsystem o-- SpeakerClient
-IntentSubsystem o-- WeatherClient
 IntentSubsystem o-- WitRecognitionFactory
-
 @enduml
 ```
 
@@ -94,22 +80,22 @@ IntentSubsystem o-- WitRecognitionFactory
 
 ```plantuml
 @startuml
+set namespaceSeparator ::
 
 class RecognitionServer {
-    {static} create(executor, performer, factory)
+    {static} create(executor, factory)
     +listen(port): bool
     +listen(endpoint): bool
     +shutdown()
 }
 
-RecognitionServer o-- ActionPerformer
 RecognitionServer o-- RecognitionSession : 0..*
 RecognitionServer o-- WitRecognitionFactory
 
 class RecognitionHandler { 
     +onComplete(callback)
     +setNext(handler)
-    +handle(buffer, parser)
+    +handle()
     #submit(result)
     #submit(error)
     #sendResponse(result)
@@ -121,7 +107,6 @@ RecognitionHandler <|-- RecognitionSpeechHandler
 RecognitionHandler <|-- RecognitionTerminalHandler
 
 RecognitionHandler o-- RecognitionHandler
-RecognitionHandler o-- RecognitionConnection
 
 RecognitionMessageHandler o-- WitRecognitionFactory
 RecognitionMessageHandler o-- WitMessageRecognition
@@ -130,11 +115,8 @@ RecognitionSpeechHandler o-- WitRecognitionFactory
 RecognitionSpeechHandler o-- WitSpeechRecognition
 RecognitionSpeechHandler o- SpeechDataBuffer
 
-RecognitionConnection -o RecognitionSession 
-RecognitionSession o-- ActionPerformer
 RecognitionSession o-- WitRecognitionFactory
 RecognitionSession o-- RecognitionHandler
-
 @enduml
 ```
 
@@ -142,7 +124,6 @@ RecognitionSession o-- RecognitionHandler
 
 ```plantuml
 @startuml
-
 class WitRecognition {
     +needData(): bool
     +done(): bool
@@ -168,30 +149,25 @@ class WitRecognitionFactory {
 
 ## Sequence Diagram
 
-* Dispatch client recognition requests
+* Handle client recognition requests
 
 ```plantuml
 @startuml
 
 participant RecognitionServer
 participant RecognitionSession
-participant RecognitionConnection
 
 -> RecognitionServer : onAcceptDone(error, socket)
-create RecognitionConnection
-RecognitionServer -> RecognitionConnection : create(socket) 
-activate RecognitionServer
-RecognitionServer -> RecognitionServer : dispatch(connection)
+RecognitionServer -> RecognitionServer : spawnSession(socket)
 create RecognitionSession
-RecognitionServer -> RecognitionSession : create(id, connection, performer, factory)
-RecognitionServer -> RecognitionSession : dispatch(id, connection, performer, factory)
+RecognitionServer -> RecognitionSession : create(socket, factory) 
+activate RecognitionServer
+RecognitionServer -> RecognitionSession : run(id, socket, factory)
 activate RecognitionSession
-RecognitionSession -> RecognitionSession : readHeader()
-RecognitionSession ->> RecognitionConnection : readHeader()
 RecognitionServer -> RecognitionServer : accept()
 note right: waiting for new connections
 ...reading header data from socket...
-RecognitionConnection -> RecognitionSession : onReadHeaderDone(buffer, parser, error)
+-> RecognitionSession : onReadHeaderDone(errorCode, bytes)
 alt if EoS or error
     RecognitionSession -> RecognitionSession : finalize()
     RecognitionSession -> RecognitionServer : onSessionComplete(id)
@@ -208,20 +184,7 @@ RecognitionSession -> RecognitionHandler : handle()
 ...handle message or speech recognition...
 RecognitionHandler -> RecognitionSession : onComplete(utterances, error)
 deactivate RecognitionHandler
-RecognitionSession -> ActionPerformer : perform(utterances)
-activate ActionPerformer
-ActionPerformer -> ActionRegistry : has(name)
-alt action is present
-    ActionPerformer -> ActionRegistry : get(name)
-    create Action
-    ActionPerformer -> Action : clone()
-end
-alt has pending actions
-    ActionPerformer -> Action : perform(callback)
-end
-RecognitionSession <- ActionPerformer : perform(utterances)
-RecognitionSession -> RecognitionSession : readHeader()
-RecognitionSession ->> RecognitionConnection : readHeader()
+RecognitionSession -> RecognitionSession : doReadHeader()
 note right: read next header (if present)
 deactivate ActionPerformer
 deactivate RecognitionSession
@@ -229,7 +192,7 @@ deactivate RecognitionSession
 @enduml
 ```
 
-* Handle client message recognition requests
+* Handle message recognition request
 
 ```plantuml
 @startuml
@@ -240,7 +203,7 @@ participant WitRecognitionFactory
 participant WitMessageRecognition
 
 activate RecognitionSession
-RecognitionSession -> RecognitionMessageHandler : handle(buffer, parser)
+RecognitionSession -> RecognitionMessageHandler : handle()
 activate RecognitionMessageHandler
 break if not message recognition
     RecognitionMessageHandler -> RecognitionMessageHandler : handle()
@@ -281,7 +244,7 @@ deactivate RecognitionMessageHandler
 @enduml
 ```
 
-* Handle client speech recognition requests
+* Handle client speech recognition request
 
 ```plantuml
 @startuml
@@ -292,7 +255,7 @@ participant WitRecognitionFactory
 participant WitSpeechRecognition
 
 activate RecognitionSession
-RecognitionSession -> RecognitionSpeechHandler : handle(buffer, parser)
+RecognitionSession -> RecognitionSpeechHandler : handle()
 activate RecognitionSpeechHandler
 break if not speech recognition
     RecognitionSpeechHandler -> RecognitionSpeechHandler : handle()

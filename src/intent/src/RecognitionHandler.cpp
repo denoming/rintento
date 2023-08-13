@@ -50,9 +50,9 @@ RecognitionHandler::RecognitionHandler(Stream& stream)
 }
 
 void
-RecognitionHandler::onDone(std::move_only_function<OnDone> callback)
+RecognitionHandler::onComplete(std::move_only_function<OnComplete> callback)
 {
-    _onDone = std::move(callback);
+    _onComplete = std::move(callback);
 }
 
 void
@@ -73,15 +73,15 @@ RecognitionHandler::handle()
 void
 RecognitionHandler::submit(wit::Utterances result)
 {
-    BOOST_ASSERT(_onDone);
-    _onDone(std::move(result), {});
+    BOOST_ASSERT(_onComplete);
+    _onComplete(std::move(result), {});
 }
 
 void
 RecognitionHandler::submit(std::error_code ec)
 {
-    BOOST_ASSERT(_onDone);
-    _onDone({}, ec);
+    BOOST_ASSERT(_onComplete);
+    _onComplete({}, ec);
 }
 
 void

@@ -11,7 +11,7 @@ namespace jar {
 
 class RecognitionHandler {
 public:
-    using OnDone = void(wit::Utterances, std::error_code);
+    using OnComplete = void(wit::Utterances, std::error_code);
 
     using Stream = beast::tcp_stream;
     using Buffer = beast::flat_buffer;
@@ -22,7 +22,7 @@ public:
     virtual ~RecognitionHandler() = default;
 
     void
-    onDone(std::move_only_function<OnDone> callback);
+    onComplete(std::move_only_function<OnComplete> callback);
 
     void
     setNext(std::shared_ptr<RecognitionHandler> handler);
@@ -52,7 +52,7 @@ protected:
 private:
     Stream& _stream;
     std::shared_ptr<RecognitionHandler> _next;
-    std::move_only_function<OnDone> _onDone;
+    std::move_only_function<OnComplete> _onComplete;
 };
 
 } // namespace jar
