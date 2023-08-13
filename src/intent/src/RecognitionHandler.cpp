@@ -1,7 +1,5 @@
 #include "intent/RecognitionHandler.hpp"
 
-#include "intent/RecognitionConnection.hpp"
-
 #include <jarvisto/Logger.hpp>
 
 #include <boost/assert.hpp>
@@ -46,10 +44,9 @@ getResponse(std::string payload)
 
 } // namespace
 
-RecognitionHandler::RecognitionHandler(std::shared_ptr<RecognitionConnection> connection)
-    : _connection{std::move(connection)}
+RecognitionHandler::RecognitionHandler(Stream& stream)
+    : _stream{stream}
 {
-    BOOST_ASSERT(_connection);
 }
 
 void
@@ -66,23 +63,11 @@ RecognitionHandler::setNext(std::shared_ptr<RecognitionHandler> handler)
 }
 
 void
-RecognitionHandler::handle(Buffer& buffer, Parser& parser)
+RecognitionHandler::handle()
 {
     if (_next) {
-        _next->handle(buffer, parser);
+        _next->handle();
     }
-}
-
-RecognitionConnection&
-RecognitionHandler::connection()
-{
-    return *_connection;
-}
-
-const RecognitionConnection&
-RecognitionHandler::connection() const
-{
-    return *_connection;
 }
 
 void
@@ -93,22 +78,36 @@ RecognitionHandler::submit(wit::Utterances result)
 }
 
 void
-RecognitionHandler::submit(std::error_code error)
+RecognitionHandler::submit(std::error_code ec)
 {
     BOOST_ASSERT(_onDone);
-    _onDone({}, error);
+    _onDone({}, ec);
 }
 
 void
 RecognitionHandler::sendResponse(const wit::Utterances& result)
 {
-    _connection->write(getResponse(getPayload(result)));
+    sys::error_code ec;
+    http::write(stream(), getResponse(getPayload(result)), ec);
 }
 
 void
-RecognitionHandler::sendResponse(std::error_code error)
+RecognitionHandler::sendResponse(std::error_code ec)
 {
-    _connection->write(getResponse(getPayload(error)));
+    sys::error_code ec1;
+    http::write(stream(), getResponse(getPayload(ec)), ec1);
+}
+
+RecognitionHandler::Stream&
+RecognitionHandler::stream()
+{
+    return _stream;
+}
+
+io::any_io_executor
+RecognitionHandler::executor()
+{
+    return _stream.get_executor();
 }
 
 } // namespace jar

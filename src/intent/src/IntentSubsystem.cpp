@@ -1,8 +1,6 @@
 #include "intent/IntentSubsystem.hpp"
 
 #include "common/Config.hpp"
-#include "intent/ActionPerformer.hpp"
-#include "intent/ActionRegistry.hpp"
 #include "intent/RecognitionServer.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 
@@ -27,9 +25,7 @@ public:
         _proxyWorker = std::make_unique<Worker>(_config->proxyServerThreads());
         _recognizeWorker = std::make_unique<Worker>(_config->recognizeThreads());
         _factory = std::make_unique<WitRecognitionFactory>(_config, _recognizeWorker->executor());
-        _registry = std::make_unique<ActionRegistry>();
-        _performer = ActionPerformer::create(*_registry);
-        _server = RecognitionServer::create(_proxyWorker->executor(), _performer, _factory);
+        _server = RecognitionServer::create(_proxyWorker->executor(), _factory);
     }
 
     void
@@ -68,8 +64,6 @@ public:
     finalize()
     {
         _server.reset();
-        _performer.reset();
-        _registry.reset();
         _factory.reset();
         _recognizeWorker.reset();
         _proxyWorker.reset();
@@ -79,9 +73,7 @@ private:
     std::unique_ptr<Worker> _proxyWorker;
     std::unique_ptr<Worker> _recognizeWorker;
     std::shared_ptr<Config> _config;
-    std::unique_ptr<ActionRegistry> _registry;
     std::shared_ptr<WitRecognitionFactory> _factory;
-    std::shared_ptr<ActionPerformer> _performer;
     std::shared_ptr<RecognitionServer> _server;
 };
 

@@ -42,7 +42,7 @@ UC2 --> Server
 | ActionRegistry             | The registry to store all currently supported actions               |
 | PositioningClient          | The client to provide current location                              |
 | RecognitionConnection      | The wrapper to handle operations upon client connection             |
-| RecognitionDispatcher      | The dispatcher to handle recognition sent to backend                |
+| RecognitionSession      | The dispatcher to handle recognition sent to backend                |
 | RecognitionHandler         | Represents base class for recognition handler                       |
 | RecognitionMessageHandler  | The message recognition handler to handle particular client request |
 | RecognitionSpeechHandler   | The speech recognition handler to handle particular client request  |
@@ -103,11 +103,11 @@ class RecognitionServer {
 }
 
 RecognitionServer o-- ActionPerformer
-RecognitionServer o-- RecognitionDispatcher : 0..*
+RecognitionServer o-- RecognitionSession : 0..*
 RecognitionServer o-- WitRecognitionFactory
 
 class RecognitionHandler { 
-    +onDone(callback)
+    +onComplete(callback)
     +setNext(handler)
     +handle(buffer, parser)
     #submit(result)
@@ -130,10 +130,10 @@ RecognitionSpeechHandler o-- WitRecognitionFactory
 RecognitionSpeechHandler o-- WitSpeechRecognition
 RecognitionSpeechHandler o- SpeechDataBuffer
 
-RecognitionConnection -o RecognitionDispatcher 
-RecognitionDispatcher o-- ActionPerformer
-RecognitionDispatcher o-- WitRecognitionFactory
-RecognitionDispatcher o-- RecognitionHandler
+RecognitionConnection -o RecognitionSession 
+RecognitionSession o-- ActionPerformer
+RecognitionSession o-- WitRecognitionFactory
+RecognitionSession o-- RecognitionHandler
 
 @enduml
 ```
@@ -147,7 +147,7 @@ class WitRecognition {
     +needData(): bool
     +done(): bool
     +wait()
-    +onDone(callback)
+    +onComplete(callback)
     +onData(callback)
     #needData()
     #setResult(value)
@@ -174,7 +174,7 @@ class WitRecognitionFactory {
 @startuml
 
 participant RecognitionServer
-participant RecognitionDispatcher
+participant RecognitionSession
 participant RecognitionConnection
 
 -> RecognitionServer : onAcceptDone(error, socket)
@@ -182,33 +182,33 @@ create RecognitionConnection
 RecognitionServer -> RecognitionConnection : create(socket) 
 activate RecognitionServer
 RecognitionServer -> RecognitionServer : dispatch(connection)
-create RecognitionDispatcher
-RecognitionServer -> RecognitionDispatcher : create(id, connection, performer, factory)
-RecognitionServer -> RecognitionDispatcher : dispatch(id, connection, performer, factory)
-activate RecognitionDispatcher
-RecognitionDispatcher -> RecognitionDispatcher : readHeader()
-RecognitionDispatcher ->> RecognitionConnection : readHeader()
+create RecognitionSession
+RecognitionServer -> RecognitionSession : create(id, connection, performer, factory)
+RecognitionServer -> RecognitionSession : dispatch(id, connection, performer, factory)
+activate RecognitionSession
+RecognitionSession -> RecognitionSession : readHeader()
+RecognitionSession ->> RecognitionConnection : readHeader()
 RecognitionServer -> RecognitionServer : accept()
 note right: waiting for new connections
 ...reading header data from socket...
-RecognitionConnection -> RecognitionDispatcher : onReadHeaderDone(buffer, parser, error)
+RecognitionConnection -> RecognitionSession : onReadHeaderDone(buffer, parser, error)
 alt if EoS or error
-    RecognitionDispatcher -> RecognitionDispatcher : finalize()
-    RecognitionDispatcher -> RecognitionServer : onDispatchDone(id)
+    RecognitionSession -> RecognitionSession : finalize()
+    RecognitionSession -> RecognitionServer : onSessionComplete(id)
     opt ready to shutdown
         RecognitionServer -> RecognitionServer : notifyShutdownReady()
     end
     deactivate RecognitionServer
 end
-RecognitionDispatcher -> RecognitionDispatcher : getHandler()
+RecognitionSession -> RecognitionSession : getHandler()
 create RecognitionHandler
-RecognitionDispatcher -> RecognitionHandler : create()
+RecognitionSession -> RecognitionHandler : create()
 activate RecognitionHandler
-RecognitionDispatcher -> RecognitionHandler : handle()
+RecognitionSession -> RecognitionHandler : handle()
 ...handle message or speech recognition...
-RecognitionHandler -> RecognitionDispatcher : onDone(utterances, error)
+RecognitionHandler -> RecognitionSession : onComplete(utterances, error)
 deactivate RecognitionHandler
-RecognitionDispatcher -> ActionPerformer : perform(utterances)
+RecognitionSession -> ActionPerformer : perform(utterances)
 activate ActionPerformer
 ActionPerformer -> ActionRegistry : has(name)
 alt action is present
@@ -219,12 +219,12 @@ end
 alt has pending actions
     ActionPerformer -> Action : perform(callback)
 end
-RecognitionDispatcher <- ActionPerformer : perform(utterances)
-RecognitionDispatcher -> RecognitionDispatcher : readHeader()
-RecognitionDispatcher ->> RecognitionConnection : readHeader()
+RecognitionSession <- ActionPerformer : perform(utterances)
+RecognitionSession -> RecognitionSession : readHeader()
+RecognitionSession ->> RecognitionConnection : readHeader()
 note right: read next header (if present)
 deactivate ActionPerformer
-deactivate RecognitionDispatcher
+deactivate RecognitionSession
 
 @enduml
 ```
@@ -234,13 +234,13 @@ deactivate RecognitionDispatcher
 ```plantuml
 @startuml
 
-participant RecognitionDispatcher
+participant RecognitionSession
 participant RecognitionMessageHandler
 participant WitRecognitionFactory
 participant WitMessageRecognition
 
-activate RecognitionDispatcher
-RecognitionDispatcher -> RecognitionMessageHandler : handle(buffer, parser)
+activate RecognitionSession
+RecognitionSession -> RecognitionMessageHandler : handle(buffer, parser)
 activate RecognitionMessageHandler
 break if not message recognition
     RecognitionMessageHandler -> RecognitionMessageHandler : handle()
@@ -258,7 +258,7 @@ deactivate WitRecognitionFactory
 RecognitionMessageHandler ->> WitMessageRecognition : run()
 
 activate WitMessageRecognition
-RecognitionDispatcher <- RecognitionMessageHandler : handle(buffer, parser)
+RecognitionSession <- RecognitionMessageHandler : handle(buffer, parser)
 ...
 WitMessageRecognition -> RecognitionMessageHandler : onRecognitionData()
 RecognitionMessageHandler -> WitMessageRecognition : feed(message)
@@ -267,14 +267,14 @@ alt recognition on backend was successful
     WitMessageRecognition -> RecognitionMessageHandler : onRecognitionSuccess(result)
     RecognitionMessageHandler -> RecognitionMessageHandler : sendResponse(result)
     RecognitionMessageHandler -> RecognitionMessageHandler : submit(result)
-    RecognitionDispatcher <- RecognitionMessageHandler : onDone(utterances, <empty>)
+    RecognitionSession <- RecognitionMessageHandler : onComplete(utterances, <empty>)
 else
     WitMessageRecognition -> RecognitionMessageHandler : onRecognitionError(error)
     deactivate WitMessageRecognition
     RecognitionMessageHandler -> RecognitionMessageHandler : sendResponse(error)
     RecognitionMessageHandler -> RecognitionMessageHandler : submit(error)
-    RecognitionDispatcher <- RecognitionMessageHandler : onDone(<empty>, error)
-    deactivate RecognitionDispatcher
+    RecognitionSession <- RecognitionMessageHandler : onComplete(<empty>, error)
+    deactivate RecognitionSession
 end
 deactivate RecognitionMessageHandler
 
@@ -286,13 +286,13 @@ deactivate RecognitionMessageHandler
 ```plantuml
 @startuml
 
-participant RecognitionDispatcher
+participant RecognitionSession
 participant RecognitionSpeechHandler
 participant WitRecognitionFactory
 participant WitSpeechRecognition
 
-activate RecognitionDispatcher
-RecognitionDispatcher -> RecognitionSpeechHandler : handle(buffer, parser)
+activate RecognitionSession
+RecognitionSession -> RecognitionSpeechHandler : handle(buffer, parser)
 activate RecognitionSpeechHandler
 break if not speech recognition
     RecognitionSpeechHandler -> RecognitionSpeechHandler : handle()
@@ -328,14 +328,14 @@ alt recognition on backend was successful
     WitSpeechRecognition -> RecognitionSpeechHandler : onRecognitionSuccess(result)
     RecognitionSpeechHandler -> RecognitionSpeechHandler : sendResponse(result)
     RecognitionSpeechHandler -> RecognitionSpeechHandler : submit(result)
-    RecognitionDispatcher <- RecognitionSpeechHandler : onDone(utterances, <empty>)
+    RecognitionSession <- RecognitionSpeechHandler : onComplete(utterances, <empty>)
 else
     WitSpeechRecognition -> RecognitionSpeechHandler : onRecognitionError(error)
     deactivate WitSpeechRecognition
     RecognitionSpeechHandler -> RecognitionSpeechHandler : sendResponse(error)
     RecognitionSpeechHandler -> RecognitionSpeechHandler : submit(error)
-    RecognitionDispatcher <- RecognitionSpeechHandler : onDone(<empty>, error)
-    deactivate RecognitionDispatcher
+    RecognitionSession <- RecognitionSpeechHandler : onComplete(<empty>, error)
+    deactivate RecognitionSession
 end
 deactivate RecognitionSpeechHandler
 

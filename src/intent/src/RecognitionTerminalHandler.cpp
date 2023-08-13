@@ -1,27 +1,24 @@
 #include "intent/RecognitionTerminalHandler.hpp"
 
-#include "intent/RecognitionConnection.hpp"
-
 namespace jar {
 
 std::shared_ptr<RecognitionHandler>
-RecognitionTerminalHandler::create(std::shared_ptr<RecognitionConnection> connection)
+RecognitionTerminalHandler::create(Stream& stream)
 {
     // clang-format off
     return std::shared_ptr<RecognitionTerminalHandler>(
-        new RecognitionTerminalHandler(std::move(connection))
+        new RecognitionTerminalHandler(stream)
     );
     // clang-format on
 }
 
-RecognitionTerminalHandler::RecognitionTerminalHandler(
-    std::shared_ptr<RecognitionConnection> connection)
-    : RecognitionHandler{std::move(connection)}
+RecognitionTerminalHandler::RecognitionTerminalHandler(Stream& stream)
+    : RecognitionHandler{stream}
 {
 }
 
 void
-RecognitionTerminalHandler::handle(Buffer& buffer, Parser& parser)
+RecognitionTerminalHandler::handle()
 {
     const auto error = sys::errc::make_error_code(sys::errc::operation_not_supported);
     sendResponse(error);

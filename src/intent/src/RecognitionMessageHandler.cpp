@@ -1,6 +1,5 @@
 #include "intent/RecognitionMessageHandler.hpp"
 
-#include "intent/RecognitionConnection.hpp"
 #include "intent/Utils.hpp"
 #include "intent/WitMessageRecognition.hpp"
 #include "intent/WitRecognitionFactory.hpp"
@@ -12,34 +11,39 @@
 namespace jar {
 
 std::shared_ptr<RecognitionMessageHandler>
-RecognitionMessageHandler::create(std::shared_ptr<RecognitionConnection> connection,
+RecognitionMessageHandler::create(Stream& stream,
+                                  Buffer& buffer,
+                                  Parser& parser,
                                   std::shared_ptr<WitRecognitionFactory> factory)
 {
     // clang-format off
     return std::shared_ptr<RecognitionMessageHandler>(
-        new RecognitionMessageHandler(std::move(connection), std::move(factory))
+        new RecognitionMessageHandler(stream, buffer, parser, std::move(factory))
     );
     // clang-format on
 }
 
-RecognitionMessageHandler::RecognitionMessageHandler(
-    std::shared_ptr<RecognitionConnection> connection,
-    std::shared_ptr<WitRecognitionFactory> factory)
-    : RecognitionHandler{std::move(connection)}
+RecognitionMessageHandler::RecognitionMessageHandler(Stream& stream,
+                                                     Buffer& buffer,
+                                                     Parser& parser,
+                                                     std::shared_ptr<WitRecognitionFactory> factory)
+    : RecognitionHandler{stream}
+    , _buffer{buffer}
+    , _parser{parser}
     , _factory{std::move(factory)}
 {
     BOOST_ASSERT(_factory);
 }
 
 void
-RecognitionMessageHandler::handle(Buffer& buffer, Parser& parser)
+RecognitionMessageHandler::handle()
 {
-    if (!canHandle(parser.get())) {
-        RecognitionHandler::handle(buffer, parser);
+    if (not canHandle()) {
+        RecognitionHandler::handle();
         return;
     }
 
-    const auto request = parser.release();
+    const auto request = _parser.release();
     if (auto messageOpt = parser::peekMessage(request.target()); messageOpt) {
         _message = std::move(*messageOpt);
     } else {
@@ -54,9 +58,9 @@ RecognitionMessageHandler::handle(Buffer& buffer, Parser& parser)
 }
 
 bool
-RecognitionMessageHandler::canHandle(const Parser::value_type& request) const
+RecognitionMessageHandler::canHandle() const
 {
-    return parser::isMessageTarget(request.target());
+    return parser::isMessageTarget(_parser.get().target());
 }
 
 std::shared_ptr<WitMessageRecognition>
@@ -64,22 +68,22 @@ RecognitionMessageHandler::createRecognition()
 {
     auto recognition = _factory->message();
     BOOST_ASSERT(recognition);
-    recognition->onDone(
-        [weakSelf = weak_from_this(), executor = connection().executor()](auto result, auto error) {
-            if (error) {
-                io::post(executor, [weakSelf, error]() {
-                    if (auto self = weakSelf.lock()) {
-                        self->onRecognitionError(error);
-                    }
-                });
-            } else {
-                io::post(executor, [weakSelf, result = std::move(result)]() {
-                    if (auto self = weakSelf.lock()) {
-                        self->onRecognitionSuccess(std::move(result));
-                    }
-                });
-            }
-        });
+    recognition->onDone([weakSelf = weak_from_this(),
+                         executor = executor()](wit::Utterances result, std::error_code error) {
+        if (error) {
+            io::post(executor, [weakSelf, error]() {
+                if (auto self = weakSelf.lock()) {
+                    self->onRecognitionError(error);
+                }
+            });
+        } else {
+            io::post(executor, [weakSelf, result = std::move(result)]() mutable {
+                if (auto self = weakSelf.lock()) {
+                    self->onRecognitionSuccess(std::move(result));
+                }
+            });
+        }
+    });
     recognition->onData([weakSelf = weak_from_this()]() {
         if (auto self = weakSelf.lock()) {
             self->onRecognitionData();

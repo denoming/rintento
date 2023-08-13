@@ -2,7 +2,6 @@
 
 #include <jarvisto/Logger.hpp>
 
-#include "intent/RecognitionConnection.hpp"
 #include "intent/Utils.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 #include "intent/WitSpeechRecognition.hpp"
@@ -14,20 +13,25 @@ static const int SpeechBufferCapacity = 1024 * 1024;
 namespace jar {
 
 std::shared_ptr<RecognitionHandler>
-RecognitionSpeechHandler::create(std::shared_ptr<RecognitionConnection> connection,
+RecognitionSpeechHandler::create(Stream& stream,
+                                 Buffer& buffer,
+                                 Parser& parser,
                                  std::shared_ptr<WitRecognitionFactory> factory)
 {
     // clang-format off
     return std::shared_ptr<RecognitionSpeechHandler>(
-        new RecognitionSpeechHandler(std::move(connection), std::move(factory))
+        new RecognitionSpeechHandler(stream, buffer, parser, std::move(factory))
     );
     // clang-format on
 }
 
-RecognitionSpeechHandler::RecognitionSpeechHandler(
-    std::shared_ptr<RecognitionConnection> connection,
-    std::shared_ptr<WitRecognitionFactory> factory)
-    : RecognitionHandler{std::move(connection)}
+RecognitionSpeechHandler::RecognitionSpeechHandler(Stream& stream,
+                                                   Buffer& buffer,
+                                                   Parser& parser,
+                                                   std::shared_ptr<WitRecognitionFactory> factory)
+    : RecognitionHandler{stream}
+    , _buffer{buffer}
+    , _parser{parser}
     , _factory{std::move(factory)}
     , _speechData{SpeechBufferCapacity}
 {
@@ -35,14 +39,14 @@ RecognitionSpeechHandler::RecognitionSpeechHandler(
 }
 
 void
-RecognitionSpeechHandler::handle(Buffer& buffer, Parser& parser)
+RecognitionSpeechHandler::handle()
 {
-    if (!canHandle(parser.get())) {
-        RecognitionHandler::handle(buffer, parser);
+    if (not canHandle()) {
+        RecognitionHandler::handle();
         return;
     }
 
-    if (auto& request = parser.get(); request[http::field::expect] != "100-continue") {
+    if (auto& request = _parser.get(); request[http::field::expect] != "100-continue") {
         LOGD("100-continue expected");
         onRecognitionError(std::make_error_code(std::errc::operation_not_supported));
         return;
@@ -50,19 +54,19 @@ RecognitionSpeechHandler::handle(Buffer& buffer, Parser& parser)
 
     http::response<http::empty_body> res{http::status::continue_, net::kHttpVersion11};
     res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-    http::write(connection().stream(), res);
+    http::write(stream(), res);
 
     _recognition = createRecognition();
     BOOST_ASSERT(_recognition);
     _recognition->run();
 
-    handleSpeechData(buffer, parser);
+    handleSpeechData();
 }
 
 bool
-RecognitionSpeechHandler::canHandle(const Parser::value_type& request) const
+RecognitionSpeechHandler::canHandle() const
 {
-    return parser::isSpeechTarget(request.target());
+    return parser::isSpeechTarget(_parser.get().target());
 }
 
 std::shared_ptr<WitSpeechRecognition>
@@ -70,22 +74,22 @@ RecognitionSpeechHandler::createRecognition()
 {
     auto recognition = _factory->speech();
     BOOST_ASSERT(recognition);
-    recognition->onDone(
-        [weakSelf = weak_from_this(), executor = connection().executor()](auto result, auto error) {
-            if (error) {
-                io::post(executor, [weakSelf, error]() {
-                    if (auto self = weakSelf.lock()) {
-                        self->onRecognitionError(error);
-                    }
-                });
-            } else {
-                io::post(executor, [weakSelf, result = std::move(result)]() {
-                    if (auto self = weakSelf.lock()) {
-                        self->onRecognitionSuccess(std::move(result));
-                    }
-                });
-            }
-        });
+    recognition->onDone([weakSelf = weak_from_this(),
+                         executor = executor()](wit::Utterances result, std::error_code error) {
+        if (error) {
+            io::post(executor, [weakSelf, error]() {
+                if (auto self = weakSelf.lock()) {
+                    self->onRecognitionError(error);
+                }
+            });
+        } else {
+            io::post(executor, [weakSelf, result = std::move(result)]() mutable {
+                if (auto self = weakSelf.lock()) {
+                    self->onRecognitionSuccess(std::move(result));
+                }
+            });
+        }
+    });
     recognition->onData([weakSelf = weak_from_this()]() {
         if (auto self = weakSelf.lock()) {
             self->onRecognitionData();
@@ -95,7 +99,7 @@ RecognitionSpeechHandler::createRecognition()
 }
 
 void
-RecognitionSpeechHandler::handleSpeechData(Buffer& buffer, Parser& parser)
+RecognitionSpeechHandler::handleSpeechData()
 {
     auto onHeader = [this](std::uint64_t size, auto extensions, std::error_code& error) {
         if (size > _speechData.capacity()) {
@@ -106,12 +110,12 @@ RecognitionSpeechHandler::handleSpeechData(Buffer& buffer, Parser& parser)
         _speechData.write(body);
         return body.size();
     };
-    parser.on_chunk_header(onHeader);
-    parser.on_chunk_body(onBody);
+    _parser.on_chunk_header(onHeader);
+    _parser.on_chunk_body(onBody);
 
     sys::error_code error;
-    while (!parser.is_done()) {
-        http::read(connection().stream(), buffer, parser, error);
+    while (!_parser.is_done()) {
+        http::read(stream(), _buffer, _parser, error);
         if (error) {
             LOGE("Reading chunk error: <{}>", error.message());
             break;

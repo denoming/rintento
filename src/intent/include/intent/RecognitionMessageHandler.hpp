@@ -16,18 +16,22 @@ class RecognitionMessageHandler final
       public std::enable_shared_from_this<RecognitionMessageHandler> {
 public:
     [[nodiscard]] static std::shared_ptr<RecognitionMessageHandler>
-    create(std::shared_ptr<RecognitionConnection> connection,
+    create(Stream& stream,
+           Buffer& buffer,
+           Parser& parser,
            std::shared_ptr<WitRecognitionFactory> factory);
 
     void
-    handle(Buffer& buffer, Parser& parser) final;
+    handle() final;
 
 private:
-    RecognitionMessageHandler(std::shared_ptr<RecognitionConnection> connection,
+    RecognitionMessageHandler(Stream& stream,
+                              Buffer& buffer,
+                              Parser& parser,
                               std::shared_ptr<WitRecognitionFactory> factory);
 
     [[nodiscard]] bool
-    canHandle(const Parser::value_type& request) const;
+    canHandle() const;
 
     [[nodiscard]] std::shared_ptr<WitMessageRecognition>
     createRecognition();
@@ -42,6 +46,8 @@ private:
     onRecognitionSuccess(wit::Utterances result);
 
 private:
+    Buffer& _buffer;
+    Parser& _parser;
     std::shared_ptr<WitRecognitionFactory> _factory;
     std::shared_ptr<WitMessageRecognition> _recognition;
     std::string _message;

@@ -26,8 +26,7 @@ target_sources(${TARGET}
             src/WitRecognitionFactory.cpp
             src/WitTypes.cpp
             src/RecognitionServer.cpp
-            src/RecognitionDispatcher.cpp
-            src/ActionPerformer.cpp
+            src/RecognitionSession.cpp
             src/IntentSubsystem.cpp
             src/RecognitionHandler.cpp
             src/RecognitionMessageHandler.cpp
@@ -35,8 +34,6 @@ target_sources(${TARGET}
             src/RecognitionTerminalHandler.cpp
             src/SpeechDataBuffer.cpp
             src/Utils.cpp
-            src/Action.cpp
-            src/ActionRegistry.cpp
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_23)

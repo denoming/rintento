@@ -1,28 +1,58 @@
 #include "intent/RecognitionServer.hpp"
 
-#include "intent/RecognitionConnection.hpp"
-#include "intent/RecognitionDispatcher.hpp"
+#include "intent/RecognitionSession.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 
 #include <jarvisto/Logger.hpp>
+
+#include <functional>
+
+namespace std {
+
+template<>
+struct hash<tcp::endpoint> {
+    size_t
+    operator()(const tcp::endpoint& e) const
+    {
+        size_t h1 = std::hash<std::string>{}(e.address().to_string());
+        size_t h2 = std::hash<io::ip::port_type>{}(e.port());
+        return h1 ^ (h2 << 1);
+    }
+};
+
+} // namespace std
+
+namespace {
+
+std::optional<std::size_t>
+getSessionId(const tcp::socket& socket)
+{
+    sys::error_code ec;
+    const auto endpoint = socket.remote_endpoint(ec);
+    if (ec) {
+        return std::nullopt;
+    }
+    return std::hash<tcp::endpoint>{}(endpoint);
+}
+
+} // namespace
 
 namespace jar {
 
 std::shared_ptr<RecognitionServer>
 RecognitionServer::create(io::any_io_executor executor,
-                          std::shared_ptr<ActionPerformer> performer,
                           std::shared_ptr<WitRecognitionFactory> factory)
 {
+    // clang-format off
     return std::shared_ptr<RecognitionServer>(
-        new RecognitionServer{std::move(executor), std::move(performer), std::move(factory)}
+        new RecognitionServer{std::move(executor), std::move(factory)}
     );
+    // clang-format on
 }
 
 RecognitionServer::RecognitionServer(io::any_io_executor executor,
-                                     std::shared_ptr<ActionPerformer> performer,
                                      std::shared_ptr<WitRecognitionFactory> factory)
     : _executor{std::move(executor)}
-    , _performer{std::move(performer)}
     , _acceptor{io::make_strand(_executor)}
     , _factory{std::move(factory)}
     , _shutdownReady{false}
@@ -52,28 +82,21 @@ RecognitionServer::doListen(const tcp::endpoint& endpoint)
 {
     _shutdownReady = false;
 
-    sys::error_code error;
-    _acceptor.open(endpoint.protocol(), error);
-    if (error) {
-        LOGE("Unable to open acceptor: <{}>", error.message());
+    sys::error_code ec;
+    if (_acceptor.open(endpoint.protocol(), ec); ec) {
+        LOGE("Unable to open acceptor: <{}>", ec.message());
         return false;
     }
-
-    _acceptor.set_option(io::socket_base::reuse_address(true), error);
-    if (error) {
-        LOGE("Unable to set option: <{}>", error.message());
+    if (_acceptor.set_option(io::socket_base::reuse_address(true), ec); ec) {
+        LOGE("Unable to set acceptor option: <{}>", ec.message());
         return false;
     }
-
-    _acceptor.bind(endpoint, error);
-    if (error) {
-        LOGE("Unable to bind: <{}>", error.message());
+    if (_acceptor.bind(endpoint, ec); ec) {
+        LOGE("Unable to bind acceptor: <{}>", ec.message());
         return false;
     }
-
-    _acceptor.listen(io::socket_base::max_listen_connections, error);
-    if (error) {
-        LOGE("Unable to listen: <{}>", error.message());
+    if (_acceptor.listen(io::socket_base::max_listen_connections, ec); ec) {
+        LOGE("Unable to start listening: <{}>", ec.message());
         return false;
     }
 
@@ -103,18 +126,50 @@ RecognitionServer::doAccept()
 }
 
 void
-RecognitionServer::onAcceptDone(std::error_code error, tcp::socket socket)
+RecognitionServer::onAcceptDone(sys::error_code ec, tcp::socket socket)
 {
-    if (!error) {
-        LOGD("Connection was established");
-        auto connection = RecognitionConnection::create(std::move(socket));
-        if (!dispatch(connection)) {
-            LOGE("Failed to dispatch connection");
-            connection->close();
-        }
+    if (ec == sys::errc::operation_canceled) {
+        LOGD("Accepting connection is canceled");
+        return;
+    }
+
+    if (ec) {
+        LOGE("Unable to accept connection: {}", ec.message());
+        return;
+    }
+
+    if (not spawnSession(std::move(socket))) {
+        LOGE("Unable to spawn session");
     }
 
     doAccept();
+}
+
+bool
+RecognitionServer::spawnSession(tcp::socket socket)
+{
+    auto idOpt = getSessionId(socket);
+    if (not idOpt) {
+        LOGE("Unable to generate session id");
+        return false;
+    }
+    const auto id = *idOpt;
+
+    LOGD("Create new session: {}", id);
+    auto session = RecognitionSession::create(id, std::move(socket), _factory);
+    {
+        std::lock_guard lock{_sessionsGuard};
+        if (_sessions.contains(id)) {
+            LOGE("Session with <{}> id already exists", id);
+            return false;
+        } else {
+            _sessions.emplace(id, session);
+        }
+    }
+    session->onComplete(std::bind_front(&RecognitionServer::onSessionComplete, this));
+    LOGD("Run <{}> session", id);
+    session->run();
+    return true;
 }
 
 void
@@ -136,57 +191,31 @@ RecognitionServer::notifyShutdownReady()
 bool
 RecognitionServer::readyToShutdown() const
 {
-    std::scoped_lock lock{_shutdownGuard, _dispatchersGuard};
-    return _acceptorReady && _dispatchers.empty();
+    std::scoped_lock lock{_shutdownGuard, _sessionsGuard};
+    return _acceptorReady && _sessions.empty();
 }
 
 void
 RecognitionServer::close()
 {
-    sys::error_code error;
-    _acceptor.close(error);
+    sys::error_code ec;
+    _acceptor.close(ec);
     {
         std::lock_guard lock{_shutdownGuard};
         _acceptorReady = true;
     }
 }
 
-bool
-RecognitionServer::dispatch(std::shared_ptr<RecognitionConnection> connection)
-{
-    const auto endpoint = connection->endpointRemote();
-    if (!endpoint) {
-        LOGE("Getting dispatcher id has failed: <{}>", endpoint.error().message());
-        return false;
-    }
-
-    const auto id = endpoint.value().port();
-    if (_dispatchers.contains(id)) {
-        LOGE("Dispatcher with <{}> id already exists", id);
-        return false;
-    }
-
-    auto dispatcher = RecognitionDispatcher::create(id, connection, _performer, _factory);
-    {
-        std::lock_guard lock{_dispatchersGuard};
-        _dispatchers.emplace(id, dispatcher);
-    }
-    dispatcher->onDone(std::bind_front(&RecognitionServer::onDispatchDone, this));
-    LOGD("Dispatcher <{}> is going to start", id);
-    dispatcher->dispatch();
-    return true;
-}
-
 void
-RecognitionServer::onDispatchDone(uint16_t id)
+RecognitionServer::onSessionComplete(std::size_t id)
 {
-    LOGD("Dispatcher <{}> has done", id);
+    LOGD("Session <{}> is complete", id);
     {
-        std::lock_guard lock{_dispatchersGuard};
-        _dispatchers.erase(id);
+        std::lock_guard lock{_sessionsGuard};
+        _sessions.erase(id);
     }
     if (readyToShutdown()) {
-        LOGD("Server is ready to shutdown");
+        LOGI("Server is ready to shutdown");
         notifyShutdownReady();
     }
 }

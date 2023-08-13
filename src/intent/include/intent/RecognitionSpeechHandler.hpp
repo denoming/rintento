@@ -15,24 +15,28 @@ class RecognitionSpeechHandler final
       public std::enable_shared_from_this<RecognitionSpeechHandler> {
 public:
     [[nodiscard]] static std::shared_ptr<RecognitionHandler>
-    create(std::shared_ptr<RecognitionConnection> connection,
+    create(Stream& stream,
+           Buffer& buffer,
+           Parser& parser,
            std::shared_ptr<WitRecognitionFactory> factory);
 
     void
-    handle(Buffer& buffer, Parser& parser) final;
+    handle() final;
 
 private:
-    RecognitionSpeechHandler(std::shared_ptr<RecognitionConnection> connection,
+    RecognitionSpeechHandler(Stream& stream,
+                             Buffer& buffer,
+                             Parser& parser,
                              std::shared_ptr<WitRecognitionFactory> factory);
 
     [[nodiscard]] bool
-    canHandle(const Parser::value_type& request) const;
+    canHandle() const;
 
     [[nodiscard]] std::shared_ptr<WitSpeechRecognition>
     createRecognition();
 
     void
-    handleSpeechData(Buffer& buffer, Parser& parser);
+    handleSpeechData();
 
     void
     onRecognitionData();
@@ -44,6 +48,8 @@ private:
     onRecognitionSuccess(wit::Utterances result);
 
 private:
+    Buffer& _buffer;
+    Parser& _parser;
     std::shared_ptr<WitRecognitionFactory> _factory;
     std::shared_ptr<WitSpeechRecognition> _recognition;
     SpeechDataBuffer _speechData;
