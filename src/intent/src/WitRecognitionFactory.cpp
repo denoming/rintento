@@ -18,13 +18,13 @@ WitRecognitionFactory::WitRecognitionFactory(std::shared_ptr<Config> config,
 std::shared_ptr<WitMessageRecognition>
 WitRecognitionFactory::message()
 {
-    return WitMessageRecognition::create(_config, _context, _executor);
+    return WitMessageRecognition::create(_config, _context, io::make_strand(_executor));
 }
 
 std::shared_ptr<WitSpeechRecognition>
 WitRecognitionFactory::speech()
 {
-    return WitSpeechRecognition::create(_config, _context, _executor);
+    return WitSpeechRecognition::create(_config, _context, io::make_strand(_executor));
 }
 
 } // namespace jar
