@@ -5,13 +5,11 @@
 
 #include <jarvisto/Logger.hpp>
 #include <jarvisto/LoggerInitializer.hpp>
-#include <jarvisto/Network.hpp>
 #include <jarvisto/Worker.hpp>
 
 #include <boost/program_options.hpp>
 
 #include <filesystem>
-#include <iostream>
 
 namespace po = boost::program_options;
 namespace fs = std::filesystem;
@@ -27,7 +25,7 @@ main(int argn, char* argv[])
     std::string audioFile;
     uint16_t serverPort;
 
-    po::options_description d{"J.A.R.V.I.S Executor CLI"};
+    po::options_description d{"Rintento CLI"};
     // clang-format off
     d.add_options()
         ("help,h", "Display help")
