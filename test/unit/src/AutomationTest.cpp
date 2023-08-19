@@ -3,13 +3,12 @@
 
 #include "intent/Automation.hpp"
 #include "intent/SequentActionLaunchStrategy.hpp"
+#include "test/Waiter.hpp"
 
 #include <jarvisto/Worker.hpp>
 
 #include <chrono>
 #include <thread>
-
-#include "Waiter.hpp"
 
 using namespace jar;
 using namespace testing;
