@@ -57,7 +57,14 @@ UC2 --> Server
 @startuml
 abstract class Subsystem
 
-interface IConfig {
+class ConfigLoader {
+    +load()
+    +load(stream)
+    +load(str)
+    +load(file)
+}
+
+class GeneralConfig {
     +proxyServerPort(): std::uint16_t
     +proxyServerThreads(): std::size_t
     +recognizeServerHost(): std::string_view
@@ -66,11 +73,14 @@ interface IConfig {
     +recognizeThreads(): std::size_t
 }
 
+ConfigLoader <|- GeneralConfig
+ConfigLoader <|- AutomationConfig
+
 Subsystem <|-- IntentSubsystem
-IConfig <|- Config
 
 IntentSubsystem o-- Worker : 2
-IntentSubsystem o-- Config
+IntentSubsystem o-- GeneralConfig
+IntentSubsystem o-- AutomationConfig
 IntentSubsystem o-- RecognitionServer
 IntentSubsystem o-- WitRecognitionFactory
 @enduml
@@ -216,7 +226,7 @@ RecognitionMessageHandler -> RecognitionMessageHandler : createRecognition()
 RecognitionMessageHandler -> WitRecognitionFactory : message()
 activate WitRecognitionFactory
 create WitMessageRecognition
-WitRecognitionFactory -> WitMessageRecognition : create(config, context, executor)
+WitRecognitionFactory -> WitMessageRecognition : create(host, port, auth, context, executor)
 deactivate WitRecognitionFactory
 RecognitionMessageHandler ->> WitMessageRecognition : run()
 
@@ -268,7 +278,7 @@ RecognitionSpeechHandler -> RecognitionSpeechHandler : createRecognition()
 RecognitionSpeechHandler -> WitRecognitionFactory : speech()
 activate WitRecognitionFactory
 create WitSpeechRecognition
-WitRecognitionFactory -> WitSpeechRecognition : create(config, context, executor)
+WitRecognitionFactory -> WitSpeechRecognition : create(host, port, auth, context, executor)
 deactivate WitRecognitionFactory
 RecognitionSpeechHandler ->> WitSpeechRecognition : run()
 activate WitSpeechRecognition
