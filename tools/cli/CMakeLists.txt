@@ -19,7 +19,6 @@ target_link_libraries(${TARGET}
     PRIVATE Boost::headers
             Boost::program_options
     PRIVATE Jarvisto::Jarvisto
-            Rintento::Common
             Rintento::Intent
 )
 

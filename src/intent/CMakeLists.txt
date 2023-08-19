@@ -10,7 +10,6 @@ target_include_directories(${TARGET}
 
 target_link_libraries(${TARGET}
     PUBLIC Jarvisto::Jarvisto
-           Rintento::Common
            Boost::headers
     PRIVATE OpenSSL::SSL
             OpenSSL::Crypto

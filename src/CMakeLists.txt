@@ -24,5 +24,4 @@ install(
     COMPONENT RintentoExecutorRuntime
 )
 
-add_subdirectory(common)
 add_subdirectory(intent)

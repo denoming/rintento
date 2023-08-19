@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common/Constants.hpp"
+#include "intent/Constants.hpp"
 
 #include <jarvisto/Network.hpp>
 
