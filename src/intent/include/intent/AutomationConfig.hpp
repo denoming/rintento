@@ -4,9 +4,9 @@
 
 namespace jar {
 
-class AutomationConfigLoader final : public ConfigLoader {
+class AutomationConfig final : public ConfigLoader {
 public:
-    AutomationConfigLoader() = default;
+    AutomationConfig() = default;
 
 private:
     void

@@ -1,6 +1,7 @@
 #include "intent/IntentSubsystem.hpp"
 
-#include "common/Config.hpp"
+#include "intent/AutomationConfig.hpp"
+#include "intent/GeneralConfig.hpp"
 #include "intent/RecognitionServer.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 
@@ -14,17 +15,24 @@ namespace jar {
 
 class IntentSubsystem::Impl {
 public:
-    explicit Impl(std::shared_ptr<Config> config)
-        : _config{std::move(config)}
-    {
-    }
+    Impl() = default;
 
     void
     initialize(Application& /*application*/)
     {
-        _proxyWorker = std::make_unique<Worker>(_config->proxyServerThreads());
-        _recognizeWorker = std::make_unique<Worker>(_config->recognizeThreads());
-        _factory = std::make_unique<WitRecognitionFactory>(_config, _recognizeWorker->executor());
+        if (not _config.load()) {
+            LOGE("Unable to load general config");
+        }
+        if (not _automationConfig.load()) {
+            LOGE("Unable to load automation config");
+        }
+
+        _proxyWorker = std::make_unique<Worker>(_config.proxyServerThreads());
+        _recognizeWorker = std::make_unique<Worker>(_config.recognizeThreads());
+        _factory = std::make_unique<WitRecognitionFactory>(_config.recognizeServerHost(),
+                                                           _config.recognizeServerPort(),
+                                                           _config.recognizeServerAuth(),
+                                                           _recognizeWorker->executor());
         _server = RecognitionServer::create(_proxyWorker->executor(), _factory);
     }
 
@@ -36,7 +44,7 @@ public:
         BOOST_ASSERT(_recognizeWorker);
         _recognizeWorker->start();
 
-        const auto port = _config->proxyServerPort();
+        const auto port = _config.proxyServerPort();
         BOOST_ASSERT(_server);
         if (_server->listen(port)) {
             LOGI("Starting server on <{}> port was success", port);
@@ -70,15 +78,17 @@ public:
     }
 
 private:
+    GeneralConfig _config;
+    AutomationConfig _automationConfig;
+
     std::unique_ptr<Worker> _proxyWorker;
     std::unique_ptr<Worker> _recognizeWorker;
-    std::shared_ptr<Config> _config;
     std::shared_ptr<WitRecognitionFactory> _factory;
     std::shared_ptr<RecognitionServer> _server;
 };
 
-IntentSubsystem::IntentSubsystem(std::shared_ptr<Config> config)
-    : _impl{std::make_unique<Impl>(std::move(config))}
+IntentSubsystem::IntentSubsystem()
+    : _impl{std::make_unique<Impl>()}
 {
 }
 

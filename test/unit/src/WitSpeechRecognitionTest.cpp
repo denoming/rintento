@@ -1,8 +1,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "common/Config.hpp"
 #include "intent/Formatters.hpp"
+#include "intent/GeneralConfig.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 #include "intent/WitSpeechRecognition.hpp"
 #include "test/Matchers.hpp"
@@ -22,7 +22,10 @@ public:
     const fs::path AssetAudioPath{fs::current_path() / "asset" / "audio"};
 
     WitSpeechRecognitionTest()
-        : factory{config, worker.executor()}
+        : factory{config.recognizeServerHost(),
+                  config.recognizeServerPort(),
+                  config.recognizeServerAuth(),
+                  worker.executor()}
         , recognition{factory.speech()}
     {
     }
@@ -30,10 +33,7 @@ public:
     static void
     SetUpTestSuite()
     {
-        if (!config) {
-            config = std::make_shared<Config>();
-            ASSERT_TRUE(config->load());
-        }
+        ASSERT_TRUE(config.load());
     }
 
     void
@@ -49,7 +49,7 @@ public:
     }
 
 public:
-    static std::shared_ptr<Config> config;
+    static GeneralConfig config;
 
     Worker worker;
     WitRecognitionFactory factory;
@@ -57,7 +57,7 @@ public:
     std::shared_ptr<WitSpeechRecognition> recognition;
 };
 
-std::shared_ptr<Config> WitSpeechRecognitionTest::config;
+GeneralConfig WitSpeechRecognitionTest::config;
 
 TEST_F(WitSpeechRecognitionTest, RecognizeSpeech1)
 {

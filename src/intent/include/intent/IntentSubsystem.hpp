@@ -10,11 +10,11 @@ class Config;
 
 class IntentSubsystem final : public Subsystem {
 public:
-    IntentSubsystem(std::shared_ptr<Config> config);
+    IntentSubsystem();
 
     ~IntentSubsystem() final;
 
-    const char*
+    [[nodiscard]] const char*
     name() const final;
 
     void

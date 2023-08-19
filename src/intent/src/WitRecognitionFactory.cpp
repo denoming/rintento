@@ -5,11 +5,15 @@
 
 namespace jar {
 
-WitRecognitionFactory::WitRecognitionFactory(std::shared_ptr<Config> config,
+WitRecognitionFactory::WitRecognitionFactory(std::string host,
+                                             std::string port,
+                                             std::string auth,
                                              io::any_io_executor executor)
-    : _config{std::move(config)}
-    , _context{ssl::context::tlsv12_client}
+    : _host{std::move(host)}
+    , _port{std::move(port)}
+    , _auth{std::move(auth)}
     , _executor{std::move(executor)}
+    , _context{ssl::context::tlsv12_client}
 {
     _context.set_default_verify_paths();
     _context.set_verify_mode(ssl::verify_peer);
@@ -18,13 +22,13 @@ WitRecognitionFactory::WitRecognitionFactory(std::shared_ptr<Config> config,
 std::shared_ptr<WitMessageRecognition>
 WitRecognitionFactory::message()
 {
-    return WitMessageRecognition::create(_config, _context, io::make_strand(_executor));
+    return WitMessageRecognition::create(_host, _port, _auth, _context, io::make_strand(_executor));
 }
 
 std::shared_ptr<WitSpeechRecognition>
 WitRecognitionFactory::speech()
 {
-    return WitSpeechRecognition::create(_config, _context, io::make_strand(_executor));
+    return WitSpeechRecognition::create(_host, _port, _auth, _context, io::make_strand(_executor));
 }
 
 } // namespace jar

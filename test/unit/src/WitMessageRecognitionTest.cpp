@@ -1,7 +1,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "common/Config.hpp"
+#include "intent/GeneralConfig.hpp"
 #include "intent/WitMessageRecognition.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 #include "test/Matchers.hpp"
@@ -20,7 +20,10 @@ using namespace jar;
 class WitMessageRecognitionTest : public Test {
 public:
     WitMessageRecognitionTest()
-        : factory{config, worker.executor()}
+        : factory{config.recognizeServerHost(),
+                  config.recognizeServerPort(),
+                  config.recognizeServerAuth(),
+                  worker.executor()}
         , recognition{factory.message()}
     {
     }
@@ -28,10 +31,7 @@ public:
     static void
     SetUpTestSuite()
     {
-        if (!config) {
-            config = std::make_shared<Config>();
-            ASSERT_TRUE(config->load());
-        }
+        ASSERT_TRUE(config.load());
     }
 
     void
@@ -47,7 +47,7 @@ public:
     }
 
 public:
-    static std::shared_ptr<Config> config;
+    static GeneralConfig config;
 
     Worker worker;
     WitRecognitionFactory factory;
@@ -55,7 +55,7 @@ public:
     std::shared_ptr<WitMessageRecognition> recognition;
 };
 
-std::shared_ptr<Config> WitMessageRecognitionTest::config;
+GeneralConfig WitMessageRecognitionTest::config;
 
 TEST_F(WitMessageRecognitionTest, RecognizeMessage)
 {

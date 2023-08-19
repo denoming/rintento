@@ -1,10 +1,8 @@
 #include "ServiceApplication.hpp"
 
-#include "common/Config.hpp"
 #include "intent/IntentSubsystem.hpp"
 #include "rintento/Options.hpp"
 
-#include <jarvisto/Logger.hpp>
 #include <jarvisto/LoggerInitializer.hpp>
 
 namespace jar {
@@ -24,12 +22,7 @@ ServiceApplication::initialize(Application& application)
     LoggerInitializer::instance().initialize();
 #endif
 
-    _config = std::make_shared<Config>();
-    if (!_config->load()) {
-        LOGE("Unable to load config file");
-    }
-
-    addSubsystem(std::make_unique<IntentSubsystem>(_config));
+    addSubsystem(std::make_unique<IntentSubsystem>());
 
     Application::initialize(application);
 }

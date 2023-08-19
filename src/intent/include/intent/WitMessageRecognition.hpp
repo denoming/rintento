@@ -9,25 +9,28 @@
 
 namespace jar {
 
-class Config;
+class GeneralConfig;
 
 class WitMessageRecognition : public WitRecognition,
                               public std::enable_shared_from_this<WitMessageRecognition> {
 public:
     static std::shared_ptr<WitMessageRecognition>
-    create(std::shared_ptr<Config> config, ssl::context& context, io::any_io_executor executor);
+    create(std::string host,
+           std::string port,
+           std::string auth,
+           ssl::context& context,
+           io::any_io_executor executor);
 
     void
     run();
 
     void
-    run(std::string_view host, std::string_view port, std::string_view auth);
-
-    void
     feed(std::string_view message);
 
 private:
-    explicit WitMessageRecognition(std::shared_ptr<Config> config,
+    explicit WitMessageRecognition(std::string host,
+                                   std::string port,
+                                   std::string auth,
                                    ssl::context& context,
                                    io::any_io_executor executor);
 
@@ -69,7 +72,9 @@ private:
     onShutdownDone(std::error_code error);
 
 private:
-    std::shared_ptr<Config> _config;
+    std::string _host;
+    std::string _port;
+    std::string _auth;
     io::any_io_executor _executor;
     tcp::resolver _resolver;
     beast::ssl_stream<beast::tcp_stream> _stream;

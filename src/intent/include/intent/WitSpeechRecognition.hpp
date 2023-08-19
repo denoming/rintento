@@ -9,19 +9,20 @@
 
 namespace jar {
 
-class Config;
+class GeneralConfig;
 
 class WitSpeechRecognition : public WitRecognition,
                              public std::enable_shared_from_this<WitSpeechRecognition> {
 public:
     static std::shared_ptr<WitSpeechRecognition>
-    create(std::shared_ptr<Config> config, ssl::context& context, io::any_io_executor executor);
+    create(std::string host,
+           std::string port,
+           std::string auth,
+           ssl::context& context,
+           io::any_io_executor executor);
 
     void
     run();
-
-    void
-    run(std::string_view host, std::string_view port, std::string_view auth);
 
     void
     feed(io::const_buffer buffer);
@@ -30,7 +31,9 @@ public:
     finalize();
 
 private:
-    explicit WitSpeechRecognition(std::shared_ptr<Config> config,
+    explicit WitSpeechRecognition(std::string host,
+                                  std::string port,
+                                  std::string auth,
                                   ssl::context& context,
                                   io::any_io_executor executor);
 
@@ -84,7 +87,9 @@ private:
     onShutdownDone(std::error_code error);
 
 private:
-    std::shared_ptr<Config> _config;
+    std::string _host;
+    std::string _port;
+    std::string _auth;
     io::any_io_executor _executor;
     tcp::resolver _resolver;
     beast::ssl_stream<beast::tcp_stream> _stream;

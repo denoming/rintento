@@ -1,6 +1,6 @@
 #include "intent/WitSpeechRecognition.hpp"
 
-#include "common/Config.hpp"
+#include "intent/GeneralConfig.hpp"
 #include "intent/Utils.hpp"
 #include "intent/WitIntentParser.hpp"
 
@@ -11,21 +11,27 @@
 namespace jar {
 
 std::shared_ptr<WitSpeechRecognition>
-WitSpeechRecognition::create(std::shared_ptr<Config> config,
+WitSpeechRecognition::create(std::string host,
+                             std::string port,
+                             std::string auth,
                              ssl::context& context,
                              io::any_io_executor executor)
 {
     // clang-format off
     return std::shared_ptr<WitSpeechRecognition>(
-        new WitSpeechRecognition(std::move(config), context, std::move(executor))
+        new WitSpeechRecognition(std::move(host), std::move(port), std::move(auth), context, std::move(executor))
     );
     // clang-format on
 }
 
-WitSpeechRecognition::WitSpeechRecognition(std::shared_ptr<Config> config,
+WitSpeechRecognition::WitSpeechRecognition(std::string host,
+                                           std::string port,
+                                           std::string auth,
                                            ssl::context& context,
                                            io::any_io_executor executor)
-    : _config{std::move(config)}
+    : _host{std::move(host)}
+    , _port{std::move(port)}
+    , _auth{std::move(auth)}
     , _executor{std::move(executor)}
     , _resolver{_executor}
     , _stream{_executor, context}
@@ -35,36 +41,21 @@ WitSpeechRecognition::WitSpeechRecognition(std::shared_ptr<Config> config,
 void
 WitSpeechRecognition::run()
 {
-    BOOST_ASSERT(_config);
-
-    const auto host = _config->recognizeServerHost();
-    const auto port = _config->recognizeServerPort();
-    const auto auth = _config->recognizeServerAuth();
-
-    if (host.empty() || (port.empty()) || auth.empty()) {
+    if (_host.empty() || (_port.empty()) || _auth.empty()) {
         LOGE("Invalid server config options: host<{}>, port<{}>, auth<{}>",
-             !host.empty(),
-             !port.empty(),
-             !auth.empty());
+             not _host.empty(),
+             not _port.empty(),
+             not _auth.empty());
         setError(sys::errc::make_error_code(sys::errc::invalid_argument));
-    } else {
-        run(host, port, auth);
+        return;
     }
-}
-
-void
-WitSpeechRecognition::run(std::string_view host, std::string_view port, std::string_view auth)
-{
-    BOOST_ASSERT(!host.empty());
-    BOOST_ASSERT(!port.empty());
-    BOOST_ASSERT(!auth.empty());
 
     std::error_code error;
-    net::setServerHostname(_stream, host, error);
+    net::setServerHostname(_stream, _host, error);
     if (error) {
         LOGW("Unable to set server to use in verification process");
     }
-    net::setSniHostname(_stream, host, error);
+    net::setSniHostname(_stream, _host, error);
     if (error) {
         LOGW("Unable to set SNI hostname");
     }
@@ -72,15 +63,15 @@ WitSpeechRecognition::run(std::string_view host, std::string_view port, std::str
     _req.version(net::kHttpVersion11);
     _req.target(format::speechTargetWithDate());
     _req.method(http::verb::post);
-    _req.set(http::field::host, host);
+    _req.set(http::field::host, _host);
     _req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-    _req.set(http::field::authorization, auth);
+    _req.set(http::field::authorization, _auth);
     _req.set(http::field::content_type,
              "audio/raw; encoding=signed-integer; bits=16; rate=16000; endian=little");
     _req.set(http::field::transfer_encoding, "chunked");
     _req.set(http::field::expect, "100-continue");
 
-    resolve(host, port);
+    resolve(_host, _port);
 }
 
 void

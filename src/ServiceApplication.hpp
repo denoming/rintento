@@ -2,8 +2,6 @@
 
 #include <jarvisto/Application.hpp>
 
-#include <memory>
-
 namespace jar {
 
 class Config;
@@ -17,10 +15,7 @@ public:
 
 private:
     void
-    initialize(Application& application) override;
-
-private:
-    std::shared_ptr<Config> _config;
+    initialize(Application& application) final;
 };
 
 } // namespace jar

@@ -6,13 +6,16 @@
 
 namespace jar {
 
-class Config;
+class GeneralConfig;
 class WitMessageRecognition;
 class WitSpeechRecognition;
 
 class WitRecognitionFactory {
 public:
-    WitRecognitionFactory(std::shared_ptr<Config> config, io::any_io_executor executor);
+    WitRecognitionFactory(std::string host,
+                          std::string port,
+                          std::string auth,
+                          io::any_io_executor executor);
 
     std::shared_ptr<WitMessageRecognition>
     message();
@@ -21,9 +24,11 @@ public:
     speech();
 
 private:
-    std::shared_ptr<Config> _config;
-    ssl::context _context;
+    std::string _host;
+    std::string _port;
+    std::string _auth;
     io::any_io_executor _executor;
+    ssl::context _context;
 };
 
 } // namespace jar
