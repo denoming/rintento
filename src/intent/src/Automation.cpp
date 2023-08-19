@@ -1,0 +1,116 @@
+#include "intent/Automation.hpp"
+
+#include "intent/Action.hpp"
+#include "intent/ActionLaunchStrategy.hpp"
+
+#include <jarvisto/Logger.hpp>
+
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
+namespace uuids = boost::uuids;
+
+namespace {
+
+std::string
+generateId()
+{
+    static uuids::random_generator gen;
+    uuids::uuid tag{gen()};
+    return uuids::to_string(tag);
+}
+
+} // namespace
+
+namespace jar {
+
+Automation::Ptr
+Automation::create(std::string alias,
+                   std::string intent,
+                   Action::List actions,
+                   ActionLaunchStrategy::Ptr launchStrategy)
+{
+    return Automation::Ptr{new Automation{generateId(),
+                                          std::move(alias),
+                                          std::move(intent),
+                                          std::move(actions),
+                                          std::move(launchStrategy)}};
+}
+
+Automation::Automation(std::string id,
+                       std::string alias,
+                       std::string intent,
+                       Action::List actions,
+                       ActionLaunchStrategy::Ptr launchStrategy)
+    : _id{std::move(id)}
+    , _alias{std::move(alias)}
+    , _intent{std::move(intent)}
+    , _actions{std::move(actions)}
+    , _launcher{std::move(launchStrategy)}
+{
+}
+
+const std::string&
+Automation::id() const
+{
+    return _id;
+}
+
+const std::string&
+Automation::alias() const
+{
+    static const std::string kEmptyAlias{"unknown"};
+    return _alias.empty() ? kEmptyAlias : _alias;
+}
+
+const std::string&
+Automation::intent() const
+{
+    return _intent;
+}
+
+Automation::Ptr
+Automation::clone()
+{
+    Action::List actions;
+    std::for_each(_actions.cbegin(), _actions.cend(), [&](const Action::Ptr& action) {
+        actions.emplace_back(action->clone());
+    });
+    BOOST_ASSERT(not actions.empty());
+
+    ActionLaunchStrategy::Ptr launcher = _launcher->clone();
+    BOOST_ASSERT(launcher);
+
+    const auto id = generateId();
+    LOGD("Clone <{}> automation to <{}> clone", _id, id);
+    return Automation::Ptr{new Automation{id, _alias, _intent, std::move(actions), launcher}};
+}
+
+void
+Automation::execute()
+{
+    BOOST_ASSERT(_launcher);
+    _launcher->onDone([weakSelf = weak_from_this()](std::error_code ec) {
+        if (auto self = weakSelf.lock()) {
+            self->onExecuteDone(ec);
+        }
+    });
+
+    LOGI("Launch <{}> actions of <{} ({})> automation", _actions.size(), alias(), id());
+    _launcher->launch(_actions);
+}
+
+void
+Automation::onExecuteDone(std::error_code ec)
+{
+    LOGI("Executing <{} ({})> automation is done: actions<{}>, result<{}>",
+         alias(),
+         id(),
+         _actions.size(),
+         ec.message());
+
+    complete(ec);
+}
+
+} // namespace jar

@@ -34,6 +34,12 @@ target_sources(${TARGET}
             src/RecognitionTerminalHandler.cpp
             src/SpeechDataBuffer.cpp
             src/Utils.cpp
+            src/Automation.cpp
+            src/AutomationExecutor.cpp
+            src/AutomationRegistry.cpp
+            src/DeferredJob.cpp
+            src/ScriptAction.cpp
+            src/SequentActionLaunchStrategy.cpp
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_23)
