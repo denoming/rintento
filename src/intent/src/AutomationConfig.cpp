@@ -7,6 +7,10 @@
 
 #include <jarvisto/Logger.hpp>
 
+#include <filesystem>
+
+namespace fs = std::filesystem;
+
 namespace jar {
 
 AutomationConfig::AutomationConfig(Worker& worker, IAutomationRegistry& registry)
@@ -73,7 +77,27 @@ AutomationConfig::doParseActions(const boost::property_tree::ptree& root)
 Action::Ptr
 AutomationConfig::doParseScriptAction(const boost::property_tree::ptree& root)
 {
-    Action::Ptr action;
+    fs::path execPath;
+    if (auto execOpt = root.get_optional<std::string>("exec"); execOpt) {
+        execPath = std::move(*execOpt);
+    } else {
+        LOGE("Mandatory field 'exec' is absent");
+        return {};
+    }
+
+    ScriptAction::Args args;
+    if (auto argsTree = root.get_child_optional("args"); argsTree) {
+        for (const auto& [_, valueTree] : *argsTree) {
+            if (auto valueOpt = valueTree.get_value_optional<std::string>(); valueOpt) {
+                args.push_back(std::move(*valueOpt));
+            }
+        }
+    }
+
+    fs::path homePath;
+    if (auto homeOpt = root.get_optional<std::string>("home"); homeOpt) {
+        homePath = std::move(*homeOpt);
+    }
 
     ScriptAction::Environment env;
     if (auto envTree = root.get_child_optional("environment"); envTree) {
@@ -84,13 +108,17 @@ AutomationConfig::doParseScriptAction(const boost::property_tree::ptree& root)
         }
     }
 
-    if (auto commandOpt = root.get_optional<std::string>("command"); commandOpt) {
-        action = ScriptAction::create(_worker.executor(), std::move(*commandOpt), std::move(env));
-    } else {
-        LOGE("Mandatory field 'command' is absent");
+    bool inheritParentEnv{false};
+    if (auto inheritOpt = root.get_optional<bool>("inheritParentEnv"); inheritOpt) {
+        inheritParentEnv = *inheritOpt;
     }
 
-    return action;
+    return ScriptAction::create(_worker.executor(),
+                                std::move(execPath),
+                                std::move(args),
+                                std::move(homePath),
+                                std::move(env),
+                                inheritParentEnv);
 }
 
 } // namespace jar

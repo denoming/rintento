@@ -6,10 +6,10 @@
 
 #include <jarvisto/Worker.hpp>
 
+#include <string_view>
+
 using namespace jar;
 using namespace testing;
-
-#include <string_view>
 
 static const std::string_view kConfigValue = R"({
     "proxy":
@@ -33,12 +33,14 @@ static const std::string_view kConfigValue = R"({
             [
                 {
                     "type": "script",
-                    "command": "/path/to/execute1 arg1 arg2",
-                    "environment":
-                    {
-                        "ENV1": "1",
-                        "ENV2": "2"
-                    }
+                    "exec": "program1",
+                    "args": ["-arg1", "-arg2", "value"],
+                    "home": "/path/to/home/directory1",
+                    "env": {
+                        "ENV1": "VAR1",
+                        "ENV2": "VAR2"
+                    },
+                    "inheritParentEnv": true
                 }
             ]
         },
@@ -49,12 +51,14 @@ static const std::string_view kConfigValue = R"({
             [
                 {
                     "type": "script",
-                    "command": "/path/to/execute2 arg1 arg2",
-                    "environment":
-                    {
-                        "ENV3": "3",
-                        "ENV4": "4"
-                    }
+                    "exec": "program2",
+                    "args": ["-arg1", "-arg2", "value"],
+                    "home": "/path/to/home/directory2",
+                    "env": {
+                        "ENV3": "VAR3",
+                        "ENV4": "VAR4"
+                    },
+                    "inheritParentEnv": true
                 }
             ]
         }
