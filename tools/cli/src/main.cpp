@@ -1,7 +1,6 @@
 #include <iostream>
 
 #include "cli/Clients.hpp"
-#include "common/Constants.hpp"
 
 #include <jarvisto/Logger.hpp>
 #include <jarvisto/LoggerInitializer.hpp>
@@ -31,7 +30,7 @@ main(int argn, char* argv[])
         ("help,h", "Display help")
         ("message,m", po::value<std::string>(&message), "Recognize message")
         ("speech,s", po::value<std::string>(&audioFile), "Recognize speech")
-        ("port,p", po::value<uint16_t>(&serverPort)->default_value(kDefaultProxyServerPort), "Recognize server port")
+        ("port,p", po::value<uint16_t>(&serverPort)->default_value(8080), "Recognize server port")
     ;
     // clang-format on
 
