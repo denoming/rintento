@@ -3,7 +3,7 @@
 #include "intent/ConfigLoader.hpp"
 #include "intent/Action.hpp"
 
-#include <jarvisto/Worker.hpp>
+#include <jarvisto/Network.hpp>
 
 #include <memory>
 
@@ -13,7 +13,7 @@ class IAutomationRegistry;
 
 class AutomationConfig final : public ConfigLoader {
 public:
-    AutomationConfig(Worker& worker, IAutomationRegistry& registry);
+    AutomationConfig(io::any_io_executor executor, IAutomationRegistry& registry);
 
 private:
     void
@@ -29,7 +29,7 @@ private:
     doParseScriptAction(const boost::property_tree::ptree& root);
 
 private:
-    Worker& _worker;
+    io::any_io_executor _executor;
     IAutomationRegistry& _registry;
 };
 

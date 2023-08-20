@@ -13,8 +13,8 @@ namespace fs = std::filesystem;
 
 namespace jar {
 
-AutomationConfig::AutomationConfig(Worker& worker, IAutomationRegistry& registry)
-    : _worker{worker}
+AutomationConfig::AutomationConfig(io::any_io_executor executor, IAutomationRegistry& registry)
+    : _executor{executor}
     , _registry{registry}
 {
 }
@@ -113,7 +113,7 @@ AutomationConfig::doParseScriptAction(const boost::property_tree::ptree& root)
         inheritParentEnv = *inheritOpt;
     }
 
-    return ScriptAction::create(_worker.executor(),
+    return ScriptAction::create(_executor,
                                 std::move(execPath),
                                 std::move(args),
                                 std::move(homePath),

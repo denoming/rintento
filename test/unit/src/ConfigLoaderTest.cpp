@@ -86,7 +86,7 @@ TEST_F(ConfigLoaderTest, GeneralConfig)
 TEST_F(ConfigLoaderTest, AutomationConfig)
 {
     Worker worker;
-    AutomationConfig config{worker, registry};
+    AutomationConfig config{worker.executor(), registry};
     EXPECT_CALL(registry, add).Times(2);
     ASSERT_TRUE(config.load(kConfigValue));
 }
