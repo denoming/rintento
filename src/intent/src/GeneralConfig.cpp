@@ -4,6 +4,10 @@
 
 #include <jarvisto/Logger.hpp>
 
+#include <boost/json.hpp>
+
+namespace json = boost::json;
+
 namespace jar {
 
 GeneralConfig::GeneralConfig()
@@ -55,8 +59,10 @@ GeneralConfig::recognizeThreads() const
 void
 GeneralConfig::doParse(const boost::property_tree::ptree& root)
 {
+    static const unsigned kMaxThreads = std::thread::hardware_concurrency() * 2;
+
     if (auto portOpt = root.get_optional<int>("proxy.port"); portOpt) {
-        if (*portOpt > 0) {
+        if (*portOpt > 0 and *portOpt < std::numeric_limits<std::uint16_t>::max()) {
             _proxyServerPort = static_cast<std::uint16_t>(*portOpt);
         } else {
             LOGW("Invalid proxy port option value: {}", *portOpt);
@@ -64,7 +70,7 @@ GeneralConfig::doParse(const boost::property_tree::ptree& root)
     }
 
     if (auto threadsOpt = root.get_optional<int>("proxy.threads"); threadsOpt) {
-        if (*threadsOpt > 0) {
+        if (*threadsOpt > 0 and *threadsOpt < kMaxThreads) {
             _proxyServerThreads = static_cast<std::size_t>(*threadsOpt);
         } else {
             LOGW("Invalid proxy threads count option value: {}", *threadsOpt);
@@ -98,7 +104,7 @@ GeneralConfig::doParse(const boost::property_tree::ptree& root)
     }
 
     if (auto threadsOpt = root.get_optional<int>("recognize.threads"); threadsOpt) {
-        if (*threadsOpt > 0) {
+        if (*threadsOpt > 0 and *threadsOpt < kMaxThreads) {
             _recognizeServerThreads = static_cast<std::size_t>(*threadsOpt);
         } else {
             LOGW("Invalid recognize threads count option value: {}", *threadsOpt);

@@ -8,6 +8,7 @@ target_sources(${TARGET}
             src/WitSpeechRecognitionTest.cpp
             src/UtilsTest.cpp
             src/AutomationTest.cpp
+            src/ConfigLoaderTest.cpp
 )
 
 target_link_libraries(${TARGET}

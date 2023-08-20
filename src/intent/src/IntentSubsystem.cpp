@@ -23,9 +23,6 @@ public:
         if (not _config.load()) {
             LOGE("Unable to load general config");
         }
-        if (not _automationConfig.load()) {
-            LOGE("Unable to load automation config");
-        }
 
         _proxyWorker = std::make_unique<Worker>(_config.proxyServerThreads());
         _recognizeWorker = std::make_unique<Worker>(_config.recognizeThreads());
@@ -79,7 +76,6 @@ public:
 
 private:
     GeneralConfig _config;
-    AutomationConfig _automationConfig;
 
     std::unique_ptr<Worker> _proxyWorker;
     std::unique_ptr<Worker> _recognizeWorker;

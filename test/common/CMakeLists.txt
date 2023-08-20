@@ -7,6 +7,7 @@ target_sources(${TARGET}
     PRIVATE src/TestMain.cpp
             src/TestWaiter.cpp
             src/Utils.cpp
+            src/MockAutomationRegistry.cpp
 )
 
 target_include_directories(${TARGET}

@@ -3,13 +3,15 @@
 namespace jar {
 
 Action::Ptr
-ScriptAction::create(io::any_io_executor executor)
+ScriptAction::create(io::any_io_executor executor, std::string cmd, Environment env)
 {
-    return Action::Ptr{new ScriptAction{std::move(executor)}};
+    return Action::Ptr{new ScriptAction{std::move(executor), std::move(cmd), std::move(env)}};
 }
 
-ScriptAction::ScriptAction(io::any_io_executor executor)
+ScriptAction::ScriptAction(io::any_io_executor executor, std::string cmd, Environment env)
     : _executor{std::move(executor)}
+    , _cmd{std::move(cmd)}
+    , _env{std::move(env)}
 {
 }
 
@@ -24,13 +26,13 @@ ScriptAction::execute()
 {
     io::post(_executor, [weakSelf = weak_from_this()]() {
         if (auto self = weakSelf.lock()) {
-            self->runCmd();
+            self->run();
         }
     });
 }
 
 void
-ScriptAction::runCmd()
+ScriptAction::run()
 {
     /* ToDo: run script or any other program */
 }
