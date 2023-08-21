@@ -71,14 +71,14 @@ RecognitionHandler::handle()
 }
 
 void
-RecognitionHandler::submit(wit::Utterances result)
+RecognitionHandler::complete(wit::Utterances result)
 {
     BOOST_ASSERT(_onComplete);
     _onComplete(std::move(result), {});
 }
 
 void
-RecognitionHandler::submit(std::error_code ec)
+RecognitionHandler::complete(std::error_code ec)
 {
     BOOST_ASSERT(_onComplete);
     _onComplete({}, ec);

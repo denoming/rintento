@@ -105,15 +105,15 @@ RecognitionMessageHandler::onRecognitionError(std::error_code error)
 {
     LOGD("Submit recognition error: <{}>", error.message());
     sendResponse(error);
-    submit(error);
+    complete(error);
 }
 
 void
 RecognitionMessageHandler::onRecognitionSuccess(wit::Utterances result)
 {
-    LOGD("Submit recognition success: <{}> size", result.size());
+    LOGD("Submit recognition result: utterances<{}>", result.size());
     sendResponse(result);
-    submit(std::move(result));
+    complete(std::move(result));
 }
 
 } // namespace jar

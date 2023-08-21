@@ -83,7 +83,7 @@ Automation::clone()
     BOOST_ASSERT(launcher);
 
     const auto id = generateId();
-    LOGD("Clone <{}> automation to <{}> clone", _id, id);
+    BOOST_ASSERT(not id.empty());
     return Automation::Ptr{new Automation{id, _alias, _intent, std::move(actions), launcher}};
 }
 
@@ -104,10 +104,9 @@ Automation::execute()
 void
 Automation::onExecuteDone(std::error_code ec)
 {
-    LOGI("Executing <{} ({})> automation is done: actions<{}>, result<{}>",
+    LOGI("Executing <{} ({})> automation is done: result<{}>",
          alias(),
          id(),
-         _actions.size(),
          ec.message());
 
     complete(ec);

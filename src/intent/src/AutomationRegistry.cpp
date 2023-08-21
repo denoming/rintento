@@ -11,7 +11,7 @@ AutomationRegistry::add(std::shared_ptr<Automation> automation)
 {
     const std::lock_guard lock{_guard};
     auto intent = automation->intent();
-    LOGD("Add new automation for <{}> intent", automation->intent());
+    LOGD("Register <{}> automation for <{}> intent", automation->id(), automation->intent());
     auto [it, ok] = _registry.insert({std::move(intent), std::move(automation)});
     BOOST_ASSERT(ok);
 }
@@ -29,10 +29,10 @@ AutomationRegistry::get(const std::string& intent)
     const std::unique_lock lock{_guard};
     Automation::Ptr automation;
     if (auto autoIt = _registry.find(intent); autoIt != std::cend(_registry)) {
-        LOGD("Clone automation for <{}> intent", intent);
         automation = std::get<1>(*autoIt)->clone();
+        LOGD("Provide <{}> automation for <{}> intent", automation->id(), intent);
     } else {
-        LOGE("Unable to find automation for <{}> intent", intent);
+        LOGE("Unable to find automation prototype for <{}> intent", intent);
     }
     return automation;
 }

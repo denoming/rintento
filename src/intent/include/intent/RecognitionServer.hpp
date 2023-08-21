@@ -1,6 +1,7 @@
 #pragma once
 
 #include "intent/Constants.hpp"
+#include "intent/WitTypes.hpp"
 
 #include <jarvisto/Network.hpp>
 
@@ -13,11 +14,14 @@ namespace jar {
 
 class WitRecognitionFactory;
 class RecognitionSession;
+class AutomationExecutor;
 
 class RecognitionServer : public std::enable_shared_from_this<RecognitionServer> {
 public:
     [[nodiscard]] static std::shared_ptr<RecognitionServer>
-    create(io::any_io_executor executor, std::shared_ptr<WitRecognitionFactory> factory);
+    create(io::any_io_executor executor,
+           std::shared_ptr<WitRecognitionFactory> factory,
+           AutomationExecutor& automationExecutor);
 
     bool
     listen(io::ip::port_type port);
@@ -29,7 +33,9 @@ public:
     shutdown();
 
 private:
-    RecognitionServer(io::any_io_executor executor, std::shared_ptr<WitRecognitionFactory> factory);
+    RecognitionServer(io::any_io_executor executor,
+                      std::shared_ptr<WitRecognitionFactory> factory,
+                      AutomationExecutor& automationExecutor);
 
     bool
     doListen(const tcp::endpoint& endpoint);
@@ -56,18 +62,19 @@ private:
     close();
 
     void
-    onSessionComplete(std::size_t id);
+    onSessionComplete(std::size_t id, wit::Utterances utterances);
 
 private:
     io::any_io_executor _executor;
     std::shared_ptr<WitRecognitionFactory> _factory;
+    AutomationExecutor& _automationExecutor;
     mutable std::mutex _shutdownGuard;
     std::condition_variable _shutdownReadyCv;
     bool _shutdownReady;
     bool _acceptorReady;
     tcp::acceptor _acceptor;
     mutable std::mutex _sessionsGuard;
-    std::map<std::size_t , std::shared_ptr<RecognitionSession>> _sessions;
+    std::map<std::size_t, std::shared_ptr<RecognitionSession>> _sessions;
 };
 
 } // namespace jar

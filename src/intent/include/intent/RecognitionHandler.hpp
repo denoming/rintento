@@ -32,10 +32,10 @@ public:
 
 protected:
     void
-    submit(wit::Utterances result);
+    complete(wit::Utterances result);
 
     void
-    submit(std::error_code error);
+    complete(std::error_code error);
 
     void
     sendResponse(const wit::Utterances& result);

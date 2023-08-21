@@ -71,13 +71,13 @@ RecognitionSession::onReadHeaderDone(sys::error_code ec, std::size_t bytes)
 
     if (bytes == 0 or ec == http::error::end_of_stream) {
         LOGD("The end of stream of <{}> session", _id);
-        finalize();
+        complete();
         return;
     }
 
     if (ec) {
         LOGE("Unable to read from <{}> session: error<{}>", _id, ec.message());
-        finalize();
+        complete();
         return;
     }
 
@@ -91,12 +91,10 @@ void
 RecognitionSession::onComplete(wit::Utterances utterances, std::error_code ec)
 {
     if (ec) {
-        LOGE("The <{}> session has failed: error<{}>", _id, ec.message());
+        complete();
     } else {
-        LOGI("The <{}> session has succeed: size<{}>", _id, utterances.size());
+        complete(std::move(utterances));
     }
-
-    doReadHeader();
 }
 
 std::shared_ptr<RecognitionHandler>
@@ -106,7 +104,7 @@ RecognitionSession::getHandler()
     handler1->onComplete(
         [weakSelf = weak_from_this(), id = _id](wit::Utterances result, std::error_code ec) {
             if (auto self = weakSelf.lock()) {
-                LOGD("Message handler of <{}> session is complete: success<{}>", id, !ec);
+                LOGD("Message handler of <{}> session is complete: result<{}>", id, ec.message());
                 self->onComplete(std::move(result), ec);
             }
         });
@@ -114,7 +112,7 @@ RecognitionSession::getHandler()
     handler2->onComplete(
         [weakSelf = weak_from_this(), id = _id](wit::Utterances result, std::error_code ec) {
             if (auto self = weakSelf.lock()) {
-                LOGD("Speech handler of <{}> session is complete: success<{}>", id, !ec);
+                LOGD("Speech handler of <{}> session is complete: result<{}>", id, ec.message());
                 self->onComplete(std::move(result), ec);
             }
         });
@@ -132,10 +130,10 @@ RecognitionSession::getHandler()
 }
 
 void
-RecognitionSession::finalize()
+RecognitionSession::complete(wit::Utterances result /*= {}*/)
 {
     if (_onComplete) {
-        _onComplete(_id);
+        _onComplete(_id, std::move(result));
     }
 }
 

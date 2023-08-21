@@ -2,6 +2,7 @@
 
 #include "intent/RecognitionSession.hpp"
 #include "intent/WitRecognitionFactory.hpp"
+#include "intent/AutomationExecutor.hpp"
 
 #include <jarvisto/Logger.hpp>
 
@@ -41,20 +42,23 @@ namespace jar {
 
 std::shared_ptr<RecognitionServer>
 RecognitionServer::create(io::any_io_executor executor,
-                          std::shared_ptr<WitRecognitionFactory> factory)
+                          std::shared_ptr<WitRecognitionFactory> factory,
+                          AutomationExecutor& automationExecutor)
 {
     // clang-format off
     return std::shared_ptr<RecognitionServer>(
-        new RecognitionServer{std::move(executor), std::move(factory)}
+        new RecognitionServer{std::move(executor), std::move(factory), automationExecutor}
     );
     // clang-format on
 }
 
 RecognitionServer::RecognitionServer(io::any_io_executor executor,
-                                     std::shared_ptr<WitRecognitionFactory> factory)
+                                     std::shared_ptr<WitRecognitionFactory> factory,
+                                     AutomationExecutor& automationExecutor)
     : _executor{std::move(executor)}
     , _acceptor{io::make_strand(_executor)}
     , _factory{std::move(factory)}
+    , _automationExecutor{automationExecutor}
     , _shutdownReady{false}
     , _acceptorReady{false}
 {
@@ -166,7 +170,12 @@ RecognitionServer::spawnSession(tcp::socket socket)
             _sessions.emplace(id, session);
         }
     }
-    session->onComplete(std::bind_front(&RecognitionServer::onSessionComplete, this));
+    session->onComplete(
+        [weakSelf = weak_from_this()](const std::size_t id, wit::Utterances utterances) {
+            if (auto self = weakSelf.lock()) {
+                self->onSessionComplete(id, std::move(utterances));
+            }
+        });
     LOGD("Run <{}> session", id);
     session->run();
     return true;
@@ -207,16 +216,21 @@ RecognitionServer::close()
 }
 
 void
-RecognitionServer::onSessionComplete(std::size_t id)
+RecognitionServer::onSessionComplete(std::size_t id, wit::Utterances utterances)
 {
-    LOGD("Session <{}> is complete", id);
+    LOGD("The <{}> session is complete: utterances<{}>", id, utterances.size());
     {
         std::lock_guard lock{_sessionsGuard};
         _sessions.erase(id);
     }
+
     if (readyToShutdown()) {
         LOGI("Server is ready to shutdown");
         notifyShutdownReady();
+    } else {
+        if (const auto result = std::move(utterances); not result.empty()) {
+            _automationExecutor.execute(result);
+        }
     }
 }
 

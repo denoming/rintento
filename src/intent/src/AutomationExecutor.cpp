@@ -22,8 +22,8 @@ mostConfidentIntent(const wit::Intents& intents)
 
 } // namespace
 
-AutomationExecutor::AutomationExecutor(std::shared_ptr<AutomationRegistry> registry)
-    : _registry{std::move(registry)}
+AutomationExecutor::AutomationExecutor(AutomationRegistry& registry)
+    : _registry{registry}
 {
 }
 
@@ -37,7 +37,7 @@ AutomationExecutor::execute(const wit::Utterances& utterances)
     for (auto&& utterance : filteredUtterances) {
         const auto intentIt = mostConfidentIntent(utterance.intents);
         BOOST_ASSERT(intentIt != std::cend(utterance.intents));
-        if (_registry->has(intentIt->name)) {
+        if (_registry.has(intentIt->name)) {
             execute(intentIt->name);
         } else {
             LOGE("Unable to find automation for <{}> intent", intentIt->name);
@@ -50,8 +50,7 @@ AutomationExecutor::execute(const std::string& intent)
 {
     Automation::Ptr automation;
 
-    BOOST_ASSERT(_registry);
-    if (automation = _registry->get(intent); not automation) {
+    if (automation = _registry.get(intent); not automation) {
         LOGE("Unable to find automation for <{}> intent", intent);
         return;
     }

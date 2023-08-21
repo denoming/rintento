@@ -15,7 +15,7 @@ class AutomationRegistry;
 
 class AutomationExecutor : public std::enable_shared_from_this<AutomationExecutor> {
 public:
-    explicit AutomationExecutor(std::shared_ptr<AutomationRegistry> registry);
+    explicit AutomationExecutor(AutomationRegistry& registry);
 
     void
     execute(const wit::Utterances& utterances);
@@ -28,7 +28,7 @@ private:
     onAutomationDone(const std::string& id, const std::string& alias, std::error_code ec);
 
 private:
-    std::shared_ptr<AutomationRegistry> _registry;
+    AutomationRegistry& _registry;
     std::map<std::string, std::shared_ptr<Automation>> _runningList;
 };
 

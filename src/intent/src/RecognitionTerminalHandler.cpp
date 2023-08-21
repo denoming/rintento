@@ -22,7 +22,7 @@ RecognitionTerminalHandler::handle()
 {
     const auto error = sys::errc::make_error_code(sys::errc::operation_not_supported);
     sendResponse(error);
-    submit(error);
+    complete(error);
 }
 
 } // namespace jar

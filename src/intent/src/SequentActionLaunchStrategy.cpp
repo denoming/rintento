@@ -71,14 +71,14 @@ SequentActionLaunchStrategy::executeNextAction()
         }
     });
 
-    LOGI("Execute <{}> action", currentActionIndex() + 1);
+    LOGI("Execute the <{}> action", currentActionIndex() + 1);
     nextAction->execute();
 }
 
 void
 SequentActionLaunchStrategy::onActionDone(std::error_code ec)
 {
-    LOGI("Executing <{}> action is done: result<{}>", currentActionIndex() + 1, ec.message());
+    LOGI("Executing the <{}> action is done: result<{}>", currentActionIndex() + 1, ec.message());
 
     if (ec) {
         reset();

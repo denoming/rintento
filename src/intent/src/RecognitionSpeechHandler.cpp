@@ -161,7 +161,7 @@ RecognitionSpeechHandler::onRecognitionError(std::error_code error)
 {
     LOGD("Submit recognition error: <{}>", error.message());
     sendResponse(error);
-    submit(error);
+    complete(error);
 }
 
 void
@@ -169,7 +169,7 @@ RecognitionSpeechHandler::onRecognitionSuccess(wit::Utterances result)
 {
     LOGD("Submit recognition success: <{}> size", result.size());
     sendResponse(result);
-    submit(std::move(result));
+    complete(std::move(result));
 }
 
 } // namespace jar

@@ -4,6 +4,8 @@
 #include "intent/GeneralConfig.hpp"
 #include "intent/RecognitionServer.hpp"
 #include "intent/WitRecognitionFactory.hpp"
+#include "intent/AutomationRegistry.hpp"
+#include "intent/AutomationExecutor.hpp"
 
 #include <jarvisto/Application.hpp>
 #include <jarvisto/Logger.hpp>
@@ -15,33 +17,47 @@ namespace jar {
 
 class IntentSubsystem::Impl {
 public:
+    static const inline std::size_t kAutomationWorkerThreads{4};
+
     Impl() = default;
 
     void
     initialize(Application& /*application*/)
     {
-        if (not _config.load()) {
+        _config = std::make_unique<GeneralConfig>();
+        if (not _config->load()) {
             LOGE("Unable to load general config");
         }
 
-        _proxyWorker = std::make_unique<Worker>(_config.proxyServerThreads());
-        _recognizeWorker = std::make_unique<Worker>(_config.recognizeThreads());
-        _factory = std::make_unique<WitRecognitionFactory>(_config.recognizeServerHost(),
-                                                           _config.recognizeServerPort(),
-                                                           _config.recognizeServerAuth(),
+        _automationWorker = std::make_unique<Worker>(kAutomationWorkerThreads);
+        _registry = std::make_unique<AutomationRegistry>();
+        _executor = std::make_unique<AutomationExecutor>(*_registry);
+        _automationConfig = std::make_unique<AutomationConfig>(_automationWorker->executor(), *_registry);
+        if (not _automationConfig->load()) {
+            LOGE("Unable to load automation config");
+        }
+
+        _recognizeWorker = std::make_unique<Worker>(_config->recognizeThreads());
+        _factory = std::make_unique<WitRecognitionFactory>(_config->recognizeServerHost(),
+                                                           _config->recognizeServerPort(),
+                                                           _config->recognizeServerAuth(),
                                                            _recognizeWorker->executor());
-        _server = RecognitionServer::create(_proxyWorker->executor(), _factory);
+
+        _proxyWorker = std::make_unique<Worker>(_config->proxyServerThreads());
+        _server = RecognitionServer::create(_proxyWorker->executor(), _factory, *_executor);
     }
 
     void
     setUp(Application& /*application*/)
     {
+        BOOST_ASSERT(_automationWorker);
+        _automationWorker->start();
         BOOST_ASSERT(_proxyWorker);
         _proxyWorker->start();
         BOOST_ASSERT(_recognizeWorker);
         _recognizeWorker->start();
 
-        const auto port = _config.proxyServerPort();
+        const auto port = _config->proxyServerPort();
         BOOST_ASSERT(_server);
         if (_server->listen(port)) {
             LOGI("Starting server on <{}> port was success", port);
@@ -63,6 +79,9 @@ public:
         if (_recognizeWorker) {
             _recognizeWorker->stop();
         }
+        if (_automationWorker) {
+            _automationWorker->stop();
+        }
     }
 
     void
@@ -72,13 +91,21 @@ public:
         _factory.reset();
         _recognizeWorker.reset();
         _proxyWorker.reset();
+        _automationWorker.reset();
+        _executor.reset();
+        _registry.reset();
+        _config.reset();
+        _automationConfig.reset();
     }
 
 private:
-    GeneralConfig _config;
-
+    std::unique_ptr<GeneralConfig> _config;
+    std::unique_ptr<AutomationConfig> _automationConfig;
+    std::unique_ptr<AutomationRegistry> _registry;
+    std::unique_ptr<AutomationExecutor> _executor;
     std::unique_ptr<Worker> _proxyWorker;
     std::unique_ptr<Worker> _recognizeWorker;
+    std::unique_ptr<Worker> _automationWorker;
     std::shared_ptr<WitRecognitionFactory> _factory;
     std::shared_ptr<RecognitionServer> _server;
 };
