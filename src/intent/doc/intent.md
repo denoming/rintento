@@ -33,21 +33,31 @@ UC2 --> Server
 
 ## Software Units
 
-| Name                       | Description                                                         |
-|----------------------------|---------------------------------------------------------------------|
-| RecognitionSession         | The dispatcher to handle recognition sent to backend                |
-| RecognitionHandler         | Represents base class for recognition handler                       |
-| RecognitionMessageHandler  | The message recognition handler to handle particular client request |
-| RecognitionSpeechHandler   | The speech recognition handler to handle particular client request  |
-| RecognitionTerminalHandler | The terminal (empty) handler                                        |
-| RecognitionServer          | The server to accept client connections                             |
-| SpeechDataBuffer           | The data buffer to receive and store client audio data              |
-| WitIntentParser            | The wit.ai intent parser                                            |
-| WitMessageRecognition      | The wit.ai message recognition request to backend                   |
-| WitSpeechRecognition       | The wit.ai speech recognition request to backend                    |
-| WitRecognition             | Represents base class for recognition request to backend            |
-| WitRecognitionFactory      | The factory to create recognition request to backend                |
-| IntentSubsystem            | The subsystem to handle lifetime of service software units          |
+| Name                        | Description                                                         |
+|-----------------------------|---------------------------------------------------------------------|
+| RecognitionSession          | The dispatcher to handle recognition sent to backend                |
+| RecognitionHandler          | Represents base class for recognition handler                       |
+| RecognitionMessageHandler   | The message recognition handler to handle particular client request |
+| RecognitionSpeechHandler    | The speech recognition handler to handle particular client request  |
+| RecognitionTerminalHandler  | The terminal (empty) handler                                        |
+| RecognitionServer           | The server to accept client connections                             |
+| SpeechDataBuffer            | The data buffer to receive and store client audio data              |
+| WitIntentParser             | The wit.ai intent parser                                            |
+| WitMessageRecognition       | The wit.ai message recognition request to backend                   |
+| WitSpeechRecognition        | The wit.ai speech recognition request to backend                    |
+| WitRecognition              | Represents base class for recognition request to backend            |
+| WitRecognitionFactory       | The factory to create recognition request to backend                |
+| IntentSubsystem             | The subsystem to handle lifetime of service software units          |
+| ConfigLoader                | Represents the base class for config loader                         |
+| GeneralConfig               | The concrete class of general config loader                         |
+| AutomationConfig            | The concrete class of automation config loader                      |
+| Action                      | Represents the base class for action                                |
+| ScriptAction                | The concrete class of action for running any configurable program   |
+| ActionLaunchStrategy        | Represents the base class for launching a bunch of actions          |
+| SequentActionLaunchStrategy | The concrete class for launching strategy in sequential manner      |
+| Automation                  | The concrete class for particular intent automation                 |
+| AutomationRegistry          | The automation registry                                             |
+| AutomationExecutor          | The executor of automations upon given intents                      |
 
 ## Class Diagrams
 
@@ -75,6 +85,8 @@ class GeneralConfig {
 
 ConfigLoader <|- GeneralConfig
 ConfigLoader <|- AutomationConfig
+
+AutomationConfig o-- AutomationRegistry
 
 Subsystem <|-- IntentSubsystem
 
@@ -130,6 +142,56 @@ RecognitionSession o-- RecognitionHandler
 @enduml
 ```
 
+* Automation
+
+```plantuml
+@startuml
+
+class Action {
+    +clone(): Ptr
+    +execute()
+}
+
+class Automation {
+    {static} create(alias, intent, actions, launchStrategy)
+    +id(): string
+    +alias(): string
+    +intent(): string
+    +clone(): Ptr
+    +execute()
+}
+
+class ActionLaunchStrategy {
+    +clone(): Ptr
+    +launch(actions)
+}
+
+class AutomationRegistry {
+    +add(automation)
+    +has(intent): bool
+    +get(intent): automation
+}
+
+class AutomationExecutor {
+    +execute(utterances)
+    +execute(intent)
+}
+
+DeferredJob <|-- Automation 
+DeferredJob <|-- Action 
+DeferredJob <|-- ActionLaunchStrategy
+
+Action <|-- ScriptAction
+ActionLaunchStrategy <|-- SequentActionLaunchStrategy
+
+Automation o-- Action : 0..*
+AutomationRegistry o-- Automation : 0..*
+AutomationExecutor o-- AutomationRegistry
+AutomationExecutor o-- Automation : 0..*
+
+@enduml
+```
+
 * The wit.ai backend classes
 
 ```plantuml
@@ -179,12 +241,11 @@ note right: waiting for new connections
 ...reading header data from socket...
 -> RecognitionSession : onReadHeaderDone(errorCode, bytes)
 alt if EoS or error
-    RecognitionSession -> RecognitionSession : finalize()
-    RecognitionSession -> RecognitionServer : onSessionComplete(id)
+    RecognitionSession -> RecognitionSession : complete()
+    RecognitionSession -> RecognitionServer : onSessionComplete(id, {})
     opt ready to shutdown
         RecognitionServer -> RecognitionServer : notifyShutdownReady()
     end
-    deactivate RecognitionServer
 end
 RecognitionSession -> RecognitionSession : getHandler()
 create RecognitionHandler
@@ -193,9 +254,24 @@ activate RecognitionHandler
 RecognitionSession -> RecognitionHandler : handle()
 ...handle message or speech recognition...
 RecognitionHandler -> RecognitionSession : onComplete(utterances, error)
+RecognitionSession -> RecognitionSession : complete(utterances)
+RecognitionSession -> RecognitionServer : onSessionComplete(id, utterances)
+alt ready to shutdown
+    RecognitionServer -> RecognitionServer : notifyShutdownReady()
+else
+    RecognitionServer -> AutomationExecutor : execute(utterances)
+    
+    activate AutomationExecutor
+end
+AutomationExecutor -> AutomationRegistry : get(intent)
+break automation for intent is absent
+    RecognitionServer <- AutomationExecutor : execute(utterances)
+    deactivate RecognitionServer
+end
+AutomationExecutor -> Automation : execute()
+note right: execute and add automation to running list
+deactivate AutomationExecutor
 deactivate RecognitionHandler
-RecognitionSession -> RecognitionSession : doReadHeader()
-note right: read next header (if present)
 deactivate ActionPerformer
 deactivate RecognitionSession
 
