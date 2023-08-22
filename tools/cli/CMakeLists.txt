@@ -1,5 +1,3 @@
-include(GNUInstallDirs)
-
 set(TARGET rintento-cli)
 
 add_executable(${TARGET} "")

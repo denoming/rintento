@@ -17,11 +17,6 @@ target_link_libraries(${TARGET}
             Rintento::Test
 )
 
-target_compile_definitions(${TARGET}
-    PRIVATE BOOST_PROCESS_USE_STD_FS=1
-            BOOST_PROCESS_NO_DEPRECATED=1
-)
-
 install(
     TARGETS ${TARGET}
     COMPONENT RintentoExecutorRuntime
