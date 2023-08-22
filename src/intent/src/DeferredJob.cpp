@@ -3,20 +3,20 @@
 namespace jar {
 
 void
-DeferredJob::onDone(std::function<OnDone> callback)
+DeferredJob::onComplete(std::function<OnComplete> callback)
 {
-    _onDone = std::move(callback);
+    _onComplete = std::move(callback);
 }
 
 void
 DeferredJob::complete(std::error_code ec)
 {
-    if (_onDone) {
-        _onDone(ec);
+    if (_onComplete) {
+        _onComplete(ec);
     }
 
     /* Nullify callable object  */
-    _onDone = nullptr;
+    _onComplete = nullptr;
 }
 
 } // namespace jar

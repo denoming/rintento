@@ -60,7 +60,7 @@ AutomationExecutor::execute(const std::string& intent)
     _runningList.insert({id, automation});
 
     const auto alias = automation->alias();
-    automation->onDone([id, alias, weakSelf = weak_from_this()](std::error_code ec) {
+    automation->onComplete([id, alias, weakSelf = weak_from_this()](std::error_code ec) {
         if (auto self = weakSelf.lock()) {
             self->onAutomationDone(id, alias, ec);
         }

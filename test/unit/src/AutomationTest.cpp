@@ -59,19 +59,19 @@ public:
 
 TEST_F(AutomationTest, Successful)
 {
-    Waiter<DeferredJob::OnDone> waiter;
+    Waiter<DeferredJob::OnComplete> waiter;
 
     TestAction action1;
     TestAction action2;
 
-    MockFunction<DeferredJob::OnDone> callback;
+    MockFunction<DeferredJob::OnComplete> callback;
     EXPECT_CALL(callback, Call(std::error_code{}));
 
     const auto automation = Automation::create("Test Automation",
                                                "Test Intent",
                                                jar::Action::List{action1.clone(), action2.clone()},
                                                strategy.clone());
-    automation->onDone(waiter.enroll([&](const std::error_code ec) { callback.Call(ec); }));
+    automation->onComplete(waiter.enroll([&](const std::error_code ec) { callback.Call(ec); }));
     automation->execute();
 
     waiter.wait();
@@ -79,19 +79,19 @@ TEST_F(AutomationTest, Successful)
 
 TEST_F(AutomationTest, Unsuccessful)
 {
-    Waiter<DeferredJob::OnDone> waiter;
+    Waiter<DeferredJob::OnComplete> waiter;
 
     TestAction action1{std::make_error_code(std::errc::invalid_argument)};
     TestAction action2;
 
-    MockFunction<DeferredJob::OnDone> callback;
+    MockFunction<DeferredJob::OnComplete> callback;
     EXPECT_CALL(callback, Call(Not(std::error_code{})));
 
     const auto automation = Automation::create("Test Automation",
                                                "Test Intent",
                                                jar::Action::List{action1.clone(), action2.clone()},
                                                strategy.clone());
-    automation->onDone(waiter.enroll([&](const std::error_code ec) { callback.Call(ec); }));
+    automation->onComplete(waiter.enroll([&](const std::error_code ec) { callback.Call(ec); }));
     automation->execute();
 
     waiter.wait();

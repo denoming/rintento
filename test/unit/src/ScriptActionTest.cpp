@@ -36,10 +36,10 @@ TEST_F(ScriptActionTest, Execute)
     auto action = ScriptAction::create(context.get_executor(), "rm", std::move(args));
     ASSERT_TRUE(action);
 
-    MockFunction<DeferredJob::OnDone> callback;
+    MockFunction<DeferredJob::OnComplete> callback;
     EXPECT_CALL(callback, Call(std::error_code{}));
 
-    action->onDone(callback.AsStdFunction());
+    action->onComplete(callback.AsStdFunction());
     action->execute();
 
     context.run();
@@ -52,10 +52,10 @@ TEST_F(ScriptActionTest, NotExistent)
     auto action = ScriptAction::create(ctx.get_executor(), "not-existent-program");
     ASSERT_TRUE(action);
 
-    MockFunction<DeferredJob::OnDone> callback;
+    MockFunction<DeferredJob::OnComplete> callback;
     EXPECT_CALL(callback, Call(Not(std::error_code{})));
 
-    action->onDone(callback.AsStdFunction());
+    action->onComplete(callback.AsStdFunction());
     action->execute();
 
     ctx.run();

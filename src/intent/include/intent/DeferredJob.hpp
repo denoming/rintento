@@ -7,19 +7,19 @@ namespace jar {
 
 class DeferredJob {
 public:
-    using OnDone = void(std::error_code);
+    using OnComplete = void(std::error_code);
 
     DeferredJob() = default;
 
     void
-    onDone(std::function<OnDone> callback);
+    onComplete(std::function<OnComplete> callback);
 
 protected:
     void
     complete(std::error_code ec = {});
 
 private:
-    std::function<OnDone> _onDone;
+    std::function<OnComplete> _onComplete;
 };
 
 } // namespace jar

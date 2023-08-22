@@ -91,7 +91,7 @@ void
 Automation::execute()
 {
     BOOST_ASSERT(_launcher);
-    _launcher->onDone([weakSelf = weak_from_this()](std::error_code ec) {
+    _launcher->onComplete([weakSelf = weak_from_this()](std::error_code ec) {
         if (auto self = weakSelf.lock()) {
             self->onExecuteDone(ec);
         }

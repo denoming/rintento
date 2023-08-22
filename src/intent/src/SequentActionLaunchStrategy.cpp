@@ -65,7 +65,7 @@ SequentActionLaunchStrategy::executeNextAction()
     _currIndex = _nextIndex++;
 
     BOOST_ASSERT(nextAction);
-    nextAction->onDone([weakSelf = weak_from_this()](const std::error_code ec) {
+    nextAction->onComplete([weakSelf = weak_from_this()](const std::error_code ec) {
         if (auto self = weakSelf.lock()) {
             self->onActionDone(ec);
         }
