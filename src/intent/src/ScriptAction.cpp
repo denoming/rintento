@@ -1,13 +1,13 @@
 #include "intent/ScriptAction.hpp"
 
+#include "process/Process.hpp"
+
 #include <jarvisto/Logger.hpp>
 
 #include <boost/assert.hpp>
-#include <boost/process.hpp>
-#include <boost/process/extend.hpp>
 
 namespace fs = std::filesystem;
-namespace pr = boost::process;
+namespace pr = boost::process::v2;
 
 namespace jar {
 
@@ -62,48 +62,52 @@ ScriptAction::execute()
 void
 ScriptAction::run()
 {
-    if (not _exec.has_root_path()) {
-        LOGD("Try to search full path to given program");
-        _exec = pr::search_path(_exec);
-    }
+    using ProcessEnv = std::unordered_map<pr::environment::key, pr::environment::value>;
 
-    std::error_code ec;
-    if (not fs::exists(_exec, ec)) {
-        LOGE("Given program has not been found");
+    _exec = pr::environment::find_executable(_exec);
+    if (_exec.empty()) {
+        LOGE("Unable to locate program executable file");
         complete(std::make_error_code(std::errc::invalid_argument));
         return;
     }
 
-    auto runEnv = _inheritParentEnv ? boost::this_process::environment() : pr::environment{};
-    for (const auto& [name, value] : _env) {
-        runEnv[name] = value;
+    if (_home.empty()) {
+        _home = fs::current_path();
+        LOGD("Use <{}> path as home directory", _home);
     }
 
-    pr::child ch;
-    try {
-        ch = pr::child{
-            pr::exe = _exec,
-            pr::args = _args,
-            pr::std_in.close(),
-            pr::std_out > pr::null,
-            pr::std_err > pr::null,
-            runEnv,
-        };
-    } catch (const std::exception& e) {
-        LOGE("Unable to execute program: {}", e.what());
+    ProcessEnv env;
+    if (_inheritParentEnv) {
+        LOGD("Copy env from current process");
+        for (const auto& view : pr::environment::current()) {
+            env[view.key()].assign(view.value());
+        }
+    }
+    if (not _env.empty()) {
+        for (const auto& [name, value] : _env) {
+            env[name].assign(value);
+        }
+    }
+
+    pr::process proc = pr::process{
+        _executor,
+        _exec,
+        _args,
+        pr::process_environment{env},
+        pr::process_start_dir{_home},
+        pr::process_stdio{nullptr, nullptr, nullptr},
+    };
+
+    sys::error_code ec2;
+    proc.wait(ec2);
+    if (ec2) {
+        LOGE("Unable to wait program: {}", ec2.message());
         complete(std::make_error_code(std::errc::invalid_argument));
         return;
     }
 
-    ch.wait(ec);
-    if (ec) {
-        LOGE("Unable to wait program: {}", ec.message());
-        complete(std::make_error_code(std::errc::invalid_argument));
-        return;
-    }
-
-    if (const auto exitCode = ch.exit_code(); exitCode != 0) {
-        LOGE("Erroneous exit code: {}", exitCode);
+    if (const auto exitCode = proc.exit_code(); exitCode != 0) {
+        LOGE("Erroneous program exit code: {}", exitCode);
     }
 
     complete();
