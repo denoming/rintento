@@ -14,7 +14,7 @@ namespace fs = std::filesystem;
 namespace jar {
 
 AutomationConfig::AutomationConfig(io::any_io_executor executor, IAutomationRegistry& registry)
-    : _executor{executor}
+    : _executor{std::move(executor)}
     , _registry{registry}
 {
 }
@@ -113,12 +113,22 @@ AutomationConfig::doParseScriptAction(const boost::property_tree::ptree& root)
         inheritParentEnv = *inheritOpt;
     }
 
+    ScriptAction::Ttl ttl{ScriptAction::kDefaultTtl};
+    if (auto ttlOpt = root.get_optional<int64_t>("ttl"); ttlOpt) {
+        if (*ttlOpt > 0) {
+            ttl = ScriptAction::Ttl{*ttlOpt};
+        } else {
+            LOGE("Invalid value for TTL field: {}", *ttlOpt);
+        }
+    }
+
     return ScriptAction::create(_executor,
                                 std::move(execPath),
                                 std::move(args),
                                 std::move(homePath),
                                 std::move(env),
-                                inheritParentEnv);
+                                inheritParentEnv,
+                                ttl);
 }
 
 } // namespace jar

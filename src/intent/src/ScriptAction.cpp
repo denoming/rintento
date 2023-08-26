@@ -3,8 +3,9 @@
 #include "process/Process.hpp"
 
 #include <jarvisto/Logger.hpp>
-
 #include <boost/assert.hpp>
+
+#include <chrono>
 
 namespace fs = std::filesystem;
 namespace pr = boost::process::v2;
@@ -17,7 +18,8 @@ ScriptAction::create(io::any_io_executor executor,
                      Args args /*= {}*/,
                      std::filesystem::path home /*= {}*/,
                      Environment env /*= {}*/,
-                     bool inheritParentEnv /*= false*/)
+                     bool inheritParentEnv /*= false*/,
+                     Ttl ttl /*= kDefaultTtl*/)
 {
     BOOST_ASSERT(not exec.empty());
     return Action::Ptr{new ScriptAction{std::move(executor),
@@ -33,20 +35,24 @@ ScriptAction::ScriptAction(io::any_io_executor executor,
                            Args args /*= {}*/,
                            std::filesystem::path home /*= {}*/,
                            Environment env /*= {}*/,
-                           bool inheritParentEnv /*= false*/)
+                           bool inheritParentEnv /*= false*/,
+                           Ttl ttl /*= kDefaultTtl*/)
     : _executor{std::move(executor)}
     , _exec{std::move(exec)}
     , _args{std::move(args)}
     , _home{std::move(home)}
     , _env{std::move(env)}
     , _inheritParentEnv{inheritParentEnv}
+    , _runningTimer{_executor}
+    , _ttl{ttl}
 {
 }
 
 ScriptAction::Ptr
 ScriptAction::clone() const
 {
-    return Action::Ptr{new ScriptAction{*this}};
+    return Action::Ptr{
+        new ScriptAction{_executor, _exec, _args, _home, _env, _inheritParentEnv, _ttl}};
 }
 
 void
@@ -62,8 +68,6 @@ ScriptAction::execute()
 void
 ScriptAction::run()
 {
-    using ProcessEnv = std::unordered_map<pr::environment::key, pr::environment::value>;
-
     _exec = pr::environment::find_executable(_exec);
     if (_exec.empty()) {
         LOGE("Unable to locate program executable file");
@@ -76,11 +80,11 @@ ScriptAction::run()
         LOGD("Use <{}> path as home directory", _home);
     }
 
-    ProcessEnv env;
+    std::unordered_map<pr::environment::key, pr::environment::value> env;
     if (_inheritParentEnv) {
         LOGD("Copy env from current process");
-        for (const auto& view : pr::environment::current()) {
-            env[view.key()].assign(view.value());
+        for (const auto& keyValueView : pr::environment::current()) {
+            env[keyValueView.key()].assign(keyValueView.value());
         }
     }
     if (not _env.empty()) {
@@ -89,28 +93,59 @@ ScriptAction::run()
         }
     }
 
-    pr::process proc = pr::process{
-        _executor,
-        _exec,
-        _args,
-        pr::process_environment{env},
-        pr::process_start_dir{_home},
-        pr::process_stdio{nullptr, nullptr, nullptr},
+    auto onComplete = [weakSelf = weak_from_this()](sys::error_code ec, int exitCode) {
+        if (auto self = weakSelf.lock()) {
+            self->cancelTimer();
+            self->complete();
+        }
+        if (exitCode != 0) {
+            LOGE("Program ended with <{}> exit code", exitCode);
+        } else {
+            LOGD("Program ended successfully");
+        }
     };
 
-    sys::error_code ec2;
-    proc.wait(ec2);
-    if (ec2) {
-        LOGE("Unable to wait program: {}", ec2.message());
-        complete(std::make_error_code(std::errc::invalid_argument));
-        return;
-    }
+    pr::async_execute(
+        pr::process{
+            _executor,
+            _exec,
+            _args,
+            pr::process_environment{env},
+            pr::process_start_dir{_home},
+            pr::process_stdio{nullptr, nullptr, nullptr},
+        },
+        io::bind_cancellation_slot(_runningSig.slot(), std::move(onComplete)));
 
-    if (const auto exitCode = proc.exit_code(); exitCode != 0) {
-        LOGE("Erroneous program exit code: {}", exitCode);
-    }
+    scheduleTimer();
+}
 
-    complete();
+void
+ScriptAction::terminate()
+{
+    LOGE("Terminate program due to specified TTL");
+    _runningSig.emit(io::cancellation_type::terminal);
+}
+
+void
+ScriptAction::scheduleTimer()
+{
+    namespace krn = std::chrono;
+
+    _runningTimer.expires_after(_ttl);
+    _runningTimer.async_wait([weakSelf = weak_from_this()](sys::error_code ec) {
+        if (not ec) {
+            if (auto self = weakSelf.lock()) {
+                self->terminate();
+                self->complete(std::make_error_code(std::errc::connection_aborted));
+            }
+        }
+    });
+}
+
+void
+ScriptAction::cancelTimer()
+{
+    _runningTimer.cancel();
 }
 
 } // namespace jar
