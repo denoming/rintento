@@ -13,15 +13,15 @@ namespace jar {
 class Automation;
 class AutomationRegistry;
 
-class AutomationExecutor : public std::enable_shared_from_this<AutomationExecutor> {
+class AutomationPerformer : public std::enable_shared_from_this<AutomationPerformer> {
 public:
-    explicit AutomationExecutor(AutomationRegistry& registry);
+    explicit AutomationPerformer(AutomationRegistry& registry);
 
     void
-    execute(const wit::Utterances& utterances);
+    perform(const wit::Utterances& utterances);
 
     void
-    execute(const std::string& intent);
+    perform(const std::string& intent);
 
 private:
     void

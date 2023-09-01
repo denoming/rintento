@@ -50,52 +50,35 @@ RecognitionHandler::RecognitionHandler(Stream& stream)
 }
 
 void
-RecognitionHandler::onComplete(std::move_only_function<OnComplete> callback)
-{
-    _onComplete = std::move(callback);
-}
-
-void
 RecognitionHandler::setNext(std::shared_ptr<RecognitionHandler> handler)
 {
     BOOST_ASSERT(!_next);
     _next = std::move(handler);
 }
 
-void
+io::awaitable<wit::Utterances>
 RecognitionHandler::handle()
 {
     if (_next) {
-        _next->handle();
+        BOOST_ASSERT(_next.get() != this);
+        co_return co_await _next->handle();
+    } else {
+        throw std::logic_error{"No handler"};
     }
 }
 
-void
-RecognitionHandler::complete(wit::Utterances result)
-{
-    BOOST_ASSERT(_onComplete);
-    _onComplete(std::move(result), {});
-}
-
-void
-RecognitionHandler::complete(std::error_code ec)
-{
-    BOOST_ASSERT(_onComplete);
-    _onComplete({}, ec);
-}
-
-void
+io::awaitable<void>
 RecognitionHandler::sendResponse(const wit::Utterances& result)
 {
-    sys::error_code ec;
-    http::write(stream(), getResponse(getPayload(result)), ec);
+    auto response = getResponse(getPayload(result));
+    std::ignore = co_await http::async_write(stream(), response, io::as_tuple(io::use_awaitable));
 }
 
-void
+io::awaitable<void>
 RecognitionHandler::sendResponse(std::error_code ec)
 {
-    sys::error_code ec1;
-    http::write(stream(), getResponse(getPayload(ec)), ec1);
+    auto response = getResponse(getPayload(ec));
+    std::ignore = co_await http::async_write(stream(), response, io::as_tuple(io::use_awaitable));
 }
 
 RecognitionHandler::Stream&

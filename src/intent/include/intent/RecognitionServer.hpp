@@ -14,14 +14,14 @@ namespace jar {
 
 class WitRecognitionFactory;
 class RecognitionSession;
-class AutomationExecutor;
+class AutomationPerformer;
 
 class RecognitionServer : public std::enable_shared_from_this<RecognitionServer> {
 public:
     [[nodiscard]] static std::shared_ptr<RecognitionServer>
     create(io::any_io_executor executor,
            std::shared_ptr<WitRecognitionFactory> factory,
-           AutomationExecutor& automationExecutor);
+           std::shared_ptr<AutomationPerformer> performer);
 
     bool
     listen(io::ip::port_type port);
@@ -35,7 +35,7 @@ public:
 private:
     RecognitionServer(io::any_io_executor executor,
                       std::shared_ptr<WitRecognitionFactory> factory,
-                      AutomationExecutor& automationExecutor);
+                      std::shared_ptr<AutomationPerformer> performer);
 
     bool
     doListen(const tcp::endpoint& endpoint);
@@ -46,8 +46,8 @@ private:
     void
     onAcceptDone(sys::error_code ec, tcp::socket socket);
 
-    bool
-    spawnSession(tcp::socket socket);
+    void
+    runSession(tcp::socket socket);
 
     void
     waitForShutdown();
@@ -61,20 +61,15 @@ private:
     void
     close();
 
-    void
-    onSessionComplete(std::size_t id, wit::Utterances utterances);
-
 private:
     io::any_io_executor _executor;
     std::shared_ptr<WitRecognitionFactory> _factory;
-    AutomationExecutor& _automationExecutor;
+    std::shared_ptr<AutomationPerformer> _performer;
     mutable std::mutex _shutdownGuard;
     std::condition_variable _shutdownReadyCv;
     bool _shutdownReady;
     bool _acceptorReady;
     tcp::acceptor _acceptor;
-    mutable std::mutex _sessionsGuard;
-    std::map<std::size_t, std::shared_ptr<RecognitionSession>> _sessions;
 };
 
 } // namespace jar

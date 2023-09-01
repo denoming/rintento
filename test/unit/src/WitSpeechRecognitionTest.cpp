@@ -1,16 +1,16 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "intent/Formatters.hpp"
 #include "intent/GeneralConfig.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 #include "intent/WitSpeechRecognition.hpp"
 #include "test/Matchers.hpp"
-#include "test/TestWaiter.hpp"
 #include "test/Utils.hpp"
 
-#include <jarvisto/Logger.hpp>
-#include <jarvisto/Worker.hpp>
+#include <jarvisto/SecureContext.hpp>
+
+#include <chrono>
+#include <exception>
 
 using namespace testing;
 using namespace jar;
@@ -19,14 +19,13 @@ namespace fs = std::filesystem;
 
 class WitSpeechRecognitionTest : public Test {
 public:
-    const fs::path AssetAudioPath{fs::current_path() / "asset" / "audio"};
+    const std::size_t kChannelCapacity{512};
+    const fs::path kAssetAudioPath{fs::current_path() / "asset" / "audio"};
 
     WitSpeechRecognitionTest()
         : factory{config.recognizeServerHost(),
                   config.recognizeServerPort(),
-                  config.recognizeServerAuth(),
-                  worker.executor()}
-        , recognition{factory.speech()}
+                  config.recognizeServerAuth()}
     {
     }
 
@@ -36,152 +35,108 @@ public:
         ASSERT_TRUE(config.load());
     }
 
-    void
-    SetUp() override
-    {
-        worker.start();
-    }
-
-    void
-    TearDown() override
-    {
-        worker.stop();
-    }
-
 public:
     static GeneralConfig config;
 
-    Worker worker;
+    SecureContext secureContext;
     WitRecognitionFactory factory;
-    TestWaiter waiter;
-    std::shared_ptr<WitSpeechRecognition> recognition;
 };
 
 GeneralConfig WitSpeechRecognitionTest::config;
 
-TEST_F(WitSpeechRecognitionTest, RecognizeSpeech1)
+static auto
+exceptionContainsError(sys::error_code errorCode)
 {
-    const std::string_view Message{"turn off the light"};
-
-    MockFunction<WitRecognition::OnDone> callback;
-    EXPECT_CALL(
-        callback,
-        Call(Contains(isUtterance(
-                 "turn off the light", IsEmpty(), Contains(isConfidentIntent("light_off", 0.9f)))),
-             IsFalse()));
-    recognition->onDone(callback.AsStdFunction());
-
-    bool guard{false};
-    recognition->onData([this, &guard]() {
-        guard = true;
-        waiter.notify();
-    });
-
-    std::size_t fileSize{0};
-    auto fileData = readFile(AssetAudioPath / "turn-off-the-light.raw", fileSize);
-    ASSERT_TRUE(fileData);
-    ASSERT_THAT(fileSize, Gt(0));
-
-    recognition->run();
-
-    waiter.wait([&guard]() { return guard; });
-    ASSERT_TRUE(guard);
-    guard = false;
-
-    recognition->feed(io::buffer(fileData.get(), fileSize));
-
-    waiter.wait([&guard]() { return guard; });
-    ASSERT_TRUE(guard);
-    guard = false;
-
-    recognition->finalize();
-    recognition->wait();
-}
-
-TEST_F(WitSpeechRecognitionTest, RecognizeSpeech2)
-{
-    MockFunction<WitRecognition::OnDone> callback;
-    EXPECT_CALL(
-        callback,
-        Call(Contains(isUtterance(
-                 "turn on the light", IsEmpty(), Contains(isConfidentIntent("light_on", 0.9f)))),
-             IsFalse()));
-    recognition->onDone(callback.AsStdFunction());
-
-    bool guard{false};
-    recognition->onData([this, &guard]() {
-        guard = true;
-        waiter.notify();
-    });
-
-    std::size_t fileSize{0};
-    auto fileData = readFile(AssetAudioPath / "turn-on-the-light.raw", fileSize);
-    ASSERT_TRUE(fileData);
-    ASSERT_THAT(fileSize, Gt(0));
-
-    recognition->run();
-
-    waiter.wait([&guard]() { return guard; });
-    ASSERT_TRUE(guard);
-    guard = false;
-
-    recognition->feed(io::buffer(fileData.get(), fileSize));
-
-    waiter.wait([&guard]() { return guard; });
-    ASSERT_TRUE(guard);
-    guard = false;
-
-    recognition->finalize();
-    recognition->wait();
-}
-
-TEST_F(WitSpeechRecognitionTest, RecognizeSpeech3)
-{
-    recognition->onDone([](wit::Utterances result, std::error_code error) {
-        if (error) {
-            LOGI("Error occurred");
-        } else {
-            fmt::print("{}", result);
+    return [errorCode](const std::exception_ptr& eptr) {
+        try {
+            if (eptr) {
+                std::rethrow_exception(eptr);
+            }
+        } catch (const sys::system_error& e) {
+            return (e.code() == errorCode);
         }
-    });
+        return false;
+    };
+}
 
-    bool guard{false};
-    recognition->onData([this, &guard]() {
-        guard = true;
-        waiter.notify();
-    });
+TEST_F(WitSpeechRecognitionTest, RecognizeSpeech)
+{
+    io::io_context context{1};
 
-    std::size_t fileSize{0};
-    auto fileData = readFile(AssetAudioPath / "will-it-be-rainy-today.raw", fileSize);
-    ASSERT_TRUE(fileData);
-    ASSERT_THAT(fileSize, Gt(0));
+    MockFunction<void(std::exception_ptr, wit::Utterances)> callback1;
+    EXPECT_CALL(callback1,
+                Call(IsFalse(),
+                     Contains(isUtterance("turn off the light",
+                                          IsEmpty(),
+                                          Contains(isConfidentIntent("light_off", 0.9f))))));
 
-    recognition->run();
+    auto executor = context.get_executor();
+    auto channel = std::make_shared<WitSpeechRecognition::Channel>(executor, kChannelCapacity);
+    auto recognition = factory.speech(executor, channel);
 
-    waiter.wait([&guard]() { return guard; });
-    ASSERT_TRUE(guard);
-    guard = false;
+    /* Spawn recognition coroutine */
+    io::co_spawn(
+        context.get_executor(),
+        [recognition]() -> io::awaitable<wit::Utterances> {
+            co_return co_await recognition->run();
+        },
+        [&](const std::exception_ptr& eptr, wit::Utterances result) {
+            callback1.Call(eptr, std::move(result));
+            if (eptr) {
+                context.stop();
+            }
+        });
 
-    recognition->feed(io::buffer(fileData.get(), fileSize));
+    /* Spawn data provider coroutine */
+    static const fs::path kAudioFile{kAssetAudioPath / "turn-off-the-light.raw"};
+    io::co_spawn(
+        context.get_executor(),
+        [channel]() -> io::awaitable<void> {
+            std::size_t fileSize{0};
+            auto fileData = readFile(kAudioFile, fileSize);
+            auto buffer = io::buffer(fileData.get(), fileSize);
+            co_await channel->send(buffer);
+            channel->close();
+        },
+        [&](const std::exception_ptr& eptr) {
+            if (eptr) {
+                context.stop();
+            }
+        });
 
-    waiter.wait([&guard]() { return guard; });
-    ASSERT_TRUE(guard);
-    guard = false;
-
-    recognition->finalize();
-    recognition->wait();
+    context.run();
 }
 
 TEST_F(WitSpeechRecognitionTest, CancelRecognizeSpeech)
 {
-    MockFunction<WitRecognition::OnDone> callback;
-    EXPECT_CALL(callback, Call(IsEmpty(), IsTrue()));
-    recognition->onDone(callback.AsStdFunction());
-    recognition->run();
+    io::io_context context{1};
 
-    // Waiting some time to simulate real situation
-    std::this_thread::sleep_for(std::chrono::milliseconds{50});
+    MockFunction<void(std::exception_ptr, wit::Utterances)> callback;
+    EXPECT_CALL(
+        callback,
+        Call(Truly(exceptionContainsError({sys::errc::operation_canceled, sys::system_category()})),
+             IsEmpty()));
 
-    recognition->cancel();
-    recognition->wait();
+    auto executor = context.get_executor();
+    auto channel = std::make_shared<WitSpeechRecognition::Channel>(executor, kChannelCapacity);
+    auto recognition = factory.speech(executor, channel);
+    io::co_spawn(
+        context.get_executor(),
+        [recognition]() -> io::awaitable<wit::Utterances> {
+            co_return co_await recognition->run();
+        },
+        callback.AsStdFunction());
+
+    const std::chrono::milliseconds kCancelAfter{50};
+    io::co_spawn(
+        context.get_executor(),
+        [&]() -> io::awaitable<void> {
+            io::steady_timer timer{context.get_executor()};
+            timer.expires_after(std::chrono::milliseconds{kCancelAfter});
+            co_await timer.async_wait(io::use_awaitable);
+            recognition->cancel();
+        },
+        io::detached);
+
+    context.run();
 }

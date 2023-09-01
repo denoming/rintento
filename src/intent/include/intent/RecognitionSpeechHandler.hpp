@@ -1,7 +1,7 @@
 #pragma once
 
+#include "coro/BoundedDataChannel.hpp"
 #include "intent/RecognitionHandler.hpp"
-#include "intent/SpeechDataBuffer.hpp"
 
 #include <memory>
 
@@ -14,13 +14,16 @@ class RecognitionSpeechHandler final
     : public RecognitionHandler,
       public std::enable_shared_from_this<RecognitionSpeechHandler> {
 public:
-    [[nodiscard]] static std::shared_ptr<RecognitionHandler>
+    using Ptr = std::shared_ptr<RecognitionSpeechHandler>;
+    using Channel = coro::BoundedDataChannel<char>;
+
+    [[nodiscard]] static Ptr
     create(Stream& stream,
            Buffer& buffer,
            Parser& parser,
            std::shared_ptr<WitRecognitionFactory> factory);
 
-    void
+    io::awaitable<wit::Utterances>
     handle() final;
 
 private:
@@ -32,27 +35,13 @@ private:
     [[nodiscard]] bool
     canHandle() const;
 
-    [[nodiscard]] std::shared_ptr<WitSpeechRecognition>
-    createRecognition();
-
-    void
-    handleSpeechData();
-
-    void
-    onRecognitionData();
-
-    void
-    onRecognitionError(std::error_code error);
-
-    void
-    onRecognitionSuccess(wit::Utterances result);
+    io::awaitable<void>
+    sendSpeechData(std::shared_ptr<Channel> channel);
 
 private:
     Buffer& _buffer;
     Parser& _parser;
     std::shared_ptr<WitRecognitionFactory> _factory;
-    std::shared_ptr<WitSpeechRecognition> _recognition;
-    SpeechDataBuffer _speechData;
 };
 
 } // namespace jar

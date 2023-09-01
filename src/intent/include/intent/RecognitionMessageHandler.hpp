@@ -2,6 +2,8 @@
 
 #include "intent/RecognitionHandler.hpp"
 
+#include <boost/asio/experimental/channel.hpp>
+
 #include <memory>
 #include <string>
 
@@ -14,13 +16,16 @@ class RecognitionMessageHandler final
     : public RecognitionHandler,
       public std::enable_shared_from_this<RecognitionMessageHandler> {
 public:
-    [[nodiscard]] static std::shared_ptr<RecognitionMessageHandler>
+    using Ptr = std::shared_ptr<RecognitionMessageHandler>;
+    using Channel = boost::asio::experimental::channel<void(sys::error_code, std::string)>;
+
+    [[nodiscard]] static Ptr
     create(Stream& stream,
            Buffer& buffer,
            Parser& parser,
            std::shared_ptr<WitRecognitionFactory> factory);
 
-    void
+    io::awaitable<wit::Utterances>
     handle() final;
 
 private:
@@ -32,24 +37,14 @@ private:
     [[nodiscard]] bool
     canHandle() const;
 
-    [[nodiscard]] std::shared_ptr<WitMessageRecognition>
-    createRecognition();
-
-    void
-    onRecognitionData();
-
-    void
-    onRecognitionError(std::error_code error);
-
-    void
-    onRecognitionSuccess(wit::Utterances result);
+    io::awaitable<void>
+    sendMessageData(std::shared_ptr<Channel> channel);
 
 private:
     Buffer& _buffer;
     Parser& _parser;
     std::shared_ptr<WitRecognitionFactory> _factory;
     std::shared_ptr<WitMessageRecognition> _recognition;
-    std::string _message;
 };
 
 } // namespace jar

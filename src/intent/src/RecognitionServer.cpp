@@ -1,8 +1,8 @@
 #include "intent/RecognitionServer.hpp"
 
+#include "intent/AutomationPerformer.hpp"
 #include "intent/RecognitionSession.hpp"
 #include "intent/WitRecognitionFactory.hpp"
-#include "intent/AutomationExecutor.hpp"
 
 #include <jarvisto/Logger.hpp>
 
@@ -43,22 +43,22 @@ namespace jar {
 std::shared_ptr<RecognitionServer>
 RecognitionServer::create(io::any_io_executor executor,
                           std::shared_ptr<WitRecognitionFactory> factory,
-                          AutomationExecutor& automationExecutor)
+                          std::shared_ptr<AutomationPerformer> performer)
 {
     // clang-format off
     return std::shared_ptr<RecognitionServer>(
-        new RecognitionServer{std::move(executor), std::move(factory), automationExecutor}
+        new RecognitionServer{std::move(executor), std::move(factory), performer}
     );
     // clang-format on
 }
 
 RecognitionServer::RecognitionServer(io::any_io_executor executor,
                                      std::shared_ptr<WitRecognitionFactory> factory,
-                                     AutomationExecutor& automationExecutor)
+                                     std::shared_ptr<AutomationPerformer> performer)
     : _executor{std::move(executor)}
     , _acceptor{io::make_strand(_executor)}
     , _factory{std::move(factory)}
-    , _automationExecutor{automationExecutor}
+    , _performer{performer}
     , _shutdownReady{false}
     , _acceptorReady{false}
 {
@@ -142,43 +142,23 @@ RecognitionServer::onAcceptDone(sys::error_code ec, tcp::socket socket)
         return;
     }
 
-    if (not spawnSession(std::move(socket))) {
-        LOGE("Unable to spawn session");
-    }
+    runSession(std::move(socket));
 
     doAccept();
 }
 
-bool
-RecognitionServer::spawnSession(tcp::socket socket)
+void
+RecognitionServer::runSession(tcp::socket socket)
 {
-    auto idOpt = getSessionId(socket);
-    if (not idOpt) {
+    auto id = getSessionId(socket);
+    if (not id) {
         LOGE("Unable to generate session id");
-        return false;
+        return;
     }
-    const auto id = *idOpt;
-
-    LOGD("Create new session: {}", id);
-    auto session = RecognitionSession::create(id, std::move(socket), _factory);
-    {
-        std::lock_guard lock{_sessionsGuard};
-        if (_sessions.contains(id)) {
-            LOGE("Session with <{}> id already exists", id);
-            return false;
-        } else {
-            _sessions.emplace(id, session);
-        }
-    }
-    session->onComplete(
-        [weakSelf = weak_from_this()](const std::size_t id, wit::Utterances utterances) {
-            if (auto self = weakSelf.lock()) {
-                self->onSessionComplete(id, std::move(utterances));
-            }
-        });
-    LOGD("Run <{}> session", id);
+    LOGD("Create new session: id<{}>", *id);
+    auto session = RecognitionSession::create(*id, std::move(socket), _factory, _performer);
+    LOGD("Run <{}> session", *id);
     session->run();
-    return true;
 }
 
 void
@@ -200,8 +180,8 @@ RecognitionServer::notifyShutdownReady()
 bool
 RecognitionServer::readyToShutdown() const
 {
-    std::scoped_lock lock{_shutdownGuard, _sessionsGuard};
-    return _acceptorReady && _sessions.empty();
+    std::lock_guard lock{_shutdownGuard};
+    return _acceptorReady;
 }
 
 void
@@ -212,25 +192,6 @@ RecognitionServer::close()
     {
         std::lock_guard lock{_shutdownGuard};
         _acceptorReady = true;
-    }
-}
-
-void
-RecognitionServer::onSessionComplete(std::size_t id, wit::Utterances utterances)
-{
-    LOGD("The <{}> session is complete: utterances<{}>", id, utterances.size());
-    {
-        std::lock_guard lock{_sessionsGuard};
-        _sessions.erase(id);
-    }
-
-    if (readyToShutdown()) {
-        LOGI("Server is ready to shutdown");
-        notifyShutdownReady();
-    } else {
-        if (const auto result = std::move(utterances); not result.empty()) {
-            _automationExecutor.execute(result);
-        }
     }
 }
 

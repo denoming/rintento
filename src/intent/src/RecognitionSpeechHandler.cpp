@@ -1,28 +1,25 @@
 #include "intent/RecognitionSpeechHandler.hpp"
 
-#include <jarvisto/Logger.hpp>
-
 #include "intent/Utils.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 #include "intent/WitSpeechRecognition.hpp"
 
+#include <jarvisto/Logger.hpp>
+
+#include <boost/asio/experimental/awaitable_operators.hpp>
 #include <boost/assert.hpp>
 
-static const int SpeechBufferCapacity = 1024 * 1024;
+using namespace boost::asio::experimental::awaitable_operators;
 
 namespace jar {
 
-std::shared_ptr<RecognitionHandler>
+RecognitionSpeechHandler::Ptr
 RecognitionSpeechHandler::create(Stream& stream,
                                  Buffer& buffer,
                                  Parser& parser,
                                  std::shared_ptr<WitRecognitionFactory> factory)
 {
-    // clang-format off
-    return std::shared_ptr<RecognitionSpeechHandler>(
-        new RecognitionSpeechHandler(stream, buffer, parser, std::move(factory))
-    );
-    // clang-format on
+    return Ptr(new RecognitionSpeechHandler(stream, buffer, parser, std::move(factory)));
 }
 
 RecognitionSpeechHandler::RecognitionSpeechHandler(Stream& stream,
@@ -33,34 +30,26 @@ RecognitionSpeechHandler::RecognitionSpeechHandler(Stream& stream,
     , _buffer{buffer}
     , _parser{parser}
     , _factory{std::move(factory)}
-    , _speechData{SpeechBufferCapacity}
 {
     BOOST_ASSERT(_factory);
 }
 
-void
+io::awaitable<wit::Utterances>
 RecognitionSpeechHandler::handle()
 {
+    static const std::size_t kChannelCapacity = 1'000'000 /* 1Mb */;
+
     if (not canHandle()) {
-        RecognitionHandler::handle();
-        return;
+        co_return co_await RecognitionHandler::handle();
     }
 
-    if (auto& request = _parser.get(); request[http::field::expect] != "100-continue") {
-        LOGD("100-continue expected");
-        onRecognitionError(std::make_error_code(std::errc::operation_not_supported));
-        return;
-    }
-
-    http::response<http::empty_body> res{http::status::continue_, net::kHttpVersion11};
-    res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-    http::write(stream(), res);
-
-    _recognition = createRecognition();
-    BOOST_ASSERT(_recognition);
-    _recognition->run();
-
-    handleSpeechData();
+    auto executor = co_await io::this_coro::executor;
+    auto channel = std::make_shared<WitSpeechRecognition::Channel>(executor, kChannelCapacity);
+    auto recognition = _factory->speech(executor, channel);
+    BOOST_ASSERT(recognition);
+    auto results = co_await (sendSpeechData(channel) && recognition->run());
+    co_await sendResponse(results);
+    co_return std::move(results);
 }
 
 bool
@@ -69,107 +58,51 @@ RecognitionSpeechHandler::canHandle() const
     return parser::isSpeechTarget(_parser.get().target());
 }
 
-std::shared_ptr<WitSpeechRecognition>
-RecognitionSpeechHandler::createRecognition()
+io::awaitable<void>
+RecognitionSpeechHandler::sendSpeechData(std::shared_ptr<Channel> channel)
 {
-    auto recognition = _factory->speech();
-    BOOST_ASSERT(recognition);
-    recognition->onDone([weakSelf = weak_from_this(),
-                         executor = executor()](wit::Utterances result, std::error_code error) {
-        if (error) {
-            io::post(executor, [weakSelf, error]() {
-                if (auto self = weakSelf.lock()) {
-                    self->onRecognitionError(error);
-                }
-            });
-        } else {
-            io::post(executor, [weakSelf, result = std::move(result)]() mutable {
-                if (auto self = weakSelf.lock()) {
-                    self->onRecognitionSuccess(std::move(result));
-                }
-            });
-        }
-    });
-    recognition->onData([weakSelf = weak_from_this()]() {
-        if (auto self = weakSelf.lock()) {
-            self->onRecognitionData();
-        }
-    });
-    return recognition;
-}
+    if (auto& request = _parser.get(); request[http::field::expect] != "100-continue") {
+        LOGE("100-continue is expected: session");
+        throw std::runtime_error{"Missing expect field in request header"};
+    }
 
-void
-RecognitionSpeechHandler::handleSpeechData()
-{
-    auto onHeader = [this](std::uint64_t size, auto extensions, std::error_code& error) {
-        if (size > _speechData.capacity()) {
-            error = sys::error_code{http::error::body_limit};
-        }
+    http::response<http::empty_body> res{http::status::continue_, net::kHttpVersion11};
+    res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+    co_await http::async_write(stream(), res, io::use_awaitable);
+
+    std::string chunk;
+    auto onHeader = [&](std::uint64_t size, std::string_view extensions, sys::error_code& ec) {
+        chunk.reserve(size);
+        chunk.clear();
     };
-    auto onBody = [this](std::uint64_t remain, std::string_view body, std::error_code& error) {
-        _speechData.write(body);
+    auto onBody = [&](std::uint64_t remain, std::string_view body, sys::error_code& ec) {
+        if (remain == body.size()) {
+            ec = http::error::end_of_chunk;
+        }
+        chunk.append(body.data(), body.size());
         return body.size();
     };
     _parser.on_chunk_header(onHeader);
     _parser.on_chunk_body(onBody);
 
-    sys::error_code error;
-    while (!_parser.is_done()) {
-        http::read(stream(), _buffer, _parser, error);
-        if (error) {
-            LOGE("Reading chunk error: <{}>", error.message());
-            break;
-        }
-        if (_recognition->needData()) {
-            onRecognitionData();
-        }
-    }
-
-    if (!error) {
-        LOGD("Receiving of chunks has been done: <{}> bytes", _speechData.available());
-        _speechData.complete();
-        if (_recognition->needData()) {
-            onRecognitionData();
-        }
-    }
-}
-
-void
-RecognitionSpeechHandler::onRecognitionData()
-{
-    static const int MinDataSize = 512;
-
-    if (_speechData.available() > MinDataSize) {
-        LOGD("Feed up the recognition using available speech data");
-        _recognition->feed(_speechData.extract());
-        return;
-    }
-
-    if (_speechData.completed()) {
-        if (_speechData.available() > 0) {
-            LOGD("Feed up the recognition using last speech data");
-            _recognition->feed(_speechData.extract());
+    sys::error_code ec;
+    while (not _parser.is_done()) {
+        co_await http::async_read(
+            stream(), _buffer, _parser, io::redirect_error(io::use_awaitable, ec));
+        if (not ec) {
+            continue;
         } else {
-            LOGD("Complete feeding up the recognition");
-            _recognition->finalize();
+            if (ec != http::error::end_of_chunk) {
+                LOGE("Error receiving speech data: error<{}>", ec.message());
+                break;
+            } else {
+                ec = {};
+            }
         }
+        co_await channel->send(io::buffer(chunk));
     }
-}
 
-void
-RecognitionSpeechHandler::onRecognitionError(std::error_code error)
-{
-    LOGD("Submit recognition error: <{}>", error.message());
-    sendResponse(error);
-    complete(error);
-}
-
-void
-RecognitionSpeechHandler::onRecognitionSuccess(wit::Utterances result)
-{
-    LOGD("Submit recognition success: <{}> size", result.size());
-    sendResponse(result);
-    complete(std::move(result));
+    channel->close();
 }
 
 } // namespace jar

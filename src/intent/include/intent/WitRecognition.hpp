@@ -3,53 +3,50 @@
 #include "intent/WitTypes.hpp"
 
 #include <jarvisto/Cancellable.hpp>
-
-#include <atomic>
-#include <condition_variable>
-#include <functional>
-#include <mutex>
+#include <jarvisto/Network.hpp>
 
 namespace jar {
 
 class WitRecognition : public Cancellable {
 public:
-    using OnDone = void(wit::Utterances result, std::error_code error);
-    using OnData = void();
+    WitRecognition(io::any_io_executor executor,
+                   ssl::context& context,
+                   std::string host,
+                   std::string port,
+                   std::string auth);
 
-    WitRecognition();
-
-    [[nodiscard]] bool
-    needData() const;
-
-    [[nodiscard]] bool
-    done() const;
-
-    void
-    wait();
-
-    void
-    onDone(std::move_only_function<OnDone> callback);
-
-    void
-    onData(std::move_only_function<OnData> callback);
+    io::awaitable<wit::Utterances>
+    run();
 
 protected:
-    void
-    needData(bool value);
+    using Stream = beast::ssl_stream<beast::tcp_stream>;
 
-    void
-    setResult(wit::Utterances result);
+    [[nodiscard]] Stream&
+    stream();
 
-    void
-    setError(std::error_code value);
+    [[nodiscard]] const std::string&
+    host() const;
+
+    [[nodiscard]] const std::string&
+    port() const;
+
+    [[nodiscard]] const std::string&
+    auth() const;
+
+    virtual io::awaitable<void>
+    connect();
+
+    virtual io::awaitable<wit::Utterances>
+    process();
+
+    virtual io::awaitable<void>
+    shutdown();
 
 private:
-    std::move_only_function<OnDone> _doneCallback;
-    std::move_only_function<OnData> _dataCallback;
-    std::atomic<bool> _needData;
-    std::atomic<bool> _done;
-    std::mutex _doneGuard;
-    std::condition_variable _whenDone;
+    Stream _stream;
+    std::string _host;
+    std::string _port;
+    std::string _auth;
 };
 
 } // namespace jar

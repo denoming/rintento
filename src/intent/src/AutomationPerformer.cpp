@@ -1,4 +1,4 @@
-#include "intent/AutomationExecutor.hpp"
+#include "intent/AutomationPerformer.hpp"
 
 #include "intent/Automation.hpp"
 #include "intent/AutomationRegistry.hpp"
@@ -22,13 +22,13 @@ mostConfidentIntent(const wit::Intents& intents)
 
 } // namespace
 
-AutomationExecutor::AutomationExecutor(AutomationRegistry& registry)
+AutomationPerformer::AutomationPerformer(AutomationRegistry& registry)
     : _registry{registry}
 {
 }
 
 void
-AutomationExecutor::execute(const wit::Utterances& utterances)
+AutomationPerformer::perform(const wit::Utterances& utterances)
 {
     auto filteredUtterances = utterances | std::views::filter([](const wit::Utterance& u) {
                                   return u.final && !u.intents.empty();
@@ -38,7 +38,7 @@ AutomationExecutor::execute(const wit::Utterances& utterances)
         const auto intentIt = mostConfidentIntent(utterance.intents);
         BOOST_ASSERT(intentIt != std::cend(utterance.intents));
         if (_registry.has(intentIt->name)) {
-            execute(intentIt->name);
+            perform(intentIt->name);
         } else {
             LOGE("Unable to find automation for <{}> intent", intentIt->name);
         }
@@ -46,7 +46,7 @@ AutomationExecutor::execute(const wit::Utterances& utterances)
 }
 
 void
-AutomationExecutor::execute(const std::string& intent)
+AutomationPerformer::perform(const std::string& intent)
 {
     Automation::Ptr automation;
 
@@ -71,9 +71,9 @@ AutomationExecutor::execute(const std::string& intent)
 }
 
 void
-AutomationExecutor::onAutomationDone(const std::string& id,
-                                     const std::string& alias,
-                                     std::error_code ec)
+AutomationPerformer::onAutomationDone(const std::string& id,
+                                      const std::string& alias,
+                                      std::error_code ec)
 {
     LOGI("The <{} ({})> automation is done: result<{}>", id, alias, ec.message());
 

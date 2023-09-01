@@ -1,45 +1,41 @@
 #include "intent/RecognitionSession.hpp"
 
-#include "intent/Formatters.hpp"
+#include "intent/AutomationPerformer.hpp"
 #include "intent/RecognitionMessageHandler.hpp"
 #include "intent/RecognitionSpeechHandler.hpp"
 #include "intent/RecognitionTerminalHandler.hpp"
-#include "intent/Utils.hpp"
 #include "intent/WitRecognitionFactory.hpp"
 
 #include <jarvisto/Logger.hpp>
 
 #include <boost/assert.hpp>
 
+#include <exception>
+
 namespace jar {
 
-std::shared_ptr<RecognitionSession>
+RecognitionSession::Ptr
 RecognitionSession::create(std::size_t id,
                            tcp::socket&& socket,
-                           std::shared_ptr<WitRecognitionFactory> factory)
+                           std::shared_ptr<WitRecognitionFactory> factory,
+                           std::shared_ptr<AutomationPerformer> performer)
 {
-    // clang-format off
-    return std::shared_ptr<RecognitionSession>(
-        new RecognitionSession{id, std::move(socket), std::move(factory)}
-    );
-    // clang-format on
+    return Ptr(
+        new RecognitionSession{id, std::move(socket), std::move(factory), std::move(performer)});
 }
 
 RecognitionSession::RecognitionSession(std::size_t id,
                                        tcp::socket&& socket,
-                                       std::shared_ptr<WitRecognitionFactory> factory)
+                                       std::shared_ptr<WitRecognitionFactory> factory,
+                                       std::shared_ptr<AutomationPerformer> performer)
     : _id{id}
     , _stream{std::move(socket)}
     , _factory{std::move(factory)}
+    , _performer{std::move(performer)}
 {
     BOOST_ASSERT(_id);
     BOOST_ASSERT(_factory);
-}
-
-void
-RecognitionSession::onComplete(std::move_only_function<OnComplete> callback)
-{
-    _onComplete = std::move(callback);
+    BOOST_ASSERT(_performer);
 }
 
 std::size_t
@@ -51,49 +47,37 @@ RecognitionSession::id() const
 void
 RecognitionSession::run()
 {
-    doReadHeader();
+    io::co_spawn(
+        _stream.get_executor(),
+        [self = shared_from_this()]() {
+            LOGD("Handle <{}> session", self->id());
+            return self->doRun();
+        },
+        [id = _id](const std::exception_ptr& eptr) {
+            try {
+                if (eptr) {
+                    std::rethrow_exception(eptr);
+                }
+            } catch (const std::exception& e) {
+                LOGE("Handling <{}> session has failed: {}", id, e.what());
+            }
+        });
 }
 
-void
-RecognitionSession::doReadHeader()
+io::awaitable<void>
+RecognitionSession::doRun()
 {
-    http::async_read_header(
-        _stream,
-        _buffer,
-        _parser,
-        beast::bind_front_handler(&RecognitionSession::onReadHeaderDone, shared_from_this()));
-}
+    LOGD("Read request header: session<{}>", _id);
+    std::size_t n = co_await http::async_read_header(_stream, _buffer, _parser, io::use_awaitable);
+    LOGD("Reading request header was done: session<{}>, transferred<{}>", _id, n);
 
-void
-RecognitionSession::onReadHeaderDone(sys::error_code ec, std::size_t bytes)
-{
-    LOGD("Reading header is complete: id<{}>, ec<{}>, bytes<{}>", _id, ec.message(), bytes);
-
-    if (bytes == 0 or ec == http::error::end_of_stream) {
-        LOGD("The end of stream of <{}> session", _id);
-        complete();
-        return;
-    }
-
-    if (ec) {
-        LOGE("Unable to read from <{}> session: error<{}>", _id, ec.message());
-        complete();
-        return;
-    }
-
-    LOGD("Call handler of <{}> session", _id);
-    _handler = getHandler();
-    BOOST_ASSERT(_handler);
-    _handler->handle();
-}
-
-void
-RecognitionSession::onComplete(wit::Utterances utterances, std::error_code ec)
-{
-    if (ec) {
-        complete();
+    auto handler = getHandler();
+    BOOST_ASSERT(handler);
+    if (auto result = co_await handler->handle(); not result.empty()) {
+        LOGD("Handling <{}> session was complete with <{}> utterances", _id, result.size());
+        _performer->perform(result);
     } else {
-        complete(std::move(utterances));
+        LOGD("Handling <{}> session was complete with no utterances");
     }
 }
 
@@ -101,40 +85,11 @@ std::shared_ptr<RecognitionHandler>
 RecognitionSession::getHandler()
 {
     auto handler1 = RecognitionMessageHandler::create(_stream, _buffer, _parser, _factory);
-    handler1->onComplete(
-        [weakSelf = weak_from_this(), id = _id](wit::Utterances result, std::error_code ec) {
-            if (auto self = weakSelf.lock()) {
-                LOGD("Message handler of <{}> session is complete: result<{}>", id, ec.message());
-                self->onComplete(std::move(result), ec);
-            }
-        });
     auto handler2 = RecognitionSpeechHandler::create(_stream, _buffer, _parser, _factory);
-    handler2->onComplete(
-        [weakSelf = weak_from_this(), id = _id](wit::Utterances result, std::error_code ec) {
-            if (auto self = weakSelf.lock()) {
-                LOGD("Speech handler of <{}> session is complete: result<{}>", id, ec.message());
-                self->onComplete(std::move(result), ec);
-            }
-        });
     auto handler3 = RecognitionTerminalHandler::create(_stream);
-    handler3->onComplete(
-        [weakSelf = weak_from_this(), id = _id](wit::Utterances result, std::error_code ec) {
-            if (auto self = weakSelf.lock()) {
-                LOGD("Terminal handler of <{}> session is complete", id);
-                self->onComplete(std::move(result), ec);
-            }
-        });
     handler2->setNext(std::move(handler3));
     handler1->setNext(std::move(handler2));
     return handler1;
-}
-
-void
-RecognitionSession::complete(wit::Utterances result /*= {}*/)
-{
-    if (_onComplete) {
-        _onComplete(_id, std::move(result));
-    }
 }
 
 } // namespace jar

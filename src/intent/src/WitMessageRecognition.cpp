@@ -1,6 +1,5 @@
 #include "intent/WitMessageRecognition.hpp"
 
-#include "intent/GeneralConfig.hpp"
 #include "intent/Utils.hpp"
 #include "intent/WitIntentParser.hpp"
 
@@ -11,299 +10,75 @@
 namespace jar {
 
 std::shared_ptr<WitMessageRecognition>
-WitMessageRecognition::create(std::string host,
+WitMessageRecognition::create(io::any_io_executor executor,
+                              ssl::context& context,
+                              std::string host,
                               std::string port,
                               std::string auth,
-                              ssl::context& context,
-                              io::any_io_executor executor)
+                              std::shared_ptr<Channel> channel)
 {
-    // clang-format off
-    return std::shared_ptr<WitMessageRecognition>(
-        new WitMessageRecognition(std::move(host), std::move(port), std::move(auth), context, std::move(executor))
-    );
-    // clang-format on
+    return Ptr(new WitMessageRecognition(std::move(executor),
+                                         context,
+                                         std::move(host),
+                                         std::move(port),
+                                         std::move(auth),
+                                         std::move(channel)));
 }
 
-WitMessageRecognition::WitMessageRecognition(std::string host,
+WitMessageRecognition::WitMessageRecognition(io::any_io_executor executor,
+                                             ssl::context& context,
+                                             std::string host,
                                              std::string port,
                                              std::string auth,
-                                             ssl::context& context,
-                                             io::any_io_executor executor)
-    : _host{std::move(host)}
-    , _port{std::move(port)}
-    , _auth{std::move(auth)}
-    , _executor{std::move(executor)}
-    , _resolver{_executor}
-    , _stream{_executor, context}
+                                             std::shared_ptr<Channel> channel)
+    : WitRecognition{std::move(executor),
+                     context,
+                     std::move(host),
+                     std::move(port),
+                     std::move(auth)}
+    , _channel{std::move(channel)}
 {
+    BOOST_ASSERT(_channel);
 }
 
-void
-WitMessageRecognition::run()
+io::awaitable<wit::Utterances>
+WitMessageRecognition::process()
 {
-    if (_host.empty() || _port.empty() || _auth.empty()) {
-        LOGE("Invalid server config options: host<{}>, port<{}>, auth<{}>",
-             not _host.empty(),
-             not _port.empty(),
-             not _auth.empty());
-        setError(sys::errc::make_error_code(sys::errc::invalid_argument));
+    const auto message = co_await _channel->async_receive(
+        io::bind_cancellation_slot(onCancel(), io::use_awaitable));
+    if (message.empty()) {
+        throw std::runtime_error{"Given message is empty"};
     }
 
-    std::error_code error;
-    net::setServerHostname(_stream, _host, error);
-    if (error) {
-        LOGW("Unable to set server to use in verification process");
-    }
-    net::setSniHostname(_stream, _host, error);
-    if (error) {
-        LOGW("Unable to set SNI hostname");
-    }
+    http::request<http::empty_body> req;
+    req.version(net::kHttpVersion11);
+    req.method(http::verb::get);
+    req.set(http::field::host, host());
+    req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+    req.set(http::field::authorization, auth());
+    req.set(http::field::content_type, "application/json");
+    req.target(format::messageTargetWithDate(message));
 
-    _req.version(net::kHttpVersion11);
-    _req.method(http::verb::get);
-    _req.set(http::field::host, _host);
-    _req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-    _req.set(http::field::authorization, _auth);
-    _req.set(http::field::content_type, "application/json");
+    net::resetTimeout(stream());
 
-    resolve(_host, _port);
-}
+    LOGD("Write request");
+    std::size_t n = co_await http::async_write(
+        stream(), req, io::bind_cancellation_slot(onCancel(), io::use_awaitable));
+    LOGD("Writing request was done: transferred<{}>", n);
 
-void
-WitMessageRecognition::feed(std::string_view message)
-{
-    if (!needData()) {
-        throw std::logic_error{"Inappropriate call to feed-up by message data"};
-    }
+    net::resetTimeout(stream());
 
-    LOGD("Feeding recognition by <{}> bytes message data", message.size());
-    needData(false);
+    LOGD("Read recognition result");
+    beast::flat_buffer buffer;
+    http::response<http::string_body> res;
+    n = co_await http::async_read(stream(), buffer, res, io::use_awaitable);
+    LOGD("Reading recognition result was done: transferred<{}>", n);
 
-    BOOST_ASSERT(!message.empty());
-    io::post(_executor,
-             [weakSelf = weak_from_this(), target = format::messageTargetWithDate(message)]() {
-                 if (auto self = weakSelf.lock()) {
-                     self->write(target);
-                 }
-             });
-}
-
-void
-WitMessageRecognition::resolve(std::string_view host, std::string_view port)
-{
-    LOGD("Resolving backend address: <{}>", host);
-
-    _resolver.async_resolve(
-        host,
-        port,
-        io::bind_cancellation_slot(
-            onCancel(),
-            beast::bind_front_handler(&WitMessageRecognition::onResolveDone, shared_from_this())));
-}
-
-void
-WitMessageRecognition::onResolveDone(std::error_code error,
-                                     const tcp::resolver::results_type& result)
-{
-    if (error) {
-        LOGE("Resolving backend address has failed: <{}>", error.message());
-        setError(error);
-        return;
-    }
-
-    if (cancelled()) {
-        LOGD("Operation was interrupted");
-        setError(std::make_error_code(std::errc::operation_canceled));
-        return;
-    }
-
-    if (result.empty()) {
-        LOGE("No address has been resolved");
-        setError(std::make_error_code(std::errc::address_not_available));
+    if (auto result = jar::WitIntentParser::parseMessageResult(res.body()); result) {
+        co_return std::move(result.value());
     } else {
-        LOGD("The <{}> endpoints was resolved", result.size());
-        connect(result);
+        throw std::runtime_error{"Unable to parse result"};
     }
-}
-
-void
-WitMessageRecognition::connect(const tcp::resolver::results_type& addresses)
-{
-    LOGD("Connecting to endpoints: {}", addresses.size());
-
-    net::resetTimeout(_stream);
-
-    beast::get_lowest_layer(_stream).async_connect(
-        addresses,
-        io::bind_cancellation_slot(
-            onCancel(),
-            beast::bind_front_handler(&WitMessageRecognition::onConnectDone, shared_from_this())));
-}
-
-void
-WitMessageRecognition::onConnectDone(std::error_code error,
-                                     const tcp::resolver::results_type::endpoint_type& endpoint)
-{
-    if (error) {
-        LOGE("Connecting to endpoints has failed: <{}>", error.message());
-        setError(error);
-        return;
-    }
-
-    if (cancelled()) {
-        LOGD("Operation was interrupted");
-        setError(std::make_error_code(std::errc::operation_canceled));
-    } else {
-        LOGD("Connecting to endpoint <{}> endpoint was done", endpoint.address().to_string());
-        handshake();
-    }
-}
-
-void
-WitMessageRecognition::handshake()
-{
-    LOGD("Handshaking with endpoint");
-
-    net::resetTimeout(_stream);
-
-    _stream.async_handshake(ssl::stream_base::client,
-                            io::bind_cancellation_slot(
-                                onCancel(),
-                                beast::bind_front_handler(&WitMessageRecognition::onHandshakeDone,
-                                                          shared_from_this())));
-}
-
-void
-WitMessageRecognition::onHandshakeDone(std::error_code error)
-{
-    if (error) {
-        LOGE("Handshaking with host has failed: <{}>", error.message());
-        setError(error);
-        return;
-    }
-
-    if (cancelled()) {
-        LOGD("Operation was interrupted");
-        setError(std::make_error_code(std::errc::operation_canceled));
-    } else {
-        LOGD("Handshaking has succeeded");
-        onCancel().assign([this](io::cancellation_type_t) {
-            setError(std::make_error_code(std::errc::operation_canceled));
-        });
-        needData(true);
-    }
-}
-
-void
-WitMessageRecognition::write(const std::string& target)
-{
-    LOGD("Writing request to the stream");
-
-    net::resetTimeout(_stream);
-
-    BOOST_ASSERT(!target.empty());
-    _req.target(target);
-
-    http::async_write(
-        _stream,
-        _req,
-        io::bind_cancellation_slot(
-            onCancel(),
-            beast::bind_front_handler(&WitMessageRecognition::onWriteDone, shared_from_this())));
-}
-
-void
-WitMessageRecognition::onWriteDone(std::error_code error, std::size_t bytesTransferred)
-{
-    if (error) {
-        LOGE("Writing request to the stream has failed: <{}>", error.message());
-        setError(error);
-        return;
-    }
-
-    if (cancelled()) {
-        LOGD("Operation was interrupted");
-        setError(std::make_error_code(std::errc::operation_canceled));
-    } else {
-        LOGD("Writing request to the stream has succeeded: <{}> bytes", bytesTransferred);
-        read();
-    }
-}
-
-void
-WitMessageRecognition::read()
-{
-    LOGD("Reading response from the stream");
-
-    net::resetTimeout(_stream);
-
-    http::async_read(
-        _stream,
-        _buf,
-        _res,
-        io::bind_cancellation_slot(
-            onCancel(),
-            beast::bind_front_handler(&WitMessageRecognition::onReadDone, shared_from_this())));
-}
-
-void
-WitMessageRecognition::onReadDone(std::error_code error, std::size_t bytesTransferred)
-{
-    if (error) {
-        LOGE("Reading response from the stream has failed: <{}>", error.message());
-        setError(error);
-        return;
-    }
-
-    LOGD("Reading response from the stream has succeeded: <{}> bytes", bytesTransferred);
-    if (auto result = jar::WitIntentParser::parseMessageResult(_res.body()); result) {
-        setResult(std::move(result.value()));
-    } else {
-        setError(result.error());
-    }
-
-    if (cancelled()) {
-        LOGD("Operation was interrupted");
-        setError(std::make_error_code(std::errc::operation_canceled));
-    } else {
-        shutdown();
-    }
-}
-
-void
-WitMessageRecognition::shutdown()
-{
-    LOGD("Shutdown connection with host");
-
-    net::resetTimeout(_stream);
-
-    _stream.async_shutdown(io::bind_cancellation_slot(
-        onCancel(),
-        beast::bind_front_handler(&WitMessageRecognition::onShutdownDone, shared_from_this())));
-}
-
-void
-WitMessageRecognition::onShutdownDone(std::error_code error)
-{
-    if (error == sys::error_code{io::error::eof}) {
-        error = {};
-    }
-    if (error == sys::error_code{io::error::operation_aborted}) {
-        error = {};
-    }
-    if (error == sys::error_code(ssl::error::stream_truncated)) {
-        error = {};
-    }
-
-    if (error) {
-        LOGE("Shutdown connection has failed: <{}>", error.message());
-    } else {
-        LOGD("Shutdown connection has succeeded");
-    }
-
-    _req.clear();
-    _res.clear();
-    _buf.clear();
 }
 
 } // namespace jar

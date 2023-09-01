@@ -11,6 +11,7 @@ target_include_directories(${TARGET}
 target_link_libraries(${TARGET}
     PUBLIC Jarvisto::Jarvisto
            Boost::headers
+           Rintento::Coro
     PRIVATE Rintento::Process
             OpenSSL::SSL
             OpenSSL::Crypto
@@ -35,7 +36,7 @@ target_sources(${TARGET}
             src/SpeechDataBuffer.cpp
             src/Utils.cpp
             src/Automation.cpp
-            src/AutomationExecutor.cpp
+            src/AutomationPerformer.cpp
             src/AutomationRegistry.cpp
             src/DeferredJob.cpp
             src/ScriptAction.cpp

@@ -6,21 +6,20 @@
 
 #include <jarvisto/Logger.hpp>
 
+#include <boost/asio/experimental/awaitable_operators.hpp>
 #include <boost/assert.hpp>
+
+using namespace boost::asio::experimental::awaitable_operators;
 
 namespace jar {
 
-std::shared_ptr<RecognitionMessageHandler>
+RecognitionMessageHandler::Ptr
 RecognitionMessageHandler::create(Stream& stream,
                                   Buffer& buffer,
                                   Parser& parser,
                                   std::shared_ptr<WitRecognitionFactory> factory)
 {
-    // clang-format off
-    return std::shared_ptr<RecognitionMessageHandler>(
-        new RecognitionMessageHandler(stream, buffer, parser, std::move(factory))
-    );
-    // clang-format on
+    return Ptr(new RecognitionMessageHandler(stream, buffer, parser, std::move(factory)));
 }
 
 RecognitionMessageHandler::RecognitionMessageHandler(Stream& stream,
@@ -35,26 +34,20 @@ RecognitionMessageHandler::RecognitionMessageHandler(Stream& stream,
     BOOST_ASSERT(_factory);
 }
 
-void
+io::awaitable<wit::Utterances>
 RecognitionMessageHandler::handle()
 {
     if (not canHandle()) {
-        RecognitionHandler::handle();
-        return;
+        co_return co_await RecognitionHandler::handle();
     }
 
-    const auto request = _parser.release();
-    if (auto messageOpt = parser::peekMessage(request.target()); messageOpt) {
-        _message = std::move(*messageOpt);
-    } else {
-        LOGE("Missing message in request target");
-        onRecognitionError(std::make_error_code(std::errc::bad_message));
-        return;
-    }
-
-    _recognition = createRecognition();
-    BOOST_ASSERT(_recognition);
-    _recognition->run();
+    auto executor = co_await io::this_coro::executor;
+    auto channel = std::make_shared<Channel>(executor);
+    auto recognition = _factory->message(executor, channel);
+    BOOST_ASSERT(recognition);
+    auto results = co_await (sendMessageData(channel) && recognition->run());
+    co_await sendResponse(results);
+    co_return std::move(results);
 }
 
 bool
@@ -63,57 +56,15 @@ RecognitionMessageHandler::canHandle() const
     return parser::isMessageTarget(_parser.get().target());
 }
 
-std::shared_ptr<WitMessageRecognition>
-RecognitionMessageHandler::createRecognition()
+io::awaitable<void>
+RecognitionMessageHandler::sendMessageData(std::shared_ptr<Channel> channel)
 {
-    auto recognition = _factory->message();
-    BOOST_ASSERT(recognition);
-    recognition->onDone([weakSelf = weak_from_this(),
-                         executor = executor()](wit::Utterances result, std::error_code error) {
-        if (error) {
-            io::post(executor, [weakSelf, error]() {
-                if (auto self = weakSelf.lock()) {
-                    self->onRecognitionError(error);
-                }
-            });
-        } else {
-            io::post(executor, [weakSelf, result = std::move(result)]() mutable {
-                if (auto self = weakSelf.lock()) {
-                    self->onRecognitionSuccess(std::move(result));
-                }
-            });
-        }
-    });
-    recognition->onData([weakSelf = weak_from_this()]() {
-        if (auto self = weakSelf.lock()) {
-            self->onRecognitionData();
-        }
-    });
-    return recognition;
-}
-
-void
-RecognitionMessageHandler::onRecognitionData()
-{
-    LOGD("Feed up the recognition using given message: <{}> length", _message.size());
-    BOOST_ASSERT(_recognition);
-    _recognition->feed(std::move(_message));
-}
-
-void
-RecognitionMessageHandler::onRecognitionError(std::error_code error)
-{
-    LOGD("Submit recognition error: <{}>", error.message());
-    sendResponse(error);
-    complete(error);
-}
-
-void
-RecognitionMessageHandler::onRecognitionSuccess(wit::Utterances result)
-{
-    LOGD("Submit recognition result: utterances<{}>", result.size());
-    sendResponse(result);
-    complete(std::move(result));
+    const auto request = _parser.release();
+    if (auto messageOpt = parser::peekMessage(request.target()); messageOpt) {
+        co_await channel->async_send(sys::error_code{}, std::move(*messageOpt), io::use_awaitable);
+    } else {
+        throw std::runtime_error{"Missing message in request target"};
+    }
 }
 
 } // namespace jar

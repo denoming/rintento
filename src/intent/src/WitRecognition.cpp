@@ -1,81 +1,115 @@
 #include "intent/WitRecognition.hpp"
 
-#include <boost/assert.hpp>
+#include <jarvisto/Logger.hpp>
 
 namespace jar {
 
-WitRecognition::WitRecognition()
-    : _needData{false}
+WitRecognition::WitRecognition(io::any_io_executor executor,
+                               ssl::context& context,
+                               std::string host,
+                               std::string port,
+                               std::string auth)
+    : _stream{std::move(executor), context}
+    , _host{std::move(host)}
+    , _port{std::move(port)}
+    , _auth{std::move(auth)}
 {
+    BOOST_ASSERT(not _host.empty());
+    BOOST_ASSERT(not _port.empty());
+    BOOST_ASSERT(not _auth.empty());
 }
 
-bool
-WitRecognition::needData() const
+io::awaitable<wit::Utterances>
+WitRecognition::run()
 {
-    return _needData;
+    co_await connect();
+    auto result = co_await process();
+    co_await shutdown();
+    co_return std::move(result);
 }
 
-bool
-WitRecognition::done() const
+WitRecognition::Stream&
+WitRecognition::stream()
 {
-    return _done;
+    return _stream;
 }
 
-void
-WitRecognition::wait()
+const std::string&
+WitRecognition::host() const
 {
-    std::unique_lock lock{_doneGuard};
-    if (!_done) {
-        _whenDone.wait(lock, [this]() { return done(); });
+    return _host;
+}
+
+const std::string&
+WitRecognition::port() const
+{
+    return _port;
+}
+
+const std::string&
+WitRecognition::auth() const
+{
+    return _auth;
+}
+
+io::awaitable<void>
+WitRecognition::connect()
+{
+    if (_host.empty() || _port.empty() || _auth.empty()) {
+        LOGE("Invalid server config options: host<{}>, port<{}>, auth<{}>",
+             not _host.empty(),
+             not _port.empty(),
+             not _auth.empty());
+        throw sys::system_error{sys::errc::invalid_argument, sys::generic_category()};
     }
-}
 
-void
-WitRecognition::onDone(std::move_only_function<OnDone> callback)
-{
-    _doneCallback = std::move(callback);
-}
-
-void
-WitRecognition::onData(std::move_only_function<OnData> callback)
-{
-    _dataCallback = std::move(callback);
-}
-
-void
-WitRecognition::needData(bool status)
-{
-    _needData = status;
-
-    if (_needData && _dataCallback) {
-        _dataCallback();
+    std::error_code ec;
+    net::setServerHostname(_stream, _host, ec);
+    if (ec) {
+        LOGW("Unable to set server to use in verification process");
     }
+    net::setSniHostname(_stream, _host, ec);
+    if (ec) {
+        LOGW("Unable to set SNI hostname");
+    }
+
+    LOGD("Resolve backend address: <{}>", _host);
+    tcp::resolver resolver{co_await io::this_coro::executor};
+    const auto endpoints = co_await resolver.async_resolve(
+        _host, _port, io::bind_cancellation_slot(onCancel(), io::use_awaitable));
+    if (endpoints.empty()) {
+        LOGE("No address has been resolved");
+        throw sys::system_error{sys::errc::address_not_available, sys::generic_category()};
+    }
+    LOGD("Resolving backend address was done: endpoints<{}>", endpoints.size());
+
+    LOGD("Connect to endpoints");
+    net::resetTimeout(_stream);
+    const auto endpoint = co_await get_lowest_layer(_stream).async_connect(
+        endpoints, io::bind_cancellation_slot(onCancel(), io::use_awaitable));
+    LOGD("Connecting to <{}> endpoint was done", endpoint.address().to_string());
+
+    LOGD("Handshake with host");
+    net::resetTimeout(_stream);
+    co_await _stream.async_handshake(ssl::stream_base::client,
+                                     io::bind_cancellation_slot(onCancel(), io::use_awaitable));
+    LOGD("Handshaking was done");
 }
 
-void
-WitRecognition::setResult(wit::Utterances result)
+io::awaitable<wit::Utterances>
+WitRecognition::process()
 {
-    BOOST_ASSERT(!_done);
-    std::unique_lock lock{_doneGuard};
-    _done = true;
-    if (_doneCallback) {
-        _doneCallback(std::move(result), {});
-    }
-    lock.unlock();
-    _whenDone.notify_all();
+    co_return wit::Utterances{};
 }
 
-void
-WitRecognition::setError(const std::error_code value)
+io::awaitable<void>
+WitRecognition::shutdown()
 {
-    BOOST_ASSERT(!_done);
-    std::unique_lock lock{_doneGuard};
-    _done = true;
-    if (_doneCallback) {
-        _doneCallback({}, value);
-    }
-    lock.unlock();
-    _whenDone.notify_all();
+    net::resetTimeout(_stream);
+
+    LOGD("Shutdown stream");
+    std::ignore = co_await _stream.async_shutdown(io::as_tuple(io::use_awaitable));
+    LOGD("Shutdown connection was done");
 }
 
 } // namespace jar

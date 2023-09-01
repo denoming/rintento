@@ -1,26 +1,24 @@
 #pragma once
 
-#include "intent/WitTypes.hpp"
-
 #include <jarvisto/Network.hpp>
 
-#include <functional>
 #include <memory>
 
 namespace jar {
 
-class RecognitionHandler;
 class WitRecognitionFactory;
+class RecognitionHandler;
+class AutomationPerformer;
 
 class RecognitionSession : public std::enable_shared_from_this<RecognitionSession> {
 public:
-    using OnComplete = void(std::size_t id, wit::Utterances utterances);
+    using Ptr = std::shared_ptr<RecognitionSession>;
 
-    [[nodiscard]] static std::shared_ptr<RecognitionSession>
-    create(std::size_t id, tcp::socket&& socket, std::shared_ptr<WitRecognitionFactory> factory);
-
-    void
-    onComplete(std::move_only_function<OnComplete> callback);
+    [[nodiscard]] static Ptr
+    create(std::size_t id,
+           tcp::socket&& socket,
+           std::shared_ptr<WitRecognitionFactory> factory,
+           std::shared_ptr<AutomationPerformer> performer);
 
     [[nodiscard]] std::size_t
     id() const;
@@ -31,22 +29,14 @@ public:
 private:
     RecognitionSession(std::size_t id,
                        tcp::socket&& socket,
-                       std::shared_ptr<WitRecognitionFactory> factory);
+                       std::shared_ptr<WitRecognitionFactory> factory,
+                       std::shared_ptr<AutomationPerformer> performer);
 
-    void
-    doReadHeader();
-
-    void
-    onReadHeaderDone(sys::error_code ec, std::size_t bytes);
-
-    void
-    onComplete(wit::Utterances utterances, std::error_code ec);
+    io::awaitable<void>
+    doRun();
 
     std::shared_ptr<RecognitionHandler>
     getHandler();
-
-    void
-    complete(wit::Utterances result = {});
 
 private:
     std::size_t _id;
@@ -54,8 +44,7 @@ private:
     beast::flat_buffer _buffer;
     http::request_parser<http::empty_body> _parser;
     std::shared_ptr<WitRecognitionFactory> _factory;
-    std::shared_ptr<RecognitionHandler> _handler;
-    std::move_only_function<OnComplete> _onComplete;
+    std::shared_ptr<AutomationPerformer> _performer;
 };
 
 } // namespace jar

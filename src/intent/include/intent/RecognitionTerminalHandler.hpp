@@ -13,7 +13,7 @@ public:
     [[nodiscard]] static std::shared_ptr<RecognitionHandler>
     create(Stream& stream);
 
-    void
+    io::awaitable<wit::Utterances>
     handle() final;
 
 private:

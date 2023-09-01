@@ -1,11 +1,11 @@
 #include "intent/IntentSubsystem.hpp"
 
 #include "intent/AutomationConfig.hpp"
+#include "intent/AutomationPerformer.hpp"
+#include "intent/AutomationRegistry.hpp"
 #include "intent/GeneralConfig.hpp"
 #include "intent/RecognitionServer.hpp"
 #include "intent/WitRecognitionFactory.hpp"
-#include "intent/AutomationRegistry.hpp"
-#include "intent/AutomationExecutor.hpp"
 
 #include <jarvisto/Application.hpp>
 #include <jarvisto/Logger.hpp>
@@ -31,8 +31,9 @@ public:
 
         _automationWorker = std::make_unique<Worker>(kAutomationWorkerThreads);
         _registry = std::make_unique<AutomationRegistry>();
-        _executor = std::make_unique<AutomationExecutor>(*_registry);
-        _automationConfig = std::make_unique<AutomationConfig>(_automationWorker->executor(), *_registry);
+        _performer = std::make_unique<AutomationPerformer>(*_registry);
+        _automationConfig
+            = std::make_unique<AutomationConfig>(_automationWorker->executor(), *_registry);
         if (not _automationConfig->load()) {
             LOGE("Unable to load automation config");
         }
@@ -40,11 +41,10 @@ public:
         _recognizeWorker = std::make_unique<Worker>(_config->recognizeThreads());
         _factory = std::make_unique<WitRecognitionFactory>(_config->recognizeServerHost(),
                                                            _config->recognizeServerPort(),
-                                                           _config->recognizeServerAuth(),
-                                                           _recognizeWorker->executor());
+                                                           _config->recognizeServerAuth());
 
         _proxyWorker = std::make_unique<Worker>(_config->proxyServerThreads());
-        _server = RecognitionServer::create(_proxyWorker->executor(), _factory, *_executor);
+        _server = RecognitionServer::create(_proxyWorker->executor(), _factory, _performer);
     }
 
     void
@@ -92,7 +92,7 @@ public:
         _recognizeWorker.reset();
         _proxyWorker.reset();
         _automationWorker.reset();
-        _executor.reset();
+        _performer.reset();
         _registry.reset();
         _config.reset();
         _automationConfig.reset();
@@ -102,7 +102,7 @@ private:
     std::unique_ptr<GeneralConfig> _config;
     std::unique_ptr<AutomationConfig> _automationConfig;
     std::unique_ptr<AutomationRegistry> _registry;
-    std::unique_ptr<AutomationExecutor> _executor;
+    std::shared_ptr<AutomationPerformer> _performer;
     std::unique_ptr<Worker> _proxyWorker;
     std::unique_ptr<Worker> _recognizeWorker;
     std::unique_ptr<Worker> _automationWorker;
