@@ -18,7 +18,7 @@ public:
     clone() const final;
 
     void
-    launch(Action::List actions) final;
+    launch(io::any_io_executor executor, Action::List actions) final;
 
 private:
     void
@@ -40,6 +40,7 @@ private:
     onActionDone(std::error_code ec);
 
 private:
+    io::any_io_executor _executor;
     std::size_t _currIndex{};
     std::size_t _nextIndex{};
     Action::List _actions;

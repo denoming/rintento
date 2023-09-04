@@ -36,7 +36,7 @@ public:
     clone();
 
     void
-    execute();
+    execute(io::any_io_executor executor);
 
 private:
     Automation(std::string id,

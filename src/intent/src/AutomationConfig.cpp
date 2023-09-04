@@ -13,10 +13,10 @@ namespace fs = std::filesystem;
 
 namespace jar {
 
-AutomationConfig::AutomationConfig(io::any_io_executor executor, IAutomationRegistry& registry)
-    : _executor{std::move(executor)}
-    , _registry{registry}
+AutomationConfig::AutomationConfig(std::shared_ptr<IAutomationRegistry> registry)
+    : _registry{std::move(registry)}
 {
+    BOOST_ASSERT(_registry);
 }
 
 void
@@ -46,10 +46,10 @@ AutomationConfig::doParseAutomation(const boost::property_tree::ptree& root)
 
     if (auto actionsTree = root.get_child_optional("actions"); actionsTree) {
         if (Action::List actions = doParseActions(*actionsTree); not actions.empty()) {
-            _registry.add(Automation::create(std::move(alias),
-                                             std::move(intent),
-                                             std::move(actions),
-                                             std::make_shared<SequentActionLaunchStrategy>()));
+            _registry->add(Automation::create(std::move(alias),
+                                              std::move(intent),
+                                              std::move(actions),
+                                              std::make_shared<SequentActionLaunchStrategy>()));
         }
     } else {
         LOGE("Mandatory field 'actions' is absent or empty");
@@ -122,8 +122,7 @@ AutomationConfig::doParseScriptAction(const boost::property_tree::ptree& root)
         }
     }
 
-    return ScriptAction::create(_executor,
-                                std::move(execPath),
+    return ScriptAction::create(std::move(execPath),
                                 std::move(args),
                                 std::move(homePath),
                                 std::move(env),

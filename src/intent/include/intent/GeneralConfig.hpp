@@ -9,34 +9,30 @@ public:
     GeneralConfig();
 
     [[nodiscard]] std::uint16_t
-    proxyServerPort() const;
+    serverPort() const;
 
     [[nodiscard]] std::size_t
-    proxyServerThreads() const;
+    serverThreads() const;
 
     [[nodiscard]] const std::string&
-    recognizeServerHost() const;
+    recognitionServerHost() const;
 
     [[nodiscard]] const std::string&
-    recognizeServerPort() const;
+    recognitionServerPort() const;
 
     [[nodiscard]] const std::string&
-    recognizeServerAuth() const;
-
-    [[nodiscard]] std::size_t
-    recognizeThreads() const;
+    recognitionServerAuth() const;
 
 private:
     void
     doParse(const boost::property_tree::ptree& root) final;
 
 private:
-    std::uint16_t _proxyServerPort;
-    std::size_t _proxyServerThreads;
-    std::string _recognizeServerHost;
-    std::string _recognizeServerPort;
-    std::string _recognizeServerAuth;
-    std::size_t _recognizeServerThreads;
+    std::uint16_t _serverPort;
+    std::size_t _serverThreads;
+    std::string _recognitionServerHost;
+    std::string _recognitionServerPort;
+    std::string _recognitionServerAuth;
 };
 
 }; // namespace jar

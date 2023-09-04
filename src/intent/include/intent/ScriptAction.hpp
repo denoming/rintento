@@ -21,8 +21,7 @@ public:
     static inline const Ttl kDefaultTtl{15'000};
 
     [[nodiscard]] static Ptr
-    create(io::any_io_executor executor,
-           std::filesystem::path exec,
+    create(std::filesystem::path exec,
            Args args = {},
            std::filesystem::path home = {},
            Environment env = {},
@@ -33,11 +32,10 @@ public:
     clone() const final;
 
     void
-    execute() final;
+    execute(io::any_io_executor executor) final;
 
 private:
-    explicit ScriptAction(io::any_io_executor executor,
-                          std::filesystem::path exec,
+    explicit ScriptAction(std::filesystem::path exec,
                           Args args = {},
                           std::filesystem::path home = {},
                           Environment env = {},
@@ -65,7 +63,7 @@ private:
     bool _inheritParentEnv{false};
     Ttl _ttl{kDefaultTtl};
     io::cancellation_signal _runningSig;
-    io::steady_timer _runningTimer;
+    std::unique_ptr<io::steady_timer> _runningTimer;
 };
 
 } // namespace jar

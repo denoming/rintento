@@ -18,9 +18,9 @@ using namespace jar;
 class WitMessageRecognitionTest : public Test {
 public:
     WitMessageRecognitionTest()
-        : factory{config.recognizeServerHost(),
-                  config.recognizeServerPort(),
-                  config.recognizeServerAuth()}
+        : factory{config.recognitionServerHost(),
+                  config.recognitionServerPort(),
+                  config.recognitionServerAuth()}
     {
     }
 

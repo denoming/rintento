@@ -88,7 +88,7 @@ Automation::clone()
 }
 
 void
-Automation::execute()
+Automation::execute(io::any_io_executor executor)
 {
     BOOST_ASSERT(_launcher);
     _launcher->onComplete([weakSelf = weak_from_this()](std::error_code ec) {
@@ -98,7 +98,7 @@ Automation::execute()
     });
 
     LOGI("Launch <{}> actions of <{} ({})> automation", _actions.size(), alias(), id());
-    _launcher->launch(_actions);
+    _launcher->launch(std::move(executor), _actions);
 }
 
 void

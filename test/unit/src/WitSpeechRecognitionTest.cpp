@@ -23,9 +23,9 @@ public:
     const fs::path kAssetAudioPath{fs::current_path() / "asset" / "audio"};
 
     WitSpeechRecognitionTest()
-        : factory{config.recognizeServerHost(),
-                  config.recognizeServerPort(),
-                  config.recognizeServerAuth()}
+        : factory{config.recognitionServerHost(),
+                  config.recognitionServerPort(),
+                  config.recognitionServerAuth()}
     {
     }
 

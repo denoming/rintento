@@ -15,7 +15,10 @@ class AutomationRegistry;
 
 class AutomationPerformer : public std::enable_shared_from_this<AutomationPerformer> {
 public:
-    explicit AutomationPerformer(AutomationRegistry& registry);
+    using Ptr = std::shared_ptr<AutomationPerformer>;
+
+    static Ptr
+    create(io::any_io_executor executor, std::shared_ptr<AutomationRegistry> registry);
 
     void
     perform(const wit::Utterances& utterances);
@@ -24,11 +27,16 @@ public:
     perform(const std::string& intent);
 
 private:
+    explicit AutomationPerformer(io::any_io_executor executor,
+                                 std::shared_ptr<AutomationRegistry> registry);
+
+private:
     void
     onAutomationDone(const std::string& id, const std::string& alias, std::error_code ec);
 
 private:
-    AutomationRegistry& _registry;
+    io::any_io_executor _executor;
+    std::shared_ptr<AutomationRegistry> _registry;
     std::map<std::string, std::shared_ptr<Automation>> _runningList;
 };
 

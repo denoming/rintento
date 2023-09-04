@@ -13,7 +13,7 @@ SequentActionLaunchStrategy::clone() const
 }
 
 void
-SequentActionLaunchStrategy::launch(Action::List actions)
+SequentActionLaunchStrategy::launch(io::any_io_executor executor, Action::List actions)
 {
     if (actions.empty()) {
         LOGW("Empty actions list");
@@ -21,6 +21,7 @@ SequentActionLaunchStrategy::launch(Action::List actions)
         return;
     }
 
+    _executor = std::move(executor);
     _actions = std::move(actions);
 
     executeNextAction();
@@ -72,7 +73,7 @@ SequentActionLaunchStrategy::executeNextAction()
     });
 
     LOGI("Execute the <{}> action", currentActionIndex() + 1);
-    nextAction->execute();
+    nextAction->execute(_executor);
 }
 
 void

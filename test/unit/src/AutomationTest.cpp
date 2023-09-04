@@ -29,9 +29,9 @@ public:
     }
 
     void
-    execute() final
+    execute(io::any_io_executor executor) final
     {
-        complete(_returnCode);
+        io::post(executor, [this]() { complete(_returnCode); });
     }
 
 private:
@@ -72,7 +72,7 @@ TEST_F(AutomationTest, Successful)
                                                jar::Action::List{action1.clone(), action2.clone()},
                                                strategy.clone());
     automation->onComplete(waiter.enroll([&](const std::error_code ec) { callback.Call(ec); }));
-    automation->execute();
+    automation->execute(worker.executor());
 
     waiter.wait();
 }
@@ -92,7 +92,7 @@ TEST_F(AutomationTest, Unsuccessful)
                                                jar::Action::List{action1.clone(), action2.clone()},
                                                strategy.clone());
     automation->onComplete(waiter.enroll([&](const std::error_code ec) { callback.Call(ec); }));
-    automation->execute();
+    automation->execute(worker.executor());
 
     waiter.wait();
 }

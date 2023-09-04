@@ -3,8 +3,6 @@
 #include "intent/ConfigLoader.hpp"
 #include "intent/Action.hpp"
 
-#include <jarvisto/Network.hpp>
-
 #include <memory>
 
 namespace jar {
@@ -13,7 +11,7 @@ class IAutomationRegistry;
 
 class AutomationConfig final : public ConfigLoader {
 public:
-    AutomationConfig(io::any_io_executor executor, IAutomationRegistry& registry);
+    AutomationConfig(std::shared_ptr<IAutomationRegistry> registry);
 
 private:
     void
@@ -29,8 +27,7 @@ private:
     doParseScriptAction(const boost::property_tree::ptree& root);
 
 private:
-    io::any_io_executor _executor;
-    IAutomationRegistry& _registry;
+    std::shared_ptr<IAutomationRegistry> _registry;
 };
 
 } // namespace jar

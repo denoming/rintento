@@ -23,7 +23,7 @@ public:
         = 0;
 
     virtual void
-    execute()
+    execute(io::any_io_executor executor)
         = 0;
 };
 

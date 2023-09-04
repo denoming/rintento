@@ -5,6 +5,8 @@
 
 #include <jarvisto/Logger.hpp>
 
+#include <boost/assert.hpp>
+
 #include <ranges>
 
 namespace jar {
@@ -22,9 +24,19 @@ mostConfidentIntent(const wit::Intents& intents)
 
 } // namespace
 
-AutomationPerformer::AutomationPerformer(AutomationRegistry& registry)
-    : _registry{registry}
+AutomationPerformer::Ptr
+AutomationPerformer::create(io::any_io_executor executor,
+                            std::shared_ptr<AutomationRegistry> registry)
 {
+    return Ptr(new AutomationPerformer{std::move(executor), std::move(registry)});
+}
+
+AutomationPerformer::AutomationPerformer(io::any_io_executor executor,
+                                         std::shared_ptr<AutomationRegistry> registry)
+    : _executor{std::move(executor)}
+    , _registry{std::move(registry)}
+{
+    BOOST_ASSERT(_registry);
 }
 
 void
@@ -37,7 +49,7 @@ AutomationPerformer::perform(const wit::Utterances& utterances)
     for (auto&& utterance : filteredUtterances) {
         const auto intentIt = mostConfidentIntent(utterance.intents);
         BOOST_ASSERT(intentIt != std::cend(utterance.intents));
-        if (_registry.has(intentIt->name)) {
+        if (_registry->has(intentIt->name)) {
             perform(intentIt->name);
         } else {
             LOGE("Unable to find automation for <{}> intent", intentIt->name);
@@ -50,7 +62,7 @@ AutomationPerformer::perform(const std::string& intent)
 {
     Automation::Ptr automation;
 
-    if (automation = _registry.get(intent); not automation) {
+    if (automation = _registry->get(intent); not automation) {
         LOGE("Unable to find automation for <{}> intent", intent);
         return;
     }
@@ -67,7 +79,7 @@ AutomationPerformer::perform(const std::string& intent)
     });
 
     LOGI("Execute <{} ({})> automation", alias, id);
-    automation->execute();
+    automation->execute(_executor);
 }
 
 void

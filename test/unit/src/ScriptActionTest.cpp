@@ -33,14 +33,14 @@ TEST_F(ScriptActionTest, Execute)
     ScriptAction::Args args{
         {"-f", kTestFilePath.string()},
     };
-    auto action = ScriptAction::create(context.get_executor(), "rm", std::move(args));
+    auto action = ScriptAction::create("rm", std::move(args));
     ASSERT_TRUE(action);
 
     MockFunction<DeferredJob::OnComplete> callback;
     EXPECT_CALL(callback, Call(std::error_code{}));
 
     action->onComplete(callback.AsStdFunction());
-    action->execute();
+    action->execute(context.get_executor());
 
     context.run();
     EXPECT_FALSE(fs::exists(kTestFilePath));
@@ -49,14 +49,14 @@ TEST_F(ScriptActionTest, Execute)
 TEST_F(ScriptActionTest, NotExistent)
 {
     io::io_context ctx;
-    auto action = ScriptAction::create(ctx.get_executor(), "not-existent-program");
+    auto action = ScriptAction::create("not-existent-program");
     ASSERT_TRUE(action);
 
     MockFunction<DeferredJob::OnComplete> callback;
     EXPECT_CALL(callback, Call(Not(std::error_code{})));
 
     action->onComplete(callback.AsStdFunction());
-    action->execute();
+    action->execute(ctx.get_executor());
 
     ctx.run();
 }
