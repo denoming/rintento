@@ -33,31 +33,31 @@ UC2 --> Server
 
 ## Software Units
 
-| Name                        | Description                                                         |
-|-----------------------------|---------------------------------------------------------------------|
-| RecognitionSession          | The dispatcher to handle recognition sent to backend                |
-| RecognitionHandler          | Represents base class for recognition handler                       |
-| RecognitionMessageHandler   | The message recognition handler to handle particular client request |
-| RecognitionSpeechHandler    | The speech recognition handler to handle particular client request  |
-| RecognitionTerminalHandler  | The terminal (empty) handler                                        |
-| RecognitionServer           | The server to accept client connections                             |
-| SpeechDataBuffer            | The data buffer to receive and store client audio data              |
-| WitIntentParser             | The wit.ai intent parser                                            |
-| WitMessageRecognition       | The wit.ai message recognition request to backend                   |
-| WitSpeechRecognition        | The wit.ai speech recognition request to backend                    |
-| WitRecognition              | Represents base class for recognition request to backend            |
-| WitRecognitionFactory       | The factory to create recognition request to backend                |
-| IntentSubsystem             | The subsystem to handle lifetime of service software units          |
-| ConfigLoader                | Represents the base class for config loader                         |
-| GeneralConfig               | The concrete class of general config loader                         |
-| AutomationConfig            | The concrete class of automation config loader                      |
-| Action                      | Represents the base class for action                                |
-| ScriptAction                | The concrete class of action for running any configurable program   |
-| ActionLaunchStrategy        | Represents the base class for launching a bunch of actions          |
-| SequentActionLaunchStrategy | The concrete class for launching strategy in sequential manner      |
-| Automation                  | The concrete class for particular intent automation                 |
-| AutomationRegistry          | The automation registry                                             |
-| AutomationExecutor          | The executor of automations upon given intents                      |
+| Name                       | Description                                                         |
+|----------------------------|---------------------------------------------------------------------|
+| RecognitionSession         | The dispatcher to handle recognition sent to backend                |
+| RecognitionHandler         | Represents base class for recognition handler                       |
+| RecognitionMessageHandler  | The message recognition handler to handle particular client request |
+| RecognitionSpeechHandler   | The speech recognition handler to handle particular client request  |
+| RecognitionTerminalHandler | The terminal (empty) handler                                        |
+| RecognitionServer          | The server to accept client connections                             |
+| SpeechDataBuffer           | The data buffer to receive and store client audio data              |
+| WitIntentParser            | The wit.ai intent parser                                            |
+| WitMessageRecognition      | The wit.ai message recognition request to backend                   |
+| WitSpeechRecognition       | The wit.ai speech recognition request to backend                    |
+| WitRecognition             | Represents base class for recognition request to backend            |
+| WitRecognitionFactory      | The factory to create recognition request to backend                |
+| IntentSubsystem            | The subsystem to handle lifetime of service software units          |
+| ConfigLoader               | Represents the base class for config loader                         |
+| GeneralConfig              | The concrete class of general config loader                         |
+| AutomationConfig           | The concrete class of automation config loader                      |
+| Action                     | Represents the base class for action                                |
+| ScriptAction               | The concrete class of action for running any configurable program   |
+| LaunchStrategy             | Represents the base class for launching a bunch of actions          |
+| SequentLaunchStrategy      | The concrete class for launching strategy in sequential manner      |
+| Automation                 | The concrete class for particular intent automation                 |
+| AutomationRegistry         | The automation registry                                             |
+| AutomationExecutor         | The executor of automations upon given intents                      |
 
 ## Class Diagrams
 
@@ -161,7 +161,7 @@ class Automation {
     +execute()
 }
 
-class ActionLaunchStrategy {
+class LaunchStrategy {
     +clone(): Ptr
     +launch(actions)
 }
@@ -179,10 +179,10 @@ class AutomationExecutor {
 
 DeferredJob <|-- Automation 
 DeferredJob <|-- Action 
-DeferredJob <|-- ActionLaunchStrategy
+DeferredJob <|-- LaunchStrategy
 
 Action <|-- ScriptAction
-ActionLaunchStrategy <|-- SequentActionLaunchStrategy
+LaunchStrategy <|-- SequentLaunchStrategy
 
 Automation o-- Action : 0..*
 AutomationRegistry o-- Automation : 0..*

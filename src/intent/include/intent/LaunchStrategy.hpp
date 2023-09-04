@@ -9,11 +9,11 @@
 
 namespace jar {
 
-class ActionLaunchStrategy : public DeferredJob {
+class LaunchStrategy : public DeferredJob {
 public:
-    using Ptr = std::shared_ptr<ActionLaunchStrategy>;
+    using Ptr = std::shared_ptr<LaunchStrategy>;
 
-    virtual ~ActionLaunchStrategy() = default;
+    virtual ~LaunchStrategy() = default;
 
     [[nodiscard]] virtual Ptr
     clone() const

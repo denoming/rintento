@@ -1,6 +1,6 @@
 #pragma once
 
-#include "intent/ActionLaunchStrategy.hpp"
+#include "intent/LaunchStrategy.hpp"
 
 #include <jarvisto/Network.hpp>
 
@@ -8,11 +8,10 @@
 
 namespace jar {
 
-class SequentActionLaunchStrategy final
-    : public std::enable_shared_from_this<SequentActionLaunchStrategy>,
-      public ActionLaunchStrategy {
+class SequentLaunchStrategy final : public std::enable_shared_from_this<SequentLaunchStrategy>,
+                                    public LaunchStrategy {
 public:
-    SequentActionLaunchStrategy() = default;
+    SequentLaunchStrategy() = default;
 
     [[nodiscard]] Ptr
     clone() const final;

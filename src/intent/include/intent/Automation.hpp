@@ -1,8 +1,8 @@
 #pragma once
 
 #include "intent/Action.hpp"
-#include "intent/ActionLaunchStrategy.hpp"
 #include "intent/DeferredJob.hpp"
+#include "intent/LaunchStrategy.hpp"
 
 #include <jarvisto/Network.hpp>
 
@@ -21,7 +21,7 @@ public:
     create(std::string alias,
            std::string intent,
            Action::List actions,
-           ActionLaunchStrategy::Ptr launchStrategy);
+           LaunchStrategy::Ptr launchStrategy);
 
     [[nodiscard]] const std::string&
     id() const;
@@ -43,7 +43,7 @@ private:
                std::string alias,
                std::string intent,
                Action::List actions,
-               ActionLaunchStrategy::Ptr launchStrategy);
+               LaunchStrategy::Ptr launchStrategy);
 
     void
     onExecuteDone(std::error_code ec);
@@ -53,7 +53,7 @@ private:
     std::string _alias;
     std::string _intent;
     Action::List _actions;
-    ActionLaunchStrategy::Ptr _launcher;
+    LaunchStrategy::Ptr _launcher;
 };
 
 } // namespace jar

@@ -1,4 +1,4 @@
-#include "intent/SequentActionLaunchStrategy.hpp"
+#include "intent/SequentLaunchStrategy.hpp"
 
 #include <jarvisto/Logger.hpp>
 
@@ -6,14 +6,14 @@
 
 namespace jar {
 
-ActionLaunchStrategy::Ptr
-SequentActionLaunchStrategy::clone() const
+LaunchStrategy::Ptr
+SequentLaunchStrategy::clone() const
 {
-    return ActionLaunchStrategy::Ptr{new SequentActionLaunchStrategy(*this)};
+    return LaunchStrategy::Ptr{new SequentLaunchStrategy(*this)};
 }
 
 void
-SequentActionLaunchStrategy::launch(io::any_io_executor executor, Action::List actions)
+SequentLaunchStrategy::launch(io::any_io_executor executor, Action::List actions)
 {
     if (actions.empty()) {
         LOGW("Empty actions list");
@@ -28,7 +28,7 @@ SequentActionLaunchStrategy::launch(io::any_io_executor executor, Action::List a
 }
 
 void
-SequentActionLaunchStrategy::reset()
+SequentLaunchStrategy::reset()
 {
     _executor = nullptr;
 
@@ -40,14 +40,14 @@ SequentActionLaunchStrategy::reset()
 }
 
 Action::Ptr
-SequentActionLaunchStrategy::currentAction() const
+SequentLaunchStrategy::currentAction() const
 {
     BOOST_ASSERT(not _actions.empty());
     return _actions[currentActionIndex()];
 }
 
 std::size_t
-SequentActionLaunchStrategy::currentActionIndex() const
+SequentLaunchStrategy::currentActionIndex() const
 {
     BOOST_ASSERT(_currIndex >= 0);
     BOOST_ASSERT(_currIndex < _actions.size());
@@ -55,13 +55,13 @@ SequentActionLaunchStrategy::currentActionIndex() const
 }
 
 bool
-SequentActionLaunchStrategy::hasNextAction() const
+SequentLaunchStrategy::hasNextAction() const
 {
     return (_nextIndex < _actions.size());
 }
 
 void
-SequentActionLaunchStrategy::executeNextAction()
+SequentLaunchStrategy::executeNextAction()
 {
     BOOST_ASSERT(_nextIndex < _actions.size());
     auto& nextAction = _actions[_nextIndex];
@@ -79,7 +79,7 @@ SequentActionLaunchStrategy::executeNextAction()
 }
 
 void
-SequentActionLaunchStrategy::onActionDone(std::error_code ec)
+SequentLaunchStrategy::onActionDone(std::error_code ec)
 {
     LOGI("Executing the <{}> action is done: result<{}>", currentActionIndex() + 1, ec.message());
 

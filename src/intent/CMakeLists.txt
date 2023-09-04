@@ -40,7 +40,7 @@ target_sources(${TARGET}
             src/AutomationRegistry.cpp
             src/DeferredJob.cpp
             src/ScriptAction.cpp
-            src/SequentActionLaunchStrategy.cpp
+            src/SequentLaunchStrategy.cpp
             src/ConfigLoader.cpp
             src/GeneralConfig.cpp
             src/AutomationConfig.cpp

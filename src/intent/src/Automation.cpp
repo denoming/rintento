@@ -1,7 +1,7 @@
 #include "intent/Automation.hpp"
 
 #include "intent/Action.hpp"
-#include "intent/ActionLaunchStrategy.hpp"
+#include "intent/LaunchStrategy.hpp"
 
 #include <jarvisto/Logger.hpp>
 
@@ -29,7 +29,7 @@ Automation::Ptr
 Automation::create(std::string alias,
                    std::string intent,
                    Action::List actions,
-                   ActionLaunchStrategy::Ptr launchStrategy)
+                   LaunchStrategy::Ptr launchStrategy)
 {
     return Automation::Ptr{new Automation{generateId(),
                                           std::move(alias),
@@ -42,7 +42,7 @@ Automation::Automation(std::string id,
                        std::string alias,
                        std::string intent,
                        Action::List actions,
-                       ActionLaunchStrategy::Ptr launchStrategy)
+                       LaunchStrategy::Ptr launchStrategy)
     : _id{std::move(id)}
     , _alias{std::move(alias)}
     , _intent{std::move(intent)}
@@ -79,7 +79,7 @@ Automation::clone()
     });
     BOOST_ASSERT(not actions.empty());
 
-    ActionLaunchStrategy::Ptr launcher = _launcher->clone();
+    LaunchStrategy::Ptr launcher = _launcher->clone();
     BOOST_ASSERT(launcher);
 
     const auto id = generateId();
@@ -104,10 +104,7 @@ Automation::execute(io::any_io_executor executor)
 void
 Automation::onExecuteDone(std::error_code ec)
 {
-    LOGI("Executing <{} ({})> automation is done: result<{}>",
-         alias(),
-         id(),
-         ec.message());
+    LOGI("Executing <{} ({})> automation is done: result<{}>", alias(), id(), ec.message());
 
     complete(ec);
 }

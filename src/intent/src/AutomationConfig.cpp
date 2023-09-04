@@ -3,7 +3,7 @@
 #include "intent/Automation.hpp"
 #include "intent/IAutomationRegistry.hpp"
 #include "intent/ScriptAction.hpp"
-#include "intent/SequentActionLaunchStrategy.hpp"
+#include "intent/SequentLaunchStrategy.hpp"
 
 #include <jarvisto/Logger.hpp>
 
@@ -49,7 +49,7 @@ AutomationConfig::doParseAutomation(const boost::property_tree::ptree& root)
             _registry->add(Automation::create(std::move(alias),
                                               std::move(intent),
                                               std::move(actions),
-                                              std::make_shared<SequentActionLaunchStrategy>()));
+                                              std::make_shared<SequentLaunchStrategy>()));
         }
     } else {
         LOGE("Mandatory field 'actions' is absent or empty");

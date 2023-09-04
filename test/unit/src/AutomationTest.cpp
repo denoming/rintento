@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 
 #include "intent/Automation.hpp"
-#include "intent/SequentActionLaunchStrategy.hpp"
+#include "intent/SequentLaunchStrategy.hpp"
 #include "test/Waiter.hpp"
 
 #include <jarvisto/Worker.hpp>
@@ -54,7 +54,7 @@ public:
 
 public:
     Worker worker;
-    SequentActionLaunchStrategy strategy;
+    SequentLaunchStrategy strategy;
 };
 
 TEST_F(AutomationTest, Successful)
