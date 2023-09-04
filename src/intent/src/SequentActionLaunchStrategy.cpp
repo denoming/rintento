@@ -30,6 +30,8 @@ SequentActionLaunchStrategy::launch(io::any_io_executor executor, Action::List a
 void
 SequentActionLaunchStrategy::reset()
 {
+    _executor = nullptr;
+
     _currIndex = 0;
     _nextIndex = 0;
 
