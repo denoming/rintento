@@ -2,8 +2,8 @@
 
 #include "process/Process.hpp"
 
-#include <jarvisto/Logger.hpp>
 #include <boost/assert.hpp>
+#include <jarvisto/Logger.hpp>
 
 #include <chrono>
 
@@ -21,11 +21,8 @@ ScriptAction::create(std::filesystem::path exec,
                      Ttl ttl /*= kDefaultTtl*/)
 {
     BOOST_ASSERT(not exec.empty());
-    return Action::Ptr{new ScriptAction{std::move(exec),
-                                        std::move(args),
-                                        std::move(home),
-                                        std::move(env),
-                                        inheritParentEnv}};
+    return Action::Ptr{new ScriptAction{
+        std::move(exec), std::move(args), std::move(home), std::move(env), inheritParentEnv, ttl}};
 }
 
 ScriptAction::ScriptAction(std::filesystem::path exec,
@@ -46,8 +43,7 @@ ScriptAction::ScriptAction(std::filesystem::path exec,
 ScriptAction::Ptr
 ScriptAction::clone() const
 {
-    return Action::Ptr{
-        new ScriptAction{_exec, _args, _home, _env, _inheritParentEnv, _ttl}};
+    return Action::Ptr{new ScriptAction{_exec, _args, _home, _env, _inheritParentEnv, _ttl}};
 }
 
 void
@@ -93,12 +89,13 @@ ScriptAction::run()
     auto onComplete = [weakSelf = weak_from_this()](sys::error_code ec, int exitCode) {
         if (auto self = weakSelf.lock()) {
             self->cancelTimer();
-            self->complete();
-        }
-        if (exitCode != 0) {
-            LOGE("Program ended with <{}> exit code", exitCode);
-        } else {
-            LOGD("Program ended: exitCode<{}>");
+            if (ec) {
+                LOGE("Unable to execute program");
+                self->complete(ec);
+            } else {
+                LOGI("Program ended with <{}> exit code", exitCode);
+                self->complete();
+            }
         }
     };
 
@@ -119,7 +116,7 @@ ScriptAction::run()
 void
 ScriptAction::terminate()
 {
-    LOGE("Terminate program due to specified TTL");
+    LOGI("Terminate program due to specified TTL");
     _runningSig.emit(io::cancellation_type::terminal);
 }
 
@@ -130,10 +127,11 @@ ScriptAction::scheduleTimer()
 
     _runningTimer = std::make_unique<io::steady_timer>(_executor, _ttl);
     _runningTimer->async_wait([weakSelf = weak_from_this()](sys::error_code ec) {
-        if (not ec) {
+        if (ec) {
+            LOGE("Unable to wait running timer: error<{}>", ec.message());
+        } else {
             if (auto self = weakSelf.lock()) {
                 self->terminate();
-                self->complete(std::make_error_code(std::errc::connection_aborted));
             }
         }
     });
