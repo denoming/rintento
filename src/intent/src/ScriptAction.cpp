@@ -18,11 +18,15 @@ ScriptAction::create(std::filesystem::path exec,
                      std::filesystem::path home /*= {}*/,
                      Environment env /*= {}*/,
                      bool inheritParentEnv /*= false*/,
-                     Ttl ttl /*= kDefaultTtl*/)
+                     Timeout timeout /*= kDefaultTimeout*/)
 {
     BOOST_ASSERT(not exec.empty());
-    return Action::Ptr{new ScriptAction{
-        std::move(exec), std::move(args), std::move(home), std::move(env), inheritParentEnv, ttl}};
+    return Action::Ptr{new ScriptAction{std::move(exec),
+                                        std::move(args),
+                                        std::move(home),
+                                        std::move(env),
+                                        inheritParentEnv,
+                                        timeout}};
 }
 
 ScriptAction::ScriptAction(std::filesystem::path exec,
@@ -30,20 +34,20 @@ ScriptAction::ScriptAction(std::filesystem::path exec,
                            std::filesystem::path home /*= {}*/,
                            Environment env /*= {}*/,
                            bool inheritParentEnv /*= false*/,
-                           Ttl ttl /*= kDefaultTtl*/)
+                           Timeout timeout /*= kDefaultTimeout*/)
     : _exec{std::move(exec)}
     , _args{std::move(args)}
     , _home{std::move(home)}
     , _env{std::move(env)}
     , _inheritParentEnv{inheritParentEnv}
-    , _ttl{ttl}
+    , _timeout{timeout}
 {
 }
 
 ScriptAction::Ptr
 ScriptAction::clone() const
 {
-    return Action::Ptr{new ScriptAction{_exec, _args, _home, _env, _inheritParentEnv, _ttl}};
+    return Action::Ptr{new ScriptAction{_exec, _args, _home, _env, _inheritParentEnv, _timeout}};
 }
 
 void
@@ -116,7 +120,7 @@ ScriptAction::run()
 void
 ScriptAction::terminate()
 {
-    LOGI("Terminate program due to specified TTL");
+    LOGI("Terminate program due to timeout");
     _runningSig.emit(io::cancellation_type::terminal);
 }
 
@@ -125,10 +129,10 @@ ScriptAction::scheduleTimer()
 {
     namespace krn = std::chrono;
 
-    _runningTimer = std::make_unique<io::steady_timer>(_executor, _ttl);
+    _runningTimer = std::make_unique<io::steady_timer>(_executor, _timeout);
     _runningTimer->async_wait([weakSelf = weak_from_this()](sys::error_code ec) {
         if (ec) {
-            LOGE("Unable to wait running timer: error<{}>", ec.message());
+            LOGE("Unable to wait given timeout: error<{}>", ec.message());
         } else {
             if (auto self = weakSelf.lock()) {
                 self->terminate();

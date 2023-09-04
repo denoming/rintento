@@ -40,7 +40,7 @@ static const std::string_view kConfigValue = R"({
                         "ENV2": "VAR2"
                     },
                     "inheritParentEnv": true,
-                    "ttl": 5000
+                    "timeout": 5000
                 }
             ]
         },
@@ -59,7 +59,7 @@ static const std::string_view kConfigValue = R"({
                         "ENV4": "VAR4"
                     },
                     "inheritParentEnv": true,
-                    "ttl": 3000
+                    "timeout": 3000
                 }
             ]
         }

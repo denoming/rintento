@@ -16,9 +16,9 @@ class ScriptAction final : public std::enable_shared_from_this<ScriptAction>, pu
 public:
     using Args = std::vector<std::string>;
     using Environment = std::unordered_map<std::string, std::string>;
-    using Ttl = std::chrono::milliseconds;
+    using Timeout = std::chrono::milliseconds;
 
-    static inline const Ttl kDefaultTtl{15'000};
+    static inline const Timeout kDefaultTimeout{15'000};
 
     [[nodiscard]] static Ptr
     create(std::filesystem::path exec,
@@ -26,7 +26,7 @@ public:
            std::filesystem::path home = {},
            Environment env = {},
            bool inheritParentEnv = false,
-           Ttl ttl = kDefaultTtl);
+           Timeout timeout = kDefaultTimeout);
 
     [[nodiscard]] Ptr
     clone() const final;
@@ -40,7 +40,7 @@ private:
                           std::filesystem::path home = {},
                           Environment env = {},
                           bool inheritParentEnv = false,
-                          Ttl ttl = kDefaultTtl);
+                          Timeout timeout = kDefaultTimeout);
 
     void
     run();
@@ -61,7 +61,7 @@ private:
     std::filesystem::path _home;
     Environment _env;
     bool _inheritParentEnv{false};
-    Ttl _ttl{kDefaultTtl};
+    Timeout _timeout{kDefaultTimeout};
     io::cancellation_signal _runningSig;
     std::unique_ptr<io::steady_timer> _runningTimer;
 };

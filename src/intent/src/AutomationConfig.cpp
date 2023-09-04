@@ -113,12 +113,12 @@ AutomationConfig::doParseScriptAction(const boost::property_tree::ptree& root)
         inheritParentEnv = *inheritOpt;
     }
 
-    ScriptAction::Ttl ttl{ScriptAction::kDefaultTtl};
-    if (auto ttlOpt = root.get_optional<int64_t>("ttl"); ttlOpt) {
-        if (*ttlOpt > 0) {
-            ttl = ScriptAction::Ttl{*ttlOpt};
+    ScriptAction::Timeout timeout{ScriptAction::kDefaultTimeout};
+    if (auto timeoutOpt = root.get_optional<int64_t>("timeout"); timeoutOpt) {
+        if (*timeoutOpt > 0) {
+            timeout = ScriptAction::Timeout{*timeoutOpt};
         } else {
-            LOGE("Invalid value for TTL field: {}", *ttlOpt);
+            LOGE("Invalid value for timeout field: {}", *timeoutOpt);
         }
     }
 
@@ -127,7 +127,7 @@ AutomationConfig::doParseScriptAction(const boost::property_tree::ptree& root)
                                 std::move(homePath),
                                 std::move(env),
                                 inheritParentEnv,
-                                ttl);
+                                timeout);
 }
 
 } // namespace jar
