@@ -45,15 +45,17 @@ public:
 GeneralConfig WitSpeechRecognitionTest::config;
 
 static auto
-exceptionContainsError(sys::error_code errorCode)
+exceptionContainsError(Matcher<int> matcher)
 {
-    return [errorCode](const std::exception_ptr& eptr) {
+    return [matcher = std::move(matcher)](const std::exception_ptr& eptr) {
         try {
             if (eptr) {
                 std::rethrow_exception(eptr);
             }
         } catch (const sys::system_error& e) {
-            return (e.code() == errorCode);
+            return Matches(matcher)(e.code().value());
+        } catch (const std::exception& e) {
+            /* Unexpected exception */
         }
         return false;
     };
@@ -112,10 +114,8 @@ TEST_F(WitSpeechRecognitionTest, CancelRecognizeSpeech)
     io::io_context context{1};
 
     MockFunction<void(std::exception_ptr, wit::Utterances)> callback;
-    EXPECT_CALL(
-        callback,
-        Call(Truly(exceptionContainsError({sys::errc::operation_canceled, sys::system_category()})),
-             IsEmpty()));
+    EXPECT_CALL(callback,
+                Call(Truly(exceptionContainsError(Eq(sys::errc::operation_canceled))), IsEmpty()));
 
     auto executor = context.get_executor();
     auto channel = std::make_shared<WitSpeechRecognition::Channel>(executor, kChannelCapacity);

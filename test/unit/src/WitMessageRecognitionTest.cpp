@@ -40,15 +40,17 @@ public:
 GeneralConfig WitMessageRecognitionTest::config;
 
 static auto
-exceptionContainsError(sys::error_code errorCode)
+exceptionContainsError(Matcher<int> matcher)
 {
-    return [errorCode](const std::exception_ptr& eptr) {
+    return [matcher = std::move(matcher)](const std::exception_ptr& eptr) {
         try {
             if (eptr) {
                 std::rethrow_exception(eptr);
             }
         } catch (const sys::system_error& e) {
-            return (e.code() == errorCode);
+            return Matches(matcher)(e.code().value());
+        } catch (const std::exception& e) {
+            /* Unexpected exception */
         }
         return false;
     };
@@ -105,11 +107,12 @@ TEST_F(WitMessageRecognitionTest, CancelRecognizeMessage)
 {
     io::io_context context{1};
 
+    namespace ioe = boost::asio::experimental;
     MockFunction<void(std::exception_ptr, wit::Utterances)> callback;
-    EXPECT_CALL(
-        callback,
-        Call(Truly(exceptionContainsError({sys::errc::operation_canceled, sys::system_category()})),
-             IsEmpty()));
+    EXPECT_CALL(callback,
+                Call(Truly(exceptionContainsError(AnyOf(Eq(sys::errc::operation_canceled),
+                                                        Eq(ioe::channel_errc::channel_cancelled)))),
+                     IsEmpty()));
 
     auto executor = context.get_executor();
     auto channel = std::make_shared<WitMessageRecognition::Channel>(executor);
