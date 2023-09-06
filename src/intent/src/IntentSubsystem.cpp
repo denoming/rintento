@@ -128,7 +128,7 @@ IntentSubsystem::finalize()
     Subsystem::finalize();
 
     BOOST_ASSERT(_impl);
-    _impl->tearDown();
+    _impl->finalize();
 }
 
 } // namespace jar
