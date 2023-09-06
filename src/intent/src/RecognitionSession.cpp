@@ -50,7 +50,7 @@ RecognitionSession::run()
     io::co_spawn(
         _stream.get_executor(),
         [self = shared_from_this()]() {
-            LOGD("Handle <{}> session", self->id());
+            LOGD("Run <{}> session", self->id());
             return self->doRun();
         },
         [id = _id](const std::exception_ptr& eptr) {
@@ -59,7 +59,7 @@ RecognitionSession::run()
                     std::rethrow_exception(eptr);
                 }
             } catch (const std::exception& e) {
-                LOGE("Handling <{}> session has failed: {}", id, e.what());
+                LOGE("Unable to run <{}> session: {}", id, e.what());
             }
         });
 }
@@ -74,10 +74,8 @@ RecognitionSession::doRun()
     auto handler = getHandler();
     BOOST_ASSERT(handler);
     if (auto result = co_await handler->handle(); not result.empty()) {
-        LOGD("Handling <{}> session was complete with <{}> utterances", _id, result.size());
+        LOGD("Running <{}> session was complete with <{}> utterances", _id, result.size());
         _performer->perform(result);
-    } else {
-        LOGD("Handling <{}> session was complete with no utterances");
     }
 }
 

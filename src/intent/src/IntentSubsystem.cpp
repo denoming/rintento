@@ -49,20 +49,12 @@ public:
 
         const auto port = _generalConfig->serverPort();
         BOOST_ASSERT(_server);
-        if (_server->listen(port)) {
-            LOGI("Starting server on <{}> port was success", port);
-        } else {
-            LOGE("Starting server on <{}> port has failed", port);
-        }
+        _server->listen(port);
     }
 
     void
     tearDown()
     {
-        if (_server) {
-            _server->shutdown();
-        }
-
         if (_worker) {
             _worker->stop();
         }
