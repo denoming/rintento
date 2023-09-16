@@ -1,32 +1,57 @@
 # Setup
 
-Configuration file represents a JSON file.
-The path to this file should be specified by `RINTENTO_EXECUTOR_CONFIG` environment variable.
+Configuration file represents a simple JSON file.
+The path to this file should is specified by `RINTENTO_EXECUTOR_CONFIG` environment variable.
 
 ## Description
 
-| Param               | Description                                  |
-|---------------------|----------------------------------------------|
-| *.proxy.port        | The proxy (server) TCP port number to run on |
-| *.proxy.threads     | The proxy (server) threads number            |
-| *.recognize.host    | The backend host address                     |
-| *.recognize.port    | The backend host port                        |
-| *.recognize.auth    | The backend authentication token             |
-| *.recognize.threads | The backend threads number                   |
+| Param                   | Description                                        |
+|-------------------------|----------------------------------------------------|
+| server.port             | The server TCP port number                         |
+| server.threads          | The server threads number                          |
+| recognition.server.host | The backend host address                           |
+| recognition.server.port | The backend host port                              |
+| recognition.server.auth | The backend authentication token                   |
+| automations             | The pre-configured actions with associated intents |
 
 ## Example
 
 ```json
 {
-  "proxy": {
-    "port": 8000,
-    "threads": 2
+  "server": {
+    "port": 8080,
+    "threads": 8
   },
-  "recognize": {
-    "host": "api.wit.ai",
-    "port": "https",
-    "auth": "Bearer ...",
-    "threads": 4
-  }
+  "recognition": {
+    "server": {
+      "host": "api.wit.ai",
+      "port": "https",
+      "auth": "<token>"
+    }
+  },
+  "automations": [
+    {
+      "alias": "Turn on the light",
+      "intent": "light_on",
+      "actions": [
+        {
+          "type": "script",
+          "exec": "/path/to/program",
+          "args": [
+            "-arg1",
+            "-arg2",
+            "value"
+          ],
+          "home": "/path/to/home/dir",
+          "env": {
+            "ENV3": "VAR3",
+            "ENV4": "VAR4"
+          },
+          "inheritParentEnv": false,
+          "timeout": 3000
+        }
+      ]
+    }
+  ]
 }
 ```

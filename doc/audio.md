@@ -1,17 +1,17 @@
+# Audio 
 
-# Info 
+## Format
 
-Default audio format:
 * encoding=signed-integer;
 * bits=16;
 * rate=16000;
 * endian=little.
 
-# How-To
+## How-To
 
 ## How-To: Record speech from input device
 
-Find input device name:
+Find out audio input device name:
 ```shell
 $ pactl list | grep -A3 'Source #'
 Source #0
@@ -35,7 +35,7 @@ Source #3
     Description: Built-in Audio Analog Stereo
 ```
 
-Record speech into audio file in RAW format:
+Record speech to audio file in RAW format:
 ```shell
 $ gst-launch-1.0 -e pulsesrc device=<device-name-from-pactl-output> \
 ! queue \
@@ -43,8 +43,8 @@ $ gst-launch-1.0 -e pulsesrc device=<device-name-from-pactl-output> \
 ! audio/x-raw,format=S16LE,rate=16000,channels=1,quality=10 \
 ! filesink location=audio.raw
 ```
-    
-Reading speech from audio file in RAW format:
+
+Playback recorded speech from audio file in RAW format:
 ```shell
 $ gst-launch-1.0 -e filesrc location = "audio.raw" \
 ! rawaudioparse use-sink-caps=false format=pcm pcm-format=s16le sample-rate=16000 num-channels=1 \
