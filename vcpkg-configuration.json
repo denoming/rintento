@@ -1,0 +1,10 @@
+{
+  "registries": [
+    {
+      "kind": "git",
+      "baseline": "768d887b0e6cb8274c8b72bfc8bf6209d0c84ae8",
+      "repository": "git@github.com:karz0n/vcpkg-registry.git",
+      "packages": [ "automotive-dlt", "jarvisto" ]
+    }
+  ]
+}
