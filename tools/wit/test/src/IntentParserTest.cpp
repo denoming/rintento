@@ -1,5 +1,5 @@
-#include "test/Matchers.hpp"
 #include "wit/IntentParser.hpp"
+#include "wit/Matchers.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -236,7 +236,7 @@ static const std::string_view kSpeechInput{R"(
     "traits": {}
 })"};
 
-TEST(WitIntentParserTest, ParseMessageResult1)
+TEST(IntentParserTest, ParseMessageResult1)
 {
     const auto entries = wit::IntentParser::parseMessageResult(kMessageResult1);
     ASSERT_TRUE(entries.has_value());
@@ -251,7 +251,7 @@ TEST(WitIntentParserTest, ParseMessageResult1)
                     Contains(isConfidentIntent("get_air_quality_status", 0.9f)))));
 }
 
-TEST(WitIntentParserTest, ParseMessageResult2)
+TEST(IntentParserTest, ParseMessageResult2)
 {
     const auto entries = wit::IntentParser::parseMessageResult(kMessageResult2);
     ASSERT_TRUE(entries.has_value());
@@ -267,7 +267,7 @@ TEST(WitIntentParserTest, ParseMessageResult2)
                     Contains(isConfidentIntent("get_air_quality_status", 0.9f)))));
 }
 
-TEST(WitIntentParserTest, ParseSpeechResult)
+TEST(IntentParserTest, ParseSpeechResult)
 {
     EXPECT_THAT(
         wit::IntentParser::parseSpeechResult(kSpeechInput),
@@ -275,7 +275,7 @@ TEST(WitIntentParserTest, ParseSpeechResult)
             "Turn off the light", IsEmpty(), Contains(isConfidentIntent("light_off", 0.9f))))));
 }
 
-TEST(WitIntentParserTest, ErrorParse)
+TEST(IntentParserTest, ErrorParse)
 {
     static const std::string_view kInvalidResult{R"(
         {
@@ -289,7 +289,7 @@ TEST(WitIntentParserTest, ErrorParse)
     EXPECT_FALSE(wit::IntentParser::parseSpeechResult(kInvalidResult));
 }
 
-TEST(WitIntentParserTest, ParseEmpty)
+TEST(IntentParserTest, ParseEmpty)
 {
     EXPECT_FALSE(wit::IntentParser::parseMessageResult(""));
     EXPECT_FALSE(wit::IntentParser::parseSpeechResult(""));

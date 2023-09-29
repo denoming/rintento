@@ -2,10 +2,10 @@
 #include <gtest/gtest.h>
 
 #include "intent/GeneralConfig.hpp"
-#include "test/Matchers.hpp"
-#include "test/Utils.hpp"
+#include "wit/Matchers.hpp"
+#include "wit/MessageRecognition.hpp"
 #include "wit/RecognitionFactory.hpp"
-#include "wit/SpeechRecognition.hpp"
+#include "wit/Utils.hpp"
 
 #include <jarvisto/SecureContext.hpp>
 
@@ -15,14 +15,9 @@
 using namespace testing;
 using namespace jar;
 
-namespace fs = std::filesystem;
-
-class WitSpeechRecognitionTest : public Test {
+class MessageRecognitionTest : public Test {
 public:
-    const std::size_t kChannelCapacity{512};
-    const fs::path kAssetAudioPath{fs::current_path() / "asset" / "audio"};
-
-    WitSpeechRecognitionTest()
+    MessageRecognitionTest()
         : factory{config.recognitionServerHost(),
                   config.recognitionServerPort(),
                   config.recognitionServerAuth()}
@@ -42,7 +37,7 @@ public:
     wit::RecognitionFactory factory;
 };
 
-GeneralConfig WitSpeechRecognitionTest::config;
+GeneralConfig MessageRecognitionTest::config;
 
 static auto
 exceptionContainsError(Matcher<int> matcher)
@@ -61,8 +56,10 @@ exceptionContainsError(Matcher<int> matcher)
     };
 }
 
-TEST_F(WitSpeechRecognitionTest, RecognizeSpeech)
+TEST_F(MessageRecognitionTest, RecognizeMessage)
 {
+    const std::string_view Message{"turn off the light"};
+
     io::io_context context{1};
 
     MockFunction<void(std::exception_ptr, wit::Utterances)> callback1;
@@ -73,8 +70,8 @@ TEST_F(WitSpeechRecognitionTest, RecognizeSpeech)
                                           Contains(isConfidentIntent("light_off", 0.9f))))));
 
     auto executor = context.get_executor();
-    auto channel = std::make_shared<wit::SpeechRecognition::Channel>(executor, kChannelCapacity);
-    auto recognition = factory.speech(executor, channel);
+    auto channel = std::make_shared<wit::MessageRecognition::Channel>(executor);
+    auto recognition = factory.message(executor, channel);
 
     /* Spawn recognition coroutine */
     io::co_spawn(
@@ -90,14 +87,11 @@ TEST_F(WitSpeechRecognitionTest, RecognizeSpeech)
         });
 
     /* Spawn data provider coroutine */
-    static const fs::path kAudioFile{kAssetAudioPath / "turn-off-the-light.raw"};
     io::co_spawn(
         context.get_executor(),
         [channel]() -> io::awaitable<void> {
-            std::size_t fileSize{0};
-            auto fileData = readFile(kAudioFile, fileSize);
-            auto buffer = io::buffer(fileData.get(), fileSize);
-            co_await channel->send(buffer);
+            std::string data = wit::messageTargetWithDate("turn off the light");
+            co_await channel->async_send(sys::error_code{}, std::move(data), io::use_awaitable);
             channel->close();
         },
         [&](const std::exception_ptr& eptr) {
@@ -109,17 +103,20 @@ TEST_F(WitSpeechRecognitionTest, RecognizeSpeech)
     context.run();
 }
 
-TEST_F(WitSpeechRecognitionTest, CancelRecognizeSpeech)
+TEST_F(MessageRecognitionTest, CancelRecognizeMessage)
 {
     io::io_context context{1};
 
+    namespace ioe = boost::asio::experimental;
     MockFunction<void(std::exception_ptr, wit::Utterances)> callback;
     EXPECT_CALL(callback,
-                Call(Truly(exceptionContainsError(Eq(sys::errc::operation_canceled))), IsEmpty()));
+                Call(Truly(exceptionContainsError(AnyOf(Eq(sys::errc::operation_canceled),
+                                                        Eq(ioe::channel_errc::channel_cancelled)))),
+                     IsEmpty()));
 
     auto executor = context.get_executor();
-    auto channel = std::make_shared<wit::SpeechRecognition::Channel>(executor, kChannelCapacity);
-    auto recognition = factory.speech(executor, channel);
+    auto channel = std::make_shared<wit::MessageRecognition::Channel>(executor);
+    auto recognition = factory.message(executor, channel);
     io::co_spawn(
         context.get_executor(),
         [recognition]() -> io::awaitable<wit::Utterances> {

@@ -21,7 +21,7 @@ target_sources(${TARGET}
     PRIVATE src/Recognition.cpp
             src/MessageRecognition.cpp
             src/SpeechRecognition.cpp
-        src/IntentParser.cpp
+            src/IntentParser.cpp
             src/RecognitionFactory.cpp
             src/Types.cpp
             src/Utils.cpp
@@ -30,5 +30,9 @@ target_sources(${TARGET}
 target_compile_features(${TARGET} PUBLIC cxx_std_23)
 
 target_compile_definitions(${TARGET}
-        PRIVATE BOOST_ASIO_NO_DEPRECATED=1
+    PRIVATE BOOST_ASIO_NO_DEPRECATED=1
 )
+
+if(ENABLE_TESTS)
+    add_subdirectory(test)
+endif()

@@ -3,10 +3,7 @@ set(TARGET rintento-unit-test)
 add_executable(${TARGET} "")
 
 target_sources(${TARGET}
-    PRIVATE src/WitIntentParserTest.cpp
-            src/WitMessageRecognitionTest.cpp
-            src/WitSpeechRecognitionTest.cpp
-            src/UtilsTest.cpp
+    PRIVATE src/UtilsTest.cpp
             src/AutomationTest.cpp
             src/ScriptActionTest.cpp
             src/ConfigLoaderTest.cpp

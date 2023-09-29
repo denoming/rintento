@@ -4,8 +4,6 @@
 #include "intent/GeneralConfig.hpp"
 #include "test/MockAutomationRegistry.hpp"
 
-#include <jarvisto/Worker.hpp>
-
 #include <string_view>
 
 using namespace jar;
