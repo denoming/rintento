@@ -12,6 +12,7 @@ target_link_libraries(${TARGET}
     PUBLIC Jarvisto::Jarvisto
            Boost::headers
            Rintento::Coro
+           Rintento::Wit
     PRIVATE Rintento::Process
             OpenSSL::SSL
             OpenSSL::Crypto
@@ -20,13 +21,7 @@ target_link_libraries(${TARGET}
 )
 
 target_sources(${TARGET}
-    PRIVATE src/WitRecognition.cpp
-            src/WitMessageRecognition.cpp
-            src/WitSpeechRecognition.cpp
-            src/WitIntentParser.cpp
-            src/WitRecognitionFactory.cpp
-            src/WitTypes.cpp
-            src/RecognitionServer.cpp
+    PRIVATE src/RecognitionServer.cpp
             src/RecognitionSession.cpp
             src/IntentSubsystem.cpp
             src/RecognitionHandler.cpp

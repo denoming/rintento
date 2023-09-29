@@ -1,6 +1,6 @@
 #pragma once
 
-#include "intent/WitTypes.hpp"
+#include "wit/WitTypes.hpp"
 
 #include <expected>
 #include <system_error>

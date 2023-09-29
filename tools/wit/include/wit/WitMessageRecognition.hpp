@@ -1,6 +1,6 @@
 #pragma once
 
-#include "intent/WitRecognition.hpp"
+#include "wit/WitRecognition.hpp"
 
 #include <boost/asio/experimental/channel.hpp>
 

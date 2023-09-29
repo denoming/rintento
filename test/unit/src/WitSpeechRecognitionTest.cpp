@@ -2,8 +2,8 @@
 #include <gtest/gtest.h>
 
 #include "intent/GeneralConfig.hpp"
-#include "intent/WitRecognitionFactory.hpp"
-#include "intent/WitSpeechRecognition.hpp"
+#include "wit/WitRecognitionFactory.hpp"
+#include "wit/WitSpeechRecognition.hpp"
 #include "test/Matchers.hpp"
 #include "test/Utils.hpp"
 

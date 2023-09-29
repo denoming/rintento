@@ -1,7 +1,7 @@
 #pragma once
 
-#include "intent/WitMessageRecognition.hpp"
-#include "intent/WitSpeechRecognition.hpp"
+#include "wit/WitMessageRecognition.hpp"
+#include "wit/WitSpeechRecognition.hpp"
 
 #include <jarvisto/Network.hpp>
 #include <jarvisto/SecureContext.hpp>

@@ -1,7 +1,7 @@
-#include "intent/WitSpeechRecognition.hpp"
+#include "wit/WitSpeechRecognition.hpp"
 
-#include "intent/Utils.hpp"
-#include "intent/WitIntentParser.hpp"
+#include "wit/Utils.hpp"
+#include "wit/WitIntentParser.hpp"
 
 #include <jarvisto/Logger.hpp>
 

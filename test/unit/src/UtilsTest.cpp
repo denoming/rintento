@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 
 #include "intent/Utils.hpp"
+#include "wit/Utils.hpp"
 
 using namespace jar;
 using namespace testing;

@@ -1,4 +1,4 @@
-#include "intent/WitIntentParser.hpp"
+#include "wit/WitIntentParser.hpp"
 
 #include <jarvisto/DateTime.hpp>
 

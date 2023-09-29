@@ -4,7 +4,7 @@
 #include "intent/RecognitionMessageHandler.hpp"
 #include "intent/RecognitionSpeechHandler.hpp"
 #include "intent/RecognitionTerminalHandler.hpp"
-#include "intent/WitRecognitionFactory.hpp"
+#include "wit/WitRecognitionFactory.hpp"
 
 #include <jarvisto/Logger.hpp>
 

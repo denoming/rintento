@@ -1,8 +1,7 @@
 #include "intent/RecognitionMessageHandler.hpp"
 
 #include "intent/Utils.hpp"
-#include "intent/WitMessageRecognition.hpp"
-#include "intent/WitRecognitionFactory.hpp"
+#include "wit/WitRecognitionFactory.hpp"
 
 #include <jarvisto/Logger.hpp>
 

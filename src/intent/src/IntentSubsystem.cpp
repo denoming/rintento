@@ -5,7 +5,7 @@
 #include "intent/AutomationRegistry.hpp"
 #include "intent/GeneralConfig.hpp"
 #include "intent/RecognitionServer.hpp"
-#include "intent/WitRecognitionFactory.hpp"
+#include "wit/WitRecognitionFactory.hpp"
 
 #include <jarvisto/Application.hpp>
 #include <jarvisto/Logger.hpp>

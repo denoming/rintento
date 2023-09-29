@@ -1,8 +1,8 @@
 #include "intent/RecognitionSpeechHandler.hpp"
 
 #include "intent/Utils.hpp"
-#include "intent/WitRecognitionFactory.hpp"
-#include "intent/WitSpeechRecognition.hpp"
+#include "wit/WitRecognitionFactory.hpp"
+#include "wit/WitSpeechRecognition.hpp"
 
 #include <jarvisto/Logger.hpp>
 

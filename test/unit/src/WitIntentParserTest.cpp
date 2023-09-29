@@ -1,4 +1,4 @@
-#include "intent/WitIntentParser.hpp"
+#include "wit/WitIntentParser.hpp"
 #include "test/Matchers.hpp"
 
 #include <gmock/gmock.h>

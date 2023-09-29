@@ -2,10 +2,10 @@
 #include <gtest/gtest.h>
 
 #include "intent/GeneralConfig.hpp"
-#include "intent/Utils.hpp"
-#include "intent/WitMessageRecognition.hpp"
-#include "intent/WitRecognitionFactory.hpp"
 #include "test/Matchers.hpp"
+#include "wit/Utils.hpp"
+#include "wit/WitMessageRecognition.hpp"
+#include "wit/WitRecognitionFactory.hpp"
 
 #include <jarvisto/SecureContext.hpp>
 

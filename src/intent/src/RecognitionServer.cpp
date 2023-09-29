@@ -2,7 +2,7 @@
 
 #include "intent/AutomationPerformer.hpp"
 #include "intent/RecognitionSession.hpp"
-#include "intent/WitRecognitionFactory.hpp"
+#include "wit/WitRecognitionFactory.hpp"
 
 #include <jarvisto/Logger.hpp>
 

@@ -1,4 +1,4 @@
-#include "intent/WitRecognitionFactory.hpp"
+#include "wit/WitRecognitionFactory.hpp"
 
 namespace jar {
 

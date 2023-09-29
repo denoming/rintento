@@ -1,4 +1,4 @@
-#include "intent/WitTypes.hpp"
+#include "wit/WitTypes.hpp"
 
 namespace jar::wit {
 
