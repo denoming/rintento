@@ -9,8 +9,10 @@
 
 namespace jar {
 
-class WitRecognitionFactory;
-class WitMessageRecognition;
+namespace wit {
+class RecognitionFactory;
+class MessageRecognition;
+} // namespace wit
 
 class RecognitionMessageHandler final
     : public RecognitionHandler,
@@ -23,7 +25,7 @@ public:
     create(Stream& stream,
            Buffer& buffer,
            Parser& parser,
-           std::shared_ptr<WitRecognitionFactory> factory);
+           std::shared_ptr<wit::RecognitionFactory> factory);
 
     io::awaitable<wit::Utterances>
     handle() final;
@@ -32,7 +34,7 @@ private:
     RecognitionMessageHandler(Stream& stream,
                               Buffer& buffer,
                               Parser& parser,
-                              std::shared_ptr<WitRecognitionFactory> factory);
+                              std::shared_ptr<wit::RecognitionFactory> factory);
 
     [[nodiscard]] bool
     canHandle() const;
@@ -43,8 +45,8 @@ private:
 private:
     Buffer& _buffer;
     Parser& _parser;
-    std::shared_ptr<WitRecognitionFactory> _factory;
-    std::shared_ptr<WitMessageRecognition> _recognition;
+    std::shared_ptr<wit::RecognitionFactory> _factory;
+    std::shared_ptr<wit::MessageRecognition> _recognition;
 };
 
 } // namespace jar

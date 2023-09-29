@@ -1,14 +1,14 @@
-#include "wit/WitRecognition.hpp"
+#include "wit/Recognition.hpp"
 
 #include <jarvisto/Logger.hpp>
 
-namespace jar {
+namespace jar::wit {
 
-WitRecognition::WitRecognition(io::any_io_executor executor,
-                               ssl::context& context,
-                               std::string host,
-                               std::string port,
-                               std::string auth)
+Recognition::Recognition(io::any_io_executor executor,
+                         ssl::context& context,
+                         std::string host,
+                         std::string port,
+                         std::string auth)
     : _stream{std::move(executor), context}
     , _host{std::move(host)}
     , _port{std::move(port)}
@@ -19,8 +19,8 @@ WitRecognition::WitRecognition(io::any_io_executor executor,
     BOOST_ASSERT(not _auth.empty());
 }
 
-io::awaitable<wit::Utterances>
-WitRecognition::run()
+io::awaitable<Utterances>
+Recognition::run()
 {
     co_await connect();
     auto result = co_await process();
@@ -28,32 +28,32 @@ WitRecognition::run()
     co_return std::move(result);
 }
 
-WitRecognition::Stream&
-WitRecognition::stream()
+Recognition::Stream&
+Recognition::stream()
 {
     return _stream;
 }
 
 const std::string&
-WitRecognition::host() const
+Recognition::host() const
 {
     return _host;
 }
 
 const std::string&
-WitRecognition::port() const
+Recognition::port() const
 {
     return _port;
 }
 
 const std::string&
-WitRecognition::auth() const
+Recognition::auth() const
 {
     return _auth;
 }
 
 io::awaitable<void>
-WitRecognition::connect()
+Recognition::connect()
 {
     if (_host.empty() || _port.empty() || _auth.empty()) {
         LOGE("Invalid server config options: host<{}>, port<{}>, auth<{}>",
@@ -97,13 +97,13 @@ WitRecognition::connect()
 }
 
 io::awaitable<wit::Utterances>
-WitRecognition::process()
+Recognition::process()
 {
     co_return wit::Utterances{};
 }
 
 io::awaitable<void>
-WitRecognition::shutdown()
+Recognition::shutdown()
 {
     net::resetTimeout(_stream);
 
@@ -112,4 +112,4 @@ WitRecognition::shutdown()
     LOGD("Shutdown connection was done");
 }
 
-} // namespace jar
+} // namespace jar::wit

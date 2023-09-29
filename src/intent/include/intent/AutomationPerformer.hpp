@@ -1,6 +1,6 @@
 #pragma once
 
-#include "wit/WitTypes.hpp"
+#include "wit/Types.hpp"
 
 #include <jarvisto/Network.hpp>
 

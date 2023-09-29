@@ -1,19 +1,19 @@
 #pragma once
 
-#include "wit/WitTypes.hpp"
+#include "wit/Types.hpp"
 
 #include <jarvisto/Cancellable.hpp>
 #include <jarvisto/Network.hpp>
 
-namespace jar {
+namespace jar::wit {
 
-class WitRecognition : public Cancellable {
+class Recognition : public Cancellable {
 public:
-    WitRecognition(io::any_io_executor executor,
-                   ssl::context& context,
-                   std::string host,
-                   std::string port,
-                   std::string auth);
+    Recognition(io::any_io_executor executor,
+                ssl::context& context,
+                std::string host,
+                std::string port,
+                std::string auth);
 
     io::awaitable<wit::Utterances>
     run();
@@ -49,4 +49,4 @@ private:
     std::string _auth;
 };
 
-} // namespace jar
+} // namespace jar::wit

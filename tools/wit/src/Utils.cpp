@@ -10,7 +10,7 @@ namespace urls = boost::urls;
 
 using namespace std::chrono;
 
-namespace jar::format {
+namespace jar::wit {
 
 std::string
 messageTarget(std::string_view message)
@@ -44,4 +44,4 @@ speechTargetWithDate()
     return fmt::format(kFormat, system_clock::now());
 }
 
-} // namespace jar::format
+} // namespace jar::wit

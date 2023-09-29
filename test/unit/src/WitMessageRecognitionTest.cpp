@@ -4,8 +4,8 @@
 #include "intent/GeneralConfig.hpp"
 #include "test/Matchers.hpp"
 #include "wit/Utils.hpp"
-#include "wit/WitMessageRecognition.hpp"
-#include "wit/WitRecognitionFactory.hpp"
+#include "wit/MessageRecognition.hpp"
+#include "wit/RecognitionFactory.hpp"
 
 #include <jarvisto/SecureContext.hpp>
 
@@ -34,7 +34,7 @@ public:
     static GeneralConfig config;
 
     SecureContext secureContext;
-    WitRecognitionFactory factory;
+    wit::RecognitionFactory factory;
 };
 
 GeneralConfig WitMessageRecognitionTest::config;
@@ -70,7 +70,7 @@ TEST_F(WitMessageRecognitionTest, RecognizeMessage)
                                           Contains(isConfidentIntent("light_off", 0.9f))))));
 
     auto executor = context.get_executor();
-    auto channel = std::make_shared<WitMessageRecognition::Channel>(executor);
+    auto channel = std::make_shared<wit::MessageRecognition::Channel>(executor);
     auto recognition = factory.message(executor, channel);
 
     /* Spawn recognition coroutine */
@@ -90,7 +90,7 @@ TEST_F(WitMessageRecognitionTest, RecognizeMessage)
     io::co_spawn(
         context.get_executor(),
         [channel]() -> io::awaitable<void> {
-            std::string data = format::messageTargetWithDate("turn off the light");
+            std::string data = wit::messageTargetWithDate("turn off the light");
             co_await channel->async_send(sys::error_code{}, std::move(data), io::use_awaitable);
             channel->close();
         },
@@ -115,7 +115,7 @@ TEST_F(WitMessageRecognitionTest, CancelRecognizeMessage)
                      IsEmpty()));
 
     auto executor = context.get_executor();
-    auto channel = std::make_shared<WitMessageRecognition::Channel>(executor);
+    auto channel = std::make_shared<wit::MessageRecognition::Channel>(executor);
     auto recognition = factory.message(executor, channel);
     io::co_spawn(
         context.get_executor(),

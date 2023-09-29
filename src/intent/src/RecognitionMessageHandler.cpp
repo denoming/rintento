@@ -1,7 +1,7 @@
 #include "intent/RecognitionMessageHandler.hpp"
 
 #include "intent/Utils.hpp"
-#include "wit/WitRecognitionFactory.hpp"
+#include "wit/RecognitionFactory.hpp"
 
 #include <jarvisto/Logger.hpp>
 
@@ -16,15 +16,16 @@ RecognitionMessageHandler::Ptr
 RecognitionMessageHandler::create(Stream& stream,
                                   Buffer& buffer,
                                   Parser& parser,
-                                  std::shared_ptr<WitRecognitionFactory> factory)
+                                  std::shared_ptr<wit::RecognitionFactory> factory)
 {
     return Ptr(new RecognitionMessageHandler(stream, buffer, parser, std::move(factory)));
 }
 
-RecognitionMessageHandler::RecognitionMessageHandler(Stream& stream,
-                                                     Buffer& buffer,
-                                                     Parser& parser,
-                                                     std::shared_ptr<WitRecognitionFactory> factory)
+RecognitionMessageHandler::RecognitionMessageHandler(
+    Stream& stream,
+    Buffer& buffer,
+    Parser& parser,
+    std::shared_ptr<wit::RecognitionFactory> factory)
     : RecognitionHandler{stream}
     , _buffer{buffer}
     , _parser{parser}

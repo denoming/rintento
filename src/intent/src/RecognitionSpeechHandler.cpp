@@ -1,8 +1,8 @@
 #include "intent/RecognitionSpeechHandler.hpp"
 
 #include "intent/Utils.hpp"
-#include "wit/WitRecognitionFactory.hpp"
-#include "wit/WitSpeechRecognition.hpp"
+#include "wit/RecognitionFactory.hpp"
+#include "wit/SpeechRecognition.hpp"
 
 #include <jarvisto/Logger.hpp>
 
@@ -17,7 +17,7 @@ RecognitionSpeechHandler::Ptr
 RecognitionSpeechHandler::create(Stream& stream,
                                  Buffer& buffer,
                                  Parser& parser,
-                                 std::shared_ptr<WitRecognitionFactory> factory)
+                                 std::shared_ptr<wit::RecognitionFactory> factory)
 {
     return Ptr(new RecognitionSpeechHandler(stream, buffer, parser, std::move(factory)));
 }
@@ -25,7 +25,7 @@ RecognitionSpeechHandler::create(Stream& stream,
 RecognitionSpeechHandler::RecognitionSpeechHandler(Stream& stream,
                                                    Buffer& buffer,
                                                    Parser& parser,
-                                                   std::shared_ptr<WitRecognitionFactory> factory)
+                                                   std::shared_ptr<wit::RecognitionFactory> factory)
     : RecognitionHandler{stream}
     , _buffer{buffer}
     , _parser{parser}
@@ -44,7 +44,7 @@ RecognitionSpeechHandler::handle()
     }
 
     auto executor = co_await io::this_coro::executor;
-    auto channel = std::make_shared<WitSpeechRecognition::Channel>(executor, kChannelCapacity);
+    auto channel = std::make_shared<wit::SpeechRecognition::Channel>(executor, kChannelCapacity);
     auto recognition = _factory->speech(executor, channel);
     BOOST_ASSERT(recognition);
     auto results = co_await (sendSpeechData(channel) && recognition->run());

@@ -1,52 +1,48 @@
-#include "wit/WitSpeechRecognition.hpp"
+#include "wit/SpeechRecognition.hpp"
 
+#include "wit/IntentParser.hpp"
 #include "wit/Utils.hpp"
-#include "wit/WitIntentParser.hpp"
 
 #include <jarvisto/Logger.hpp>
 
 #include <boost/assert.hpp>
 
-namespace jar {
+namespace jar::wit {
 
-std::shared_ptr<WitSpeechRecognition>
-WitSpeechRecognition::create(io::any_io_executor executor,
-                             ssl::context& context,
-                             std::string host,
-                             std::string port,
-                             std::string auth,
-                             std::shared_ptr<Channel> channel)
+std::shared_ptr<SpeechRecognition>
+SpeechRecognition::create(io::any_io_executor executor,
+                          ssl::context& context,
+                          std::string host,
+                          std::string port,
+                          std::string auth,
+                          std::shared_ptr<Channel> channel)
 {
-    return Ptr(new WitSpeechRecognition(std::move(executor),
-                                        context,
-                                        std::move(host),
-                                        std::move(port),
-                                        std::move(auth),
-                                        std::move(channel)));
+    return Ptr(new SpeechRecognition(std::move(executor),
+                                     context,
+                                     std::move(host),
+                                     std::move(port),
+                                     std::move(auth),
+                                     std::move(channel)));
 }
 
-WitSpeechRecognition::WitSpeechRecognition(io::any_io_executor executor,
-                                           ssl::context& context,
-                                           std::string host,
-                                           std::string port,
-                                           std::string auth,
-                                           std::shared_ptr<Channel> channel)
-    : WitRecognition{std::move(executor),
-                     context,
-                     std::move(host),
-                     std::move(port),
-                     std::move(auth)}
+SpeechRecognition::SpeechRecognition(io::any_io_executor executor,
+                                     ssl::context& context,
+                                     std::string host,
+                                     std::string port,
+                                     std::string auth,
+                                     std::shared_ptr<Channel> channel)
+    : Recognition{std::move(executor), context, std::move(host), std::move(port), std::move(auth)}
     , _channel{std::move(channel)}
 {
     BOOST_ASSERT(_channel);
 }
 
 io::awaitable<wit::Utterances>
-WitSpeechRecognition::process()
+SpeechRecognition::process()
 {
     http::request<http::empty_body> req;
     req.version(net::kHttpVersion11);
-    req.target(format::speechTargetWithDate());
+    req.target(speechTargetWithDate());
     req.method(http::verb::post);
     req.set(http::field::host, host());
     req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
@@ -111,11 +107,11 @@ WitSpeechRecognition::process()
         stream(), buffer, res, io::bind_cancellation_slot(onCancel(), io::use_awaitable));
     LOGD("Reading recognition result was done: transferred<{}>", n);
 
-    if (auto result = jar::WitIntentParser::parseSpeechResult(res.body()); result) {
+    if (auto result = IntentParser::parseSpeechResult(res.body()); result) {
         co_return std::move(result.value());
     } else {
         throw std::runtime_error{"Unable to parse result"};
     }
 }
 
-} // namespace jar
+} // namespace jar::wit

@@ -4,7 +4,7 @@
 
 #include <gmock/gmock.h>
 
-#include "wit/WitTypes.hpp"
+#include "wit/Types.hpp"
 
 namespace testing {
 

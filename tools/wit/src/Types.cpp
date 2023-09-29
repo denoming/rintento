@@ -1,4 +1,4 @@
-#include "wit/WitTypes.hpp"
+#include "wit/Types.hpp"
 
 namespace jar::wit {
 
@@ -11,4 +11,4 @@ operator==(const Intent& lhs, const Intent& rhs)
     return true;
 }
 
-} // namespace jar
+} // namespace jar::wit

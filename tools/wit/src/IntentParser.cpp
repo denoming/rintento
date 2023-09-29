@@ -1,4 +1,4 @@
-#include "wit/WitIntentParser.hpp"
+#include "wit/IntentParser.hpp"
 
 #include <jarvisto/DateTime.hpp>
 
@@ -18,7 +18,9 @@ tag_invoke(json::value_to_tag<Timestamp>, const json::value& v)
     }
 }
 
-namespace wit {
+} // namespace jar
+
+namespace jar::wit {
 
 static Confidence
 tag_invoke(json::value_to_tag<Confidence>, const json::value& v)
@@ -158,10 +160,8 @@ toUtterance(const json::object& root, const bool finalByDefault = false)
     }
 }
 
-} // namespace wit
-
 std::expected<wit::Utterances, std::error_code>
-WitIntentParser::parseMessageResult(std::string_view input)
+IntentParser::parseMessageResult(std::string_view input)
 {
     if (input.empty()) {
         return std::unexpected(std::make_error_code(std::errc::invalid_argument));
@@ -183,7 +183,7 @@ WitIntentParser::parseMessageResult(std::string_view input)
 }
 
 std::expected<wit::Utterances, std::error_code>
-WitIntentParser::parseSpeechResult(std::string_view input)
+IntentParser::parseSpeechResult(std::string_view input)
 {
     if (input.empty()) {
         return std::unexpected(std::make_error_code(std::errc::invalid_argument));
@@ -211,4 +211,4 @@ WitIntentParser::parseSpeechResult(std::string_view input)
     return output;
 }
 
-} // namespace jar
+} // namespace jar::wit

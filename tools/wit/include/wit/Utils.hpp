@@ -3,7 +3,7 @@
 #include <string>
 #include <string_view>
 
-namespace jar::format {
+namespace jar::wit {
 
 [[nodiscard]] std::string
 messageTarget(std::string_view input);
@@ -17,4 +17,4 @@ speechTarget();
 [[nodiscard]] std::string
 speechTargetWithDate();
 
-} // namespace jar::format
+} // namespace jar::wit

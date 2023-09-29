@@ -5,7 +5,7 @@
 #include "intent/AutomationRegistry.hpp"
 #include "intent/GeneralConfig.hpp"
 #include "intent/RecognitionServer.hpp"
-#include "wit/WitRecognitionFactory.hpp"
+#include "wit/RecognitionFactory.hpp"
 
 #include <jarvisto/Application.hpp>
 #include <jarvisto/Logger.hpp>
@@ -35,9 +35,10 @@ public:
 
         _worker = std::make_unique<Worker>(_generalConfig->serverThreads());
         _performer = AutomationPerformer::create(_worker->executor(), _registry);
-        _factory = std::make_unique<WitRecognitionFactory>(_generalConfig->recognitionServerHost(),
-                                                           _generalConfig->recognitionServerPort(),
-                                                           _generalConfig->recognitionServerAuth());
+        _factory
+            = std::make_unique<wit::RecognitionFactory>(_generalConfig->recognitionServerHost(),
+                                                        _generalConfig->recognitionServerPort(),
+                                                        _generalConfig->recognitionServerAuth());
         _server = RecognitionServer::create(_worker->executor(), _factory, _performer);
     }
 
@@ -78,7 +79,7 @@ private:
     std::shared_ptr<AutomationRegistry> _registry;
     std::shared_ptr<AutomationPerformer> _performer;
     std::unique_ptr<Worker> _worker;
-    std::shared_ptr<WitRecognitionFactory> _factory;
+    std::shared_ptr<wit::RecognitionFactory> _factory;
     std::shared_ptr<RecognitionServer> _server;
 };
 

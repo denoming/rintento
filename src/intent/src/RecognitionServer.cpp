@@ -2,7 +2,7 @@
 
 #include "intent/AutomationPerformer.hpp"
 #include "intent/RecognitionSession.hpp"
-#include "wit/WitRecognitionFactory.hpp"
+#include "wit/RecognitionFactory.hpp"
 
 #include <jarvisto/Logger.hpp>
 
@@ -42,7 +42,7 @@ namespace jar {
 
 std::shared_ptr<RecognitionServer>
 RecognitionServer::create(io::any_io_executor executor,
-                          std::shared_ptr<WitRecognitionFactory> factory,
+                          std::shared_ptr<wit::RecognitionFactory> factory,
                           std::shared_ptr<AutomationPerformer> performer)
 {
     return Ptr(
@@ -50,7 +50,7 @@ RecognitionServer::create(io::any_io_executor executor,
 }
 
 RecognitionServer::RecognitionServer(io::any_io_executor executor,
-                                     std::shared_ptr<WitRecognitionFactory> factory,
+                                     std::shared_ptr<wit::RecognitionFactory> factory,
                                      std::shared_ptr<AutomationPerformer> performer)
     : _executor{std::move(executor)}
     , _factory{std::move(factory)}

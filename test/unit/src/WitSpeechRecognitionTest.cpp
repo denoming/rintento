@@ -2,10 +2,10 @@
 #include <gtest/gtest.h>
 
 #include "intent/GeneralConfig.hpp"
-#include "wit/WitRecognitionFactory.hpp"
-#include "wit/WitSpeechRecognition.hpp"
 #include "test/Matchers.hpp"
 #include "test/Utils.hpp"
+#include "wit/RecognitionFactory.hpp"
+#include "wit/SpeechRecognition.hpp"
 
 #include <jarvisto/SecureContext.hpp>
 
@@ -39,7 +39,7 @@ public:
     static GeneralConfig config;
 
     SecureContext secureContext;
-    WitRecognitionFactory factory;
+    wit::RecognitionFactory factory;
 };
 
 GeneralConfig WitSpeechRecognitionTest::config;
@@ -73,7 +73,7 @@ TEST_F(WitSpeechRecognitionTest, RecognizeSpeech)
                                           Contains(isConfidentIntent("light_off", 0.9f))))));
 
     auto executor = context.get_executor();
-    auto channel = std::make_shared<WitSpeechRecognition::Channel>(executor, kChannelCapacity);
+    auto channel = std::make_shared<wit::SpeechRecognition::Channel>(executor, kChannelCapacity);
     auto recognition = factory.speech(executor, channel);
 
     /* Spawn recognition coroutine */
@@ -118,7 +118,7 @@ TEST_F(WitSpeechRecognitionTest, CancelRecognizeSpeech)
                 Call(Truly(exceptionContainsError(Eq(sys::errc::operation_canceled))), IsEmpty()));
 
     auto executor = context.get_executor();
-    auto channel = std::make_shared<WitSpeechRecognition::Channel>(executor, kChannelCapacity);
+    auto channel = std::make_shared<wit::SpeechRecognition::Channel>(executor, kChannelCapacity);
     auto recognition = factory.speech(executor, channel);
     io::co_spawn(
         context.get_executor(),
