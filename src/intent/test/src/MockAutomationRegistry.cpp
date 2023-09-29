@@ -1,4 +1,4 @@
-#include "test/MockAutomationRegistry.hpp"
+#include "intent/MockAutomationRegistry.hpp"
 
 using namespace testing;
 

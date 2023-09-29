@@ -13,9 +13,8 @@ target_include_directories(${TARGET}
 )
 
 target_link_libraries(${TARGET}
-    PRIVATE Rintento::Test
-            Rintento::Wit
-            Rintento::Intent
+    PRIVATE Rintento::Wit
+            Rintento::Test
 )
 
 install(

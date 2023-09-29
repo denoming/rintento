@@ -2,7 +2,7 @@
 
 #include "intent/AutomationConfig.hpp"
 #include "intent/GeneralConfig.hpp"
-#include "test/MockAutomationRegistry.hpp"
+#include "intent/MockAutomationRegistry.hpp"
 
 #include <string_view>
 
