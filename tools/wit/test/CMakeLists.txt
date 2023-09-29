@@ -6,6 +6,7 @@ target_sources(${TARGET}
     PRIVATE src/IntentParserTest.cpp
             src/MessageRecognitionTest.cpp
             src/SpeechRecognitionTest.cpp
+            src/ConfigTest.cpp
 )
 
 target_include_directories(${TARGET}

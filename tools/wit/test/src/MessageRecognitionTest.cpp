@@ -1,7 +1,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "intent/GeneralConfig.hpp"
+#include "wit/Config.hpp"
 #include "wit/Matchers.hpp"
 #include "wit/MessageRecognition.hpp"
 #include "wit/RecognitionFactory.hpp"
@@ -18,9 +18,7 @@ using namespace jar;
 class MessageRecognitionTest : public Test {
 public:
     MessageRecognitionTest()
-        : factory{config.recognitionServerHost(),
-                  config.recognitionServerPort(),
-                  config.recognitionServerAuth()}
+        : factory{config.remoteHost(), config.remotePort(), config.remoteAuth()}
     {
     }
 
@@ -31,13 +29,13 @@ public:
     }
 
 public:
-    static GeneralConfig config;
+    static wit::Config config;
 
     SecureContext secureContext;
     wit::RecognitionFactory factory;
 };
 
-GeneralConfig MessageRecognitionTest::config;
+wit::Config MessageRecognitionTest::config;
 
 static auto
 exceptionContainsError(Matcher<int> matcher)

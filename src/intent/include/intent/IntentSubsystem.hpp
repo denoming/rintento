@@ -6,7 +6,7 @@
 
 namespace jar {
 
-class Config;
+class GeneralConfig;
 
 class IntentSubsystem final : public Subsystem {
 public:

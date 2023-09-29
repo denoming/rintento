@@ -9,9 +9,6 @@ namespace jar {
 GeneralConfig::GeneralConfig()
     : _serverPort{kDefaultServerPort}
     , _serverThreads{kDefaultServerThreads}
-    , _recognitionServerHost{}
-    , _recognitionServerPort{}
-    , _recognitionServerAuth{}
 {
 }
 
@@ -25,24 +22,6 @@ std::size_t
 GeneralConfig::serverThreads() const
 {
     return _serverThreads;
-}
-
-const std::string&
-GeneralConfig::recognitionServerHost() const
-{
-    return _recognitionServerHost;
-}
-
-const std::string&
-GeneralConfig::recognitionServerPort() const
-{
-    return _recognitionServerPort;
-}
-
-const std::string&
-GeneralConfig::recognitionServerAuth() const
-{
-    return _recognitionServerAuth;
 }
 
 void
@@ -64,32 +43,6 @@ GeneralConfig::doParse(const boost::property_tree::ptree& root)
         } else {
             LOGW("Invalid server threads option value: {}", *threadsOpt);
         }
-    }
-
-    if (auto hostOpt = root.get_optional<std::string>("recognition.server.host"); hostOpt) {
-        if (hostOpt->empty()) {
-            LOGW("Invalid host option value");
-        } else {
-            _recognitionServerHost = std::move(*hostOpt);
-        }
-    }
-
-    if (auto portOpt = root.get_optional<std::string>("recognition.server.port"); portOpt) {
-        if (portOpt->empty()) {
-            LOGW("Invalid port option value: {}", *portOpt);
-        } else {
-            _recognitionServerPort = std::move(*portOpt);
-        }
-    }
-
-    if (auto authOpt = root.get_optional<std::string>("recognition.server.auth"); authOpt) {
-        if (authOpt->empty()) {
-            LOGW("Invalid auth option value");
-        } else {
-            _recognitionServerAuth = std::move(*authOpt);
-        }
-    } else {
-        LOGW("Mandatory recognize auth option value is absent");
     }
 }
 

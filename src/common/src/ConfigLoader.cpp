@@ -1,4 +1,4 @@
-#include "intent/ConfigLoader.hpp"
+#include "common/ConfigLoader.hpp"
 
 #include <jarvisto/Logger.hpp>
 #include <jarvisto/Utils.hpp>

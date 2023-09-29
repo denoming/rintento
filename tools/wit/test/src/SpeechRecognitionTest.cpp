@@ -1,7 +1,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "intent/GeneralConfig.hpp"
+#include "wit/Config.hpp"
 #include "wit/Matchers.hpp"
 #include "wit/RecognitionFactory.hpp"
 #include "wit/SpeechRecognition.hpp"
@@ -38,9 +38,7 @@ public:
     const fs::path kAssetAudioPath{fs::current_path() / "asset" / "audio"};
 
     SpeechRecognitionTest()
-        : factory{config.recognitionServerHost(),
-                  config.recognitionServerPort(),
-                  config.recognitionServerAuth()}
+        : factory{config.remoteHost(), config.remotePort(), config.remoteAuth()}
     {
     }
 
@@ -51,13 +49,13 @@ public:
     }
 
 public:
-    static GeneralConfig config;
+    static wit::Config config;
 
     SecureContext secureContext;
     wit::RecognitionFactory factory;
 };
 
-GeneralConfig SpeechRecognitionTest::config;
+wit::Config SpeechRecognitionTest::config;
 
 static auto
 exceptionContainsError(Matcher<int> matcher)

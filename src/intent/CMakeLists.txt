@@ -36,7 +36,6 @@ target_sources(${TARGET}
             src/DeferredJob.cpp
             src/ScriptAction.cpp
             src/SequentLaunchStrategy.cpp
-            src/ConfigLoader.cpp
             src/GeneralConfig.cpp
             src/AutomationConfig.cpp
 )

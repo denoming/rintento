@@ -4,7 +4,7 @@
 
 namespace jar {
 
-class Config;
+class GeneralConfig;
 
 class ServiceApplication final : public Application {
 public:

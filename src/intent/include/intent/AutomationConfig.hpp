@@ -1,6 +1,6 @@
 #pragma once
 
-#include "intent/ConfigLoader.hpp"
+#include "common/ConfigLoader.hpp"
 #include "intent/Action.hpp"
 
 #include <memory>
@@ -11,7 +11,7 @@ class IAutomationRegistry;
 
 class AutomationConfig final : public ConfigLoader {
 public:
-    AutomationConfig(std::shared_ptr<IAutomationRegistry> registry);
+    explicit AutomationConfig(std::shared_ptr<IAutomationRegistry> registry);
 
 private:
     void

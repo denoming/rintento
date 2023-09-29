@@ -11,7 +11,7 @@ target_link_libraries(${TARGET}
     PUBLIC Jarvisto::Jarvisto
            Boost::headers
            Rintento::Coro
-           Rintento::Intent
+           Rintento::Common
     PRIVATE OpenSSL::SSL
             OpenSSL::Crypto
             Boost::url
@@ -26,6 +26,7 @@ target_sources(${TARGET}
             src/RecognitionFactory.cpp
             src/Types.cpp
             src/Utils.cpp
+            src/Config.cpp
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_23)
