@@ -41,7 +41,7 @@ run_image() {
   --volume="$HOME/.local/share/rintento:$HOME/.local/share/rintento" \
   --network=bridge \
   --workdir="${PROJECT_DIR}" \
-  --env RINTENTO_EXECUTOR_CONFIG="$HOME/.local/share/rintento/rintento-config.json" \
+  --env RINTENTO_CONFIG="$HOME/.local/share/rintento/rintento-config.json" \
   "${DOCKER_IMAGE_NAME}")
 
   if [ -n "$(docker images -q ${DOCKER_IMAGE_NAME})" ]; then

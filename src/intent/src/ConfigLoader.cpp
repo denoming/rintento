@@ -16,11 +16,11 @@ bool
 ConfigLoader::load()
 {
     bool rv{false};
-    if (const auto filePathOpt = getEnvVar("RINTENTO_EXECUTOR_CONFIG"); filePathOpt) {
+    if (const auto filePathOpt = getEnvVar("RINTENTO_CONFIG"); filePathOpt) {
         fs::path filePath{*filePathOpt};
         rv = load(filePath);
     } else {
-        LOGE("Set the path to config file using RINTENTO_EXECUTOR_CONFIG env variable");
+        LOGE("Set the path to config file using RINTENTO_CONFIG env variable");
     }
     return rv;
 }

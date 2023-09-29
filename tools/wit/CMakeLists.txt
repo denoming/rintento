@@ -11,6 +11,7 @@ target_link_libraries(${TARGET}
     PUBLIC Jarvisto::Jarvisto
            Boost::headers
            Rintento::Coro
+           Rintento::Intent
     PRIVATE OpenSSL::SSL
             OpenSSL::Crypto
             Boost::url

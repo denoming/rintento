@@ -1,7 +1,7 @@
 # Setup
 
 Configuration file represents a simple JSON file.
-The path to this file should is specified by `RINTENTO_EXECUTOR_CONFIG` environment variable.
+The path to this file should is specified by `RINTENTO_CONFIG` environment variable.
 
 ## Description
 
