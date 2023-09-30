@@ -72,7 +72,6 @@ SpeechRecognition::process()
     n = co_await http::async_read(
         stream(), buffer, res, io::bind_cancellation_slot(onCancel(), io::use_awaitable));
     LOGD("Reading response was done: bytes<{}>", n);
-
     if (res.result() != http::status::continue_) {
         throw std::runtime_error{"Unexpected response status-code result"};
     }
@@ -82,16 +81,22 @@ SpeechRecognition::process()
     n = 0;
     io::streambuf channelBuffer;
     while (_channel->active() or not _channel->empty()) {
+        onCancel().assign([channel = _channel](auto){
+            LOGD("Close channel upon cancel request");
+            channel->close();
+        });
         auto outputSeq = channelBuffer.prepare(kMinChunkSize);
-        std::size_t size = co_await _channel->receive(outputSeq);
+        const std::size_t size = co_await _channel->receive(outputSeq);
+        if (cancelled()) {
+            throw sys::system_error{sys::errc::make_error_code(sys::errc::operation_canceled)};
+        }
+
         channelBuffer.commit(size);
         const auto inputSeq = channelBuffer.data();
-
         net::resetTimeout(stream());
         n += co_await io::async_write(stream(),
                                       http::make_chunk(inputSeq),
                                       io::bind_cancellation_slot(onCancel(), io::use_awaitable));
-
         channelBuffer.consume(size);
     }
     LOGD("Writing audio chunk was done: transferred<{}>", n);

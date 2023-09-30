@@ -44,8 +44,16 @@ MessageRecognition::process()
     beast::flat_buffer buffer;
     static const int kBufferSize = 64;
     while(_channel->active() or not _channel->empty()) {
+        onCancel().assign([channel = _channel](auto){
+            LOGD("Close channel upon cancel request");
+            channel->close();
+        });
         auto outputSeq = buffer.prepare(kBufferSize);
         const std::size_t size = co_await _channel->receive(outputSeq);
+        if (cancelled()) {
+            throw sys::system_error{sys::errc::make_error_code(sys::errc::operation_canceled)};
+        }
+
         buffer.commit(size);
         const auto inputSeq = buffer.data();
         message.append(static_cast<const char*>(inputSeq.data()), inputSeq.size());
