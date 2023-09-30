@@ -43,7 +43,7 @@ public:
     {
         _needRecv = buffer.size();
         std::size_t totalRecv{};
-        while (_needRecv > 0) {
+        while (_needRecv > 0 and _active) {
             _recvEvent.reset();
             if (empty()) {
                 co_await _recvEvent.wait();
@@ -73,7 +73,7 @@ public:
 
         _needSend = buffer.size();
         std::size_t totalSend{};
-        while (_needSend > 0) {
+        while (_needSend > 0 and _active) {
             _sendEvent.reset();
             if (full()) {
                 co_await _recvEvent.wait();
@@ -94,6 +94,8 @@ public:
     close()
     {
         _active = false;
+        _sendEvent.set();
+        _recvEvent.set();
     }
 
     void
