@@ -1,29 +1,35 @@
 #pragma once
 
-#include "wit/MessageRecognition.hpp"
-#include "wit/SpeechRecognition.hpp"
+#include "common/IRecognitionFactory.hpp"
 
 #include <jarvisto/Network.hpp>
 #include <jarvisto/SecureContext.hpp>
 
-#include <memory>
+#include <string>
+#include <optional>
 
 namespace jar::wit {
 
-class RecognitionFactory {
+class RecognitionFactory final : public IRecognitionFactory {
 public:
-    RecognitionFactory(std::string host, std::string port, std::string auth);
+    RecognitionFactory();
 
-    std::shared_ptr<MessageRecognition>
-    message(io::any_io_executor executor, std::shared_ptr<MessageRecognition::Channel> channel);
+    [[nodiscard]] bool
+    canRecognizeMessage() const final;
 
-    std::shared_ptr<SpeechRecognition>
-    speech(io::any_io_executor executor, std::shared_ptr<SpeechRecognition::Channel> channel);
+    [[nodiscard]] std::shared_ptr<Recognition>
+    message(io::any_io_executor executor, std::shared_ptr<DataChannel> channel) final;
+
+    [[nodiscard]] bool
+    canRecognizeSpeech() const final;
+
+    [[nodiscard]] std::shared_ptr<Recognition>
+    speech(io::any_io_executor executor, std::shared_ptr<DataChannel> channel) final;
 
 private:
-    std::string _host;
-    std::string _port;
-    std::string _auth;
+    std::optional<std::string> _remoteHost;
+    std::optional<std::string> _remotePort;
+    std::optional<std::string> _remoteAuth;
     SecureContext _context;
 };
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "wit/Types.hpp"
+#include "common/Types.hpp"
 
 #include <jarvisto/Network.hpp>
 
@@ -22,12 +22,12 @@ public:
     void
     setNext(std::shared_ptr<RecognitionHandler> handler);
 
-    virtual io::awaitable<wit::Utterances>
+    virtual io::awaitable<RecognitionResult>
     handle();
 
 protected:
     io::awaitable<void>
-    sendResponse(const wit::Utterances& result);
+    sendResponse(const RecognitionResult& result);
 
     io::awaitable<void>
     sendResponse(std::error_code ec);

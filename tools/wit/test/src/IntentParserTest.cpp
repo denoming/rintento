@@ -1,5 +1,6 @@
 #include "wit/IntentParser.hpp"
-#include "wit/Matchers.hpp"
+
+#include <jarvisto/DateTime.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -235,6 +236,56 @@ static const std::string_view kSpeechInput{R"(
     "text": "Turn off the light",
     "traits": {}
 })"};
+
+static Matcher<wit::Intent>
+isConfidentIntent(std::string_view name, float threshold)
+{
+    return AllOf(Field("name", &wit::Intent::name, StrCaseEq(name)),
+                 Field("confidence", &wit::Intent::confidence, Gt(threshold)));
+}
+
+static Matcher<const wit::DateTimeEntity&>
+matchEntityWithExactTime(wit::DateTimeEntity::Grains grain, std::string_view dateTime)
+{
+    const auto timestamp = parseZonedDateTime(dateTime);
+    return AllOf(Field("valueFrom",
+                       &wit::DateTimeEntity::valueFrom,
+                       Optional(AllOf(Field(&wit::DateTimeEntity::Value::grain, grain),
+                                      Field(&wit::DateTimeEntity::Value::timestamp, timestamp)))),
+                 Field("valueTo",
+                       &wit::DateTimeEntity::valueTo,
+                       Optional(AllOf(Field(&wit::DateTimeEntity::Value::grain, grain),
+                                      Field(&wit::DateTimeEntity::Value::timestamp, timestamp)))));
+}
+
+static Matcher<const wit::DateTimeEntity&>
+matchEntityWithTimeRange(wit::DateTimeEntity::Grains grain,
+                         std::string_view from,
+                         std::string_view to)
+{
+    return AllOf(Field("valueFrom",
+                       &wit::DateTimeEntity::valueFrom,
+                       Optional(AllOf(Field(&wit::DateTimeEntity::Value::grain, grain),
+                                      Field(&wit::DateTimeEntity::Value::timestamp,
+                                            parseZonedDateTime(from))))),
+                 Field("valueTo",
+                       &wit::DateTimeEntity::valueTo,
+                       Optional(AllOf(Field(&wit::DateTimeEntity::Value::grain, grain),
+                                      Field(&wit::DateTimeEntity::Value::timestamp,
+                                            parseZonedDateTime(to))))));
+}
+
+static Matcher<wit::Utterance>
+isUtterance(std::string_view text,
+            Matcher<wit::Entities> entities,
+            Matcher<wit::Intents> intents,
+            const bool final = true)
+{
+    return AllOf(Field("text", &wit::Utterance::text, StrCaseEq(text)),
+                 Field("entities", &wit::Utterance::entities, entities),
+                 Field("intents", &wit::Utterance::intents, intents),
+                 Field("final", &wit::Utterance::final, final));
+}
 
 TEST(IntentParserTest, ParseMessageResult1)
 {

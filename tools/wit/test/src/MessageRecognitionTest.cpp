@@ -17,10 +17,7 @@ using namespace jar;
 
 class MessageRecognitionTest : public Test {
 public:
-    MessageRecognitionTest()
-        : factory{config.remoteHost(), config.remotePort(), config.remoteAuth()}
-    {
-    }
+    const std::size_t kChannelCapacity{64};
 
     static void
     SetUpTestSuite()
@@ -37,47 +34,26 @@ public:
 
 wit::Config MessageRecognitionTest::config;
 
-static auto
-exceptionContainsError(Matcher<int> matcher)
-{
-    return [matcher = std::move(matcher)](const std::exception_ptr& eptr) {
-        try {
-            if (eptr) {
-                std::rethrow_exception(eptr);
-            }
-        } catch (const sys::system_error& e) {
-            return Matches(matcher)(e.code().value());
-        } catch (const std::exception& e) {
-            /* Unexpected exception */
-        }
-        return false;
-    };
-}
-
 TEST_F(MessageRecognitionTest, RecognizeMessage)
 {
     const std::string_view Message{"turn off the light"};
 
     io::io_context context{1};
 
-    MockFunction<void(std::exception_ptr, wit::Utterances)> callback1;
-    EXPECT_CALL(callback1,
-                Call(IsFalse(),
-                     Contains(isUtterance("turn off the light",
-                                          IsEmpty(),
-                                          Contains(isConfidentIntent("light_off", 0.9f))))));
+    MockFunction<void(std::exception_ptr, RecognitionResult)> callback1;
+    EXPECT_CALL(callback1, Call(IsFalse(), understoodIntent("light_off")));
 
     auto executor = context.get_executor();
-    auto channel = std::make_shared<wit::MessageRecognition::Channel>(executor);
+    auto channel = std::make_shared<wit::MessageRecognition::Channel>(executor, 128);
     auto recognition = factory.message(executor, channel);
 
     /* Spawn recognition coroutine */
     io::co_spawn(
         context.get_executor(),
-        [recognition]() -> io::awaitable<wit::Utterances> {
+        [recognition]() -> io::awaitable<RecognitionResult> {
             co_return co_await recognition->run();
         },
-        [&](const std::exception_ptr& eptr, wit::Utterances result) {
+        [&](const std::exception_ptr& eptr, RecognitionResult result) {
             callback1.Call(eptr, std::move(result));
             if (eptr) {
                 context.stop();
@@ -88,8 +64,8 @@ TEST_F(MessageRecognitionTest, RecognizeMessage)
     io::co_spawn(
         context.get_executor(),
         [channel]() -> io::awaitable<void> {
-            std::string data = wit::messageTargetWithDate("turn off the light");
-            co_await channel->async_send(sys::error_code{}, std::move(data), io::use_awaitable);
+            std::string message = wit::messageTargetWithDate("turn off the light");
+            std::ignore = co_await channel->send(io::buffer(message));
             channel->close();
         },
         [&](const std::exception_ptr& eptr) {
@@ -105,23 +81,24 @@ TEST_F(MessageRecognitionTest, CancelRecognizeMessage)
 {
     io::io_context context{1};
 
-    namespace ioe = boost::asio::experimental;
-    MockFunction<void(std::exception_ptr, wit::Utterances)> callback;
+    MockFunction<void(std::exception_ptr, RecognitionResult)> callback;
     EXPECT_CALL(callback,
-                Call(Truly(exceptionContainsError(AnyOf(Eq(sys::errc::operation_canceled),
-                                                        Eq(ioe::channel_errc::channel_cancelled)))),
-                     IsEmpty()));
+                Call(Truly(exceptionContainsError(Eq(sys::errc::operation_canceled))),
+                     notUnderstoodIntent()));
 
     auto executor = context.get_executor();
-    auto channel = std::make_shared<wit::MessageRecognition::Channel>(executor);
+    auto channel = std::make_shared<wit::MessageRecognition::Channel>(executor, kChannelCapacity);
     auto recognition = factory.message(executor, channel);
+
+    /* Spawn recognition coroutine */
     io::co_spawn(
         context.get_executor(),
-        [recognition]() -> io::awaitable<wit::Utterances> {
+        [recognition]() -> io::awaitable<RecognitionResult> {
             co_return co_await recognition->run();
         },
         callback.AsStdFunction());
 
+    /* Spawn cancellation timer */
     const std::chrono::milliseconds kCancelAfter{50};
     io::co_spawn(
         context.get_executor(),

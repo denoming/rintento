@@ -1,8 +1,7 @@
 #pragma once
 
 #include "intent/RecognitionHandler.hpp"
-
-#include <boost/asio/experimental/channel.hpp>
+#include "coro/BoundedDataChannel.hpp"
 
 #include <memory>
 #include <string>
@@ -19,7 +18,7 @@ class RecognitionMessageHandler final
       public std::enable_shared_from_this<RecognitionMessageHandler> {
 public:
     using Ptr = std::shared_ptr<RecognitionMessageHandler>;
-    using Channel = boost::asio::experimental::channel<void(sys::error_code, std::string)>;
+    using Channel = coro::BoundedDataChannel<char>;
 
     [[nodiscard]] static Ptr
     create(Stream& stream,
@@ -27,7 +26,7 @@ public:
            Parser& parser,
            std::shared_ptr<wit::RecognitionFactory> factory);
 
-    io::awaitable<wit::Utterances>
+    io::awaitable<RecognitionResult>
     handle() final;
 
 private:

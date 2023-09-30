@@ -12,7 +12,7 @@ namespace jar {
 namespace {
 
 std::string
-getPayload(const wit::Utterances& /*result*/)
+getPayload(const RecognitionResult& /*result*/)
 {
     json::value value;
     auto& object = value.emplace_object();
@@ -56,7 +56,7 @@ RecognitionHandler::setNext(std::shared_ptr<RecognitionHandler> handler)
     _next = std::move(handler);
 }
 
-io::awaitable<wit::Utterances>
+io::awaitable<RecognitionResult>
 RecognitionHandler::handle()
 {
     if (_next) {
@@ -68,7 +68,7 @@ RecognitionHandler::handle()
 }
 
 io::awaitable<void>
-RecognitionHandler::sendResponse(const wit::Utterances& result)
+RecognitionHandler::sendResponse(const RecognitionResult& result)
 {
     auto response = getResponse(getPayload(result));
     std::ignore = co_await http::async_write(stream(), response, io::as_tuple(io::use_awaitable));

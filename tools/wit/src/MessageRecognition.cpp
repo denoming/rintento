@@ -31,7 +31,7 @@ MessageRecognition::MessageRecognition(io::any_io_executor executor,
                                        std::string port,
                                        std::string auth,
                                        std::shared_ptr<Channel> channel)
-    : Recognition{std::move(executor), context, std::move(host), std::move(port), std::move(auth)}
+    : RemoteRecognition{std::move(executor), context, std::move(host), std::move(port), std::move(auth)}
     , _channel{std::move(channel)}
 {
     BOOST_ASSERT(_channel);
@@ -40,20 +40,30 @@ MessageRecognition::MessageRecognition(io::any_io_executor executor,
 io::awaitable<wit::Utterances>
 MessageRecognition::process()
 {
-    const auto message = co_await _channel->async_receive(
-        io::bind_cancellation_slot(onCancel(), io::use_awaitable));
-    if (message.empty()) {
-        throw std::runtime_error{"Given message is empty"};
+    std::string message;
+    beast::flat_buffer buffer;
+    static const int kBufferSize = 64;
+    while(_channel->active() or not _channel->empty()) {
+        auto outputSeq = buffer.prepare(kBufferSize);
+        const std::size_t size = co_await _channel->receive(outputSeq);
+        buffer.commit(size);
+        const auto inputSeq = buffer.data();
+        message.append(static_cast<const char*>(inputSeq.data()), inputSeq.size());
+        buffer.consume(size);
     }
 
     http::request<http::empty_body> req;
     req.version(net::kHttpVersion11);
     req.method(http::verb::get);
-    req.set(http::field::host, host());
+    req.set(http::field::host, remoteHost());
     req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-    req.set(http::field::authorization, auth());
+    req.set(http::field::authorization, remoteAuth());
     req.set(http::field::content_type, "application/json");
-    req.target(messageTargetWithDate(message));
+    if (message.empty()) {
+        throw std::runtime_error{"Given message is empty"};
+    } else {
+        req.target(messageTargetWithDate(message));
+    }
 
     net::resetTimeout(stream());
 
@@ -65,7 +75,6 @@ MessageRecognition::process()
     net::resetTimeout(stream());
 
     LOGD("Read recognition result");
-    beast::flat_buffer buffer;
     http::response<http::string_body> res;
     n = co_await http::async_read(stream(), buffer, res, io::use_awaitable);
     LOGD("Reading recognition result was done: transferred<{}>", n);

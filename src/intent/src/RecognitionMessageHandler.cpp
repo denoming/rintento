@@ -34,20 +34,22 @@ RecognitionMessageHandler::RecognitionMessageHandler(
     BOOST_ASSERT(_factory);
 }
 
-io::awaitable<wit::Utterances>
+io::awaitable<RecognitionResult>
 RecognitionMessageHandler::handle()
 {
+    static const std::size_t kChannelCapacity = 64;
+
     if (not canHandle()) {
         co_return co_await RecognitionHandler::handle();
     }
 
     auto executor = co_await io::this_coro::executor;
-    auto channel = std::make_shared<Channel>(executor);
+    auto channel = std::make_shared<Channel>(executor, kChannelCapacity);
     auto recognition = _factory->message(executor, channel);
     BOOST_ASSERT(recognition);
-    auto results = co_await (sendMessageData(channel) && recognition->run());
-    co_await sendResponse(results);
-    co_return std::move(results);
+    auto result = co_await (sendMessageData(channel) && recognition->run());
+    co_await sendResponse(result);
+    co_return std::move(result);
 }
 
 bool
@@ -61,7 +63,8 @@ RecognitionMessageHandler::sendMessageData(std::shared_ptr<Channel> channel)
 {
     const auto request = _parser.release();
     if (auto messageOpt = parser::peekMessage(request.target()); messageOpt) {
-        co_await channel->async_send(sys::error_code{}, std::move(*messageOpt), io::use_awaitable);
+        std::ignore = co_await channel->send(io::buffer(*messageOpt));
+        channel->close();
     } else {
         throw std::runtime_error{"Missing message in request target"};
     }

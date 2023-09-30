@@ -1,28 +1,62 @@
 #include "wit/RecognitionFactory.hpp"
 
+#include "wit/Config.hpp"
+#include "wit/MessageRecognition.hpp"
+#include "wit/SpeechRecognition.hpp"
+
+#include <jarvisto/Logger.hpp>
+
 namespace jar::wit {
 
-RecognitionFactory::RecognitionFactory(std::string host, std::string port, std::string auth)
-    : _host{std::move(host)}
-    , _port{std::move(port)}
-    , _auth{std::move(auth)}
+RecognitionFactory::RecognitionFactory()
 {
+    if (Config config; config.load()) {
+        _remoteHost = config.remoteHost();
+        _remotePort = config.remotePort();
+        _remoteAuth = config.remoteAuth();
+    } else {
+        LOGE("Unable to load WIT configuration");
+    }
 }
 
-std::shared_ptr<MessageRecognition>
-RecognitionFactory::message(io::any_io_executor executor,
-                            std::shared_ptr<MessageRecognition::Channel> channel)
+bool
+RecognitionFactory::canRecognizeMessage() const
 {
-    return MessageRecognition::create(
-        std::move(executor), _context.ref(), _host, _port, _auth, std::move(channel));
+    return (_remoteHost and _remotePort and _remoteAuth);
 }
 
-std::shared_ptr<SpeechRecognition>
-RecognitionFactory::speech(io::any_io_executor executor,
-                           std::shared_ptr<SpeechRecognition::Channel> channel)
+std::shared_ptr<Recognition>
+RecognitionFactory::message(io::any_io_executor executor, std::shared_ptr<DataChannel> channel)
 {
-    return SpeechRecognition::create(
-        std::move(executor), _context.ref(), _host, _port, _auth, std::move(channel));
+    if (not canRecognizeMessage()) {
+        throw std::logic_error{"Not supported"};
+    }
+    return MessageRecognition::create(std::move(executor),
+                                      _context.ref(),
+                                      *_remoteHost,
+                                      *_remotePort,
+                                      *_remoteAuth,
+                                      std::move(channel));
+}
+
+bool
+RecognitionFactory::canRecognizeSpeech() const
+{
+    return (_remoteHost and _remotePort and _remoteAuth);
+}
+
+std::shared_ptr<Recognition>
+RecognitionFactory::speech(io::any_io_executor executor, std::shared_ptr<DataChannel> channel)
+{
+    if (not canRecognizeSpeech()) {
+        throw std::logic_error{"Not supported"};
+    }
+    return SpeechRecognition::create(std::move(executor),
+                                     _context.ref(),
+                                     *_remoteHost,
+                                     *_remotePort,
+                                     *_remoteAuth,
+                                     std::move(channel));
 }
 
 } // namespace jar::wit

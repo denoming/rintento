@@ -7,22 +7,7 @@
 
 #include <boost/assert.hpp>
 
-#include <ranges>
-
 namespace jar {
-
-namespace {
-
-wit::Intents::const_iterator
-mostConfidentIntent(const wit::Intents& intents)
-{
-    return std::max_element(
-        intents.cbegin(), intents.cend(), [](const wit::Intent& n1, const wit::Intent& n2) {
-            return (n1.confidence < n2.confidence);
-        });
-}
-
-} // namespace
 
 AutomationPerformer::Ptr
 AutomationPerformer::create(io::any_io_executor executor,
@@ -40,30 +25,16 @@ AutomationPerformer::AutomationPerformer(io::any_io_executor executor,
 }
 
 void
-AutomationPerformer::perform(const wit::Utterances& utterances)
+AutomationPerformer::perform(const RecognitionResult& result)
 {
-    auto filteredUtterances = utterances | std::views::filter([](const wit::Utterance& u) {
-                                  return u.final && !u.intents.empty();
-                              });
-
-    for (auto&& utterance : filteredUtterances) {
-        const auto intentIt = mostConfidentIntent(utterance.intents);
-        BOOST_ASSERT(intentIt != std::cend(utterance.intents));
-        if (_registry->has(intentIt->name)) {
-            perform(intentIt->name);
-        } else {
-            LOGE("Unable to find automation for <{}> intent", intentIt->name);
-        }
+    if (not result) {
+        LOGD("Not understood recognition result is given");
+        return;
     }
-}
 
-void
-AutomationPerformer::perform(const std::string& intent)
-{
     Automation::Ptr automation;
-
-    if (automation = _registry->get(intent); not automation) {
-        LOGE("Unable to find automation for <{}> intent", intent);
+    if (automation = _registry->get(result.intent); not automation) {
+        LOGE("Unable to find automation for <{}> intent", result.intent);
         return;
     }
 

@@ -25,7 +25,7 @@ public:
            Parser& parser,
            std::shared_ptr<wit::RecognitionFactory> factory);
 
-    io::awaitable<wit::Utterances>
+    io::awaitable<RecognitionResult>
     handle() final;
 
 private:

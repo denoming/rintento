@@ -1,18 +1,17 @@
 #pragma once
 
-#include "wit/Recognition.hpp"
-
-#include <boost/asio/experimental/channel.hpp>
+#include "coro/BoundedDataChannel.hpp"
+#include "wit/RemoteRecognition.hpp"
 
 #include <memory>
 
 namespace jar::wit {
 
-class MessageRecognition final : public Recognition,
+class MessageRecognition final : public RemoteRecognition,
                                  public std::enable_shared_from_this<MessageRecognition> {
 public:
     using Ptr = std::shared_ptr<MessageRecognition>;
-    using Channel = boost::asio::experimental::channel<void(sys::error_code, std::string)>;
+    using Channel = coro::BoundedDataChannel<char>;
 
     static Ptr
     create(io::any_io_executor executor,

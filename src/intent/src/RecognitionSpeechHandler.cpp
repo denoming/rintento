@@ -34,7 +34,7 @@ RecognitionSpeechHandler::RecognitionSpeechHandler(Stream& stream,
     BOOST_ASSERT(_factory);
 }
 
-io::awaitable<wit::Utterances>
+io::awaitable<RecognitionResult>
 RecognitionSpeechHandler::handle()
 {
     static const std::size_t kChannelCapacity = 1'000'000 /* 1Mb */;
@@ -47,9 +47,9 @@ RecognitionSpeechHandler::handle()
     auto channel = std::make_shared<wit::SpeechRecognition::Channel>(executor, kChannelCapacity);
     auto recognition = _factory->speech(executor, channel);
     BOOST_ASSERT(recognition);
-    auto results = co_await (sendSpeechData(channel) && recognition->run());
-    co_await sendResponse(results);
-    co_return std::move(results);
+    auto result = co_await (sendSpeechData(channel) && recognition->run());
+    co_await sendResponse(result);
+    co_return std::move(result);
 }
 
 bool

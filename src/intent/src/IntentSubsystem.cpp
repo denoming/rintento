@@ -33,15 +33,10 @@ public:
         if (not _automationConfig->load()) {
             LOGE("Unable to load automation config");
         }
-        _witConfig = std::make_unique<wit::Config>();
-        if (not _witConfig->load()) {
-            LOGE("Unable to load WiT config");
-        }
 
         _worker = std::make_unique<Worker>(_generalConfig->serverThreads());
         _performer = AutomationPerformer::create(_worker->executor(), _registry);
-        _factory = std::make_unique<wit::RecognitionFactory>(
-            _witConfig->remoteHost(), _witConfig->remotePort(), _witConfig->remoteAuth());
+        _factory = std::make_unique<wit::RecognitionFactory>();
         _server = RecognitionServer::create(_worker->executor(), _factory, _performer);
     }
 
@@ -79,7 +74,6 @@ public:
 private:
     std::unique_ptr<GeneralConfig> _generalConfig;
     std::unique_ptr<AutomationConfig> _automationConfig;
-    std::unique_ptr<wit::Config> _witConfig;
     std::shared_ptr<AutomationRegistry> _registry;
     std::shared_ptr<AutomationPerformer> _performer;
     std::unique_ptr<Worker> _worker;

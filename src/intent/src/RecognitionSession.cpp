@@ -1,5 +1,6 @@
 #include "intent/RecognitionSession.hpp"
 
+#include "common/Formatters.hpp"
 #include "intent/AutomationPerformer.hpp"
 #include "intent/RecognitionMessageHandler.hpp"
 #include "intent/RecognitionSpeechHandler.hpp"
@@ -73,8 +74,9 @@ RecognitionSession::doRun()
 
     auto handler = getHandler();
     BOOST_ASSERT(handler);
-    if (auto result = co_await handler->handle(); not result.empty()) {
-        LOGD("Running <{}> session was complete with <{}> utterances", _id, result.size());
+    auto result = co_await handler->handle();
+    LOGD("Running <{}> session was complete with <{}> result", _id, result);
+    if (result) {
         _performer->perform(result);
     }
 }

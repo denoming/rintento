@@ -1,22 +1,22 @@
 #pragma once
 
+#include "common/Recognition.hpp"
 #include "wit/Types.hpp"
 
-#include <jarvisto/Cancellable.hpp>
 #include <jarvisto/Network.hpp>
 
 namespace jar::wit {
 
-class Recognition : public Cancellable {
+class RemoteRecognition : public Recognition {
 public:
-    Recognition(io::any_io_executor executor,
-                ssl::context& context,
-                std::string host,
-                std::string port,
-                std::string auth);
+    RemoteRecognition(io::any_io_executor executor,
+                      ssl::context& context,
+                      std::string remoteHost,
+                      std::string remotePort,
+                      std::string remoteAuth);
 
-    io::awaitable<wit::Utterances>
-    run();
+    io::awaitable<RecognitionResult>
+    run() final;
 
 protected:
     using Stream = beast::ssl_stream<beast::tcp_stream>;
@@ -25,13 +25,13 @@ protected:
     stream();
 
     [[nodiscard]] const std::string&
-    host() const;
+    remoteHost() const;
 
     [[nodiscard]] const std::string&
-    port() const;
+    remotePort() const;
 
     [[nodiscard]] const std::string&
-    auth() const;
+    remoteAuth() const;
 
     virtual io::awaitable<void>
     connect();
@@ -44,9 +44,9 @@ protected:
 
 private:
     Stream _stream;
-    std::string _host;
-    std::string _port;
-    std::string _auth;
+    std::string _remoteHost;
+    std::string _remotePort;
+    std::string _remoteAuth;
 };
 
 } // namespace jar::wit

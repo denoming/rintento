@@ -17,12 +17,12 @@ RecognitionTerminalHandler::RecognitionTerminalHandler(Stream& stream)
 {
 }
 
-io::awaitable<wit::Utterances>
+io::awaitable<RecognitionResult>
 RecognitionTerminalHandler::handle()
 {
     const auto error = sys::errc::make_error_code(sys::errc::operation_not_supported);
     co_await sendResponse(error);
-    co_return wit::Utterances{};
+    co_return RecognitionResult{};
 }
 
 } // namespace jar

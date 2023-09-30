@@ -1,6 +1,6 @@
 #pragma once
 
-#include "wit/Types.hpp"
+#include "common/Types.hpp"
 
 #include <jarvisto/Network.hpp>
 
@@ -21,10 +21,7 @@ public:
     create(io::any_io_executor executor, std::shared_ptr<AutomationRegistry> registry);
 
     void
-    perform(const wit::Utterances& utterances);
-
-    void
-    perform(const std::string& intent);
+    perform(const RecognitionResult& result);
 
 private:
     explicit AutomationPerformer(io::any_io_executor executor,

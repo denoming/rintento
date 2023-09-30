@@ -1,6 +1,6 @@
 #pragma once
 
-#include "wit/Recognition.hpp"
+#include "wit/RemoteRecognition.hpp"
 
 #include "coro/BoundedDataChannel.hpp"
 
@@ -9,7 +9,7 @@
 
 namespace jar::wit {
 
-class SpeechRecognition final : public Recognition,
+class SpeechRecognition final : public RemoteRecognition,
                                 public std::enable_shared_from_this<SpeechRecognition> {
 public:
     using Ptr = std::shared_ptr<SpeechRecognition>;
@@ -31,7 +31,7 @@ private:
                                std::string auth,
                                std::shared_ptr<Channel> channel);
 
-    io::awaitable<wit::Utterances>
+    io::awaitable<Utterances>
     process() final;
 
 private:

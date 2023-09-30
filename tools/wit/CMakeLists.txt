@@ -19,7 +19,7 @@ target_link_libraries(${TARGET}
 )
 
 target_sources(${TARGET}
-    PRIVATE src/Recognition.cpp
+    PRIVATE src/RemoteRecognition.cpp
             src/MessageRecognition.cpp
             src/SpeechRecognition.cpp
             src/IntentParser.cpp

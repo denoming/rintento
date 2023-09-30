@@ -31,22 +31,26 @@ SpeechRecognition::SpeechRecognition(io::any_io_executor executor,
                                      std::string port,
                                      std::string auth,
                                      std::shared_ptr<Channel> channel)
-    : Recognition{std::move(executor), context, std::move(host), std::move(port), std::move(auth)}
+    : RemoteRecognition{std::move(executor),
+                        context,
+                        std::move(host),
+                        std::move(port),
+                        std::move(auth)}
     , _channel{std::move(channel)}
 {
     BOOST_ASSERT(_channel);
 }
 
-io::awaitable<wit::Utterances>
+io::awaitable<Utterances>
 SpeechRecognition::process()
 {
     http::request<http::empty_body> req;
     req.version(net::kHttpVersion11);
     req.target(speechTargetWithDate());
     req.method(http::verb::post);
-    req.set(http::field::host, host());
+    req.set(http::field::host, remoteHost());
     req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-    req.set(http::field::authorization, auth());
+    req.set(http::field::authorization, remoteAuth());
     req.set(http::field::content_type,
             "audio/raw; encoding=signed-integer; bits=16; rate=16000; endian=little");
     req.set(http::field::transfer_encoding, "chunked");
