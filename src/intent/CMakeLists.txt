@@ -5,7 +5,7 @@ add_library(Rintento::Intent ALIAS ${TARGET})
 
 target_include_directories(${TARGET}
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
-    PRIVATE $<BUILD_INTERFACE:${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/options
+    PRIVATE $<BUILD_INTERFACE:${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/options>
 )
 
 target_link_libraries(${TARGET}
