@@ -107,7 +107,14 @@ toIntent(const json::object& input)
 {
     try {
         const auto& name = input.at("name").as_string();
-        const auto& conf = input.at("confidence").as_double();
+        float conf = 0.f;
+        if (const auto* value = input.if_contains("confidence"); value) {
+            if (value->kind() == json::kind::double_) {
+                conf = static_cast<float>(value->as_double());
+            } else {
+                conf = static_cast<float>(value->as_int64());
+            }
+        }
         return Intent{std::string(name.cbegin(), name.cend()), static_cast<float>(conf)};
     } catch (const std::exception&) {
         return std::nullopt;
