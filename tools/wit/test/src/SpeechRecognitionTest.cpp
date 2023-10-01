@@ -57,7 +57,7 @@ TEST_F(SpeechRecognitionTest, RecognizeSpeech)
     io::io_context context{1};
 
     MockFunction<void(std::exception_ptr, RecognitionResult)> callback1;
-    EXPECT_CALL(callback1, Call(IsFalse(), understoodIntent("light_off")));
+    EXPECT_CALL(callback1, Call(IsFalse(), understoodIntent("light_control")));
 
     auto executor = context.get_executor();
     auto channel = std::make_shared<wit::SpeechRecognition::Channel>(executor, kChannelCapacity);
