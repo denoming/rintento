@@ -12,6 +12,16 @@ include(BuildType)
 include(BuildLocation)
 include(BuildOptions)
 
+if(ENABLE_CODE_FORMAT)
+    # Include all dirs with source code
+    set(CLANG_FORMAT_INCLUDE_DIRS
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/tools
+        ${PROJECT_SOURCE_DIR}/test
+    )
+    include(CodeFormat)
+endif()
+
 if (ENABLE_TESTS)
     enable_testing()
     include(AddGoogleTest)
