@@ -1,3 +1,4 @@
 
 #cmakedefine ENABLE_DLT
 #cmakedefine ENABLE_TESTS
+#cmakedefine ENABLE_WIT_SUPPORT

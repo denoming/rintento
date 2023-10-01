@@ -1,17 +1,14 @@
 #pragma once
 
-#include "intent/RecognitionHandler.hpp"
 #include "coro/BoundedDataChannel.hpp"
+#include "intent/RecognitionHandler.hpp"
 
 #include <memory>
 #include <string>
 
 namespace jar {
 
-namespace wit {
-class RecognitionFactory;
-class MessageRecognition;
-} // namespace wit
+class IRecognitionFactory;
 
 class RecognitionMessageHandler final
     : public RecognitionHandler,
@@ -24,7 +21,7 @@ public:
     create(Stream& stream,
            Buffer& buffer,
            Parser& parser,
-           std::shared_ptr<wit::RecognitionFactory> factory);
+           std::shared_ptr<IRecognitionFactory> factory);
 
     io::awaitable<RecognitionResult>
     handle() final;
@@ -33,7 +30,7 @@ private:
     RecognitionMessageHandler(Stream& stream,
                               Buffer& buffer,
                               Parser& parser,
-                              std::shared_ptr<wit::RecognitionFactory> factory);
+                              std::shared_ptr<IRecognitionFactory> factory);
 
     [[nodiscard]] bool
     canHandle() const;
@@ -44,8 +41,7 @@ private:
 private:
     Buffer& _buffer;
     Parser& _parser;
-    std::shared_ptr<wit::RecognitionFactory> _factory;
-    std::shared_ptr<wit::MessageRecognition> _recognition;
+    std::shared_ptr<IRecognitionFactory> _factory;
 };
 
 } // namespace jar

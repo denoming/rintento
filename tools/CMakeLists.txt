@@ -1,4 +1,6 @@
 add_subdirectory(cli)
 add_subdirectory(coro)
 add_subdirectory(process)
-add_subdirectory(wit)
+if (ENABLE_WIT_SUPPORT)
+    add_subdirectory(wit)
+endif ()

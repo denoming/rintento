@@ -6,9 +6,7 @@
 
 namespace jar {
 
-namespace wit {
-class RecognitionFactory;
-}
+class IRecognitionFactory;
 class RecognitionHandler;
 class AutomationPerformer;
 
@@ -19,7 +17,7 @@ public:
     [[nodiscard]] static Ptr
     create(std::size_t id,
            tcp::socket&& socket,
-           std::shared_ptr<wit::RecognitionFactory> factory,
+           std::shared_ptr<IRecognitionFactory> factory,
            std::shared_ptr<AutomationPerformer> performer);
 
     [[nodiscard]] std::size_t
@@ -31,7 +29,7 @@ public:
 private:
     RecognitionSession(std::size_t id,
                        tcp::socket&& socket,
-                       std::shared_ptr<wit::RecognitionFactory> factory,
+                       std::shared_ptr<IRecognitionFactory> factory,
                        std::shared_ptr<AutomationPerformer> performer);
 
     io::awaitable<void>
@@ -45,7 +43,7 @@ private:
     beast::tcp_stream _stream;
     beast::flat_buffer _buffer;
     http::request_parser<http::empty_body> _parser;
-    std::shared_ptr<wit::RecognitionFactory> _factory;
+    std::shared_ptr<IRecognitionFactory> _factory;
     std::shared_ptr<AutomationPerformer> _performer;
 };
 

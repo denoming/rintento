@@ -1,9 +1,7 @@
 #include "intent/RecognitionMessageHandler.hpp"
 
+#include "common/IRecognitionFactory.hpp"
 #include "intent/Utils.hpp"
-#include "wit/RecognitionFactory.hpp"
-
-#include <jarvisto/Logger.hpp>
 
 #include <boost/asio/experimental/awaitable_operators.hpp>
 #include <boost/assert.hpp>
@@ -16,16 +14,15 @@ RecognitionMessageHandler::Ptr
 RecognitionMessageHandler::create(Stream& stream,
                                   Buffer& buffer,
                                   Parser& parser,
-                                  std::shared_ptr<wit::RecognitionFactory> factory)
+                                  std::shared_ptr<IRecognitionFactory> factory)
 {
     return Ptr(new RecognitionMessageHandler(stream, buffer, parser, std::move(factory)));
 }
 
-RecognitionMessageHandler::RecognitionMessageHandler(
-    Stream& stream,
-    Buffer& buffer,
-    Parser& parser,
-    std::shared_ptr<wit::RecognitionFactory> factory)
+RecognitionMessageHandler::RecognitionMessageHandler(Stream& stream,
+                                                     Buffer& buffer,
+                                                     Parser& parser,
+                                                     std::shared_ptr<IRecognitionFactory> factory)
     : RecognitionHandler{stream}
     , _buffer{buffer}
     , _parser{parser}

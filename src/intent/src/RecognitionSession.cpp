@@ -1,11 +1,11 @@
 #include "intent/RecognitionSession.hpp"
 
 #include "common/Formatters.hpp"
+#include "common/IRecognitionFactory.hpp"
 #include "intent/AutomationPerformer.hpp"
 #include "intent/RecognitionMessageHandler.hpp"
 #include "intent/RecognitionSpeechHandler.hpp"
 #include "intent/RecognitionTerminalHandler.hpp"
-#include "wit/RecognitionFactory.hpp"
 
 #include <jarvisto/Logger.hpp>
 
@@ -18,7 +18,7 @@ namespace jar {
 RecognitionSession::Ptr
 RecognitionSession::create(std::size_t id,
                            tcp::socket&& socket,
-                           std::shared_ptr<wit::RecognitionFactory> factory,
+                           std::shared_ptr<IRecognitionFactory> factory,
                            std::shared_ptr<AutomationPerformer> performer)
 {
     return Ptr(
@@ -27,7 +27,7 @@ RecognitionSession::create(std::size_t id,
 
 RecognitionSession::RecognitionSession(std::size_t id,
                                        tcp::socket&& socket,
-                                       std::shared_ptr<wit::RecognitionFactory> factory,
+                                       std::shared_ptr<IRecognitionFactory> factory,
                                        std::shared_ptr<AutomationPerformer> performer)
     : _id{id}
     , _stream{std::move(socket)}

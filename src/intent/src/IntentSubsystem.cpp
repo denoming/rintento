@@ -5,8 +5,10 @@
 #include "intent/AutomationRegistry.hpp"
 #include "intent/GeneralConfig.hpp"
 #include "intent/RecognitionServer.hpp"
-#include "wit/Config.hpp"
+#include "rintento/Options.hpp"
+#ifdef ENABLE_WIT_SUPPORT
 #include "wit/RecognitionFactory.hpp"
+#endif
 
 #include <jarvisto/Application.hpp>
 #include <jarvisto/Logger.hpp>
@@ -16,6 +18,21 @@
 
 namespace jar {
 
+namespace {
+
+std::shared_ptr<IRecognitionFactory>
+getFactory()
+{
+#ifndef ENABLE_WIT_SUPPORT
+    return std::make_shared<wit::RecognitionFactory>();
+#else
+    LOGE("There is no recognition provider");
+    return {};
+#endif
+}
+
+} // namespace
+
 class IntentSubsystem::Impl {
 public:
     Impl() = default;
@@ -24,7 +41,6 @@ public:
     initialize(Application& /*application*/)
     {
         _registry = std::make_shared<AutomationRegistry>();
-
         _generalConfig = std::make_unique<GeneralConfig>();
         if (not _generalConfig->load()) {
             LOGE("Unable to load general config");
@@ -36,8 +52,12 @@ public:
 
         _worker = std::make_unique<Worker>(_generalConfig->serverThreads());
         _performer = AutomationPerformer::create(_worker->executor(), _registry);
-        _factory = std::make_unique<wit::RecognitionFactory>();
-        _server = RecognitionServer::create(_worker->executor(), _factory, _performer);
+        _factory = getFactory();
+        if (not _factory) {
+            LOGE("Recognition factory is not available");
+        } else {
+            _server = RecognitionServer::create(_worker->executor(), _factory, _performer);
+        }
     }
 
     void
@@ -77,7 +97,7 @@ private:
     std::shared_ptr<AutomationRegistry> _registry;
     std::shared_ptr<AutomationPerformer> _performer;
     std::unique_ptr<Worker> _worker;
-    std::shared_ptr<wit::RecognitionFactory> _factory;
+    std::shared_ptr<IRecognitionFactory> _factory;
     std::shared_ptr<RecognitionServer> _server;
 };
 
