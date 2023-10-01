@@ -81,7 +81,7 @@ SpeechRecognition::process()
     n = 0;
     io::streambuf channelBuffer;
     while (_channel->active() or not _channel->empty()) {
-        onCancel().assign([channel = _channel](auto){
+        onCancel().assign([channel = _channel](auto) {
             LOGD("Close channel upon cancel request");
             channel->close();
         });

@@ -5,8 +5,8 @@
 #include <jarvisto/Network.hpp>
 #include <jarvisto/SecureContext.hpp>
 
-#include <string>
 #include <optional>
+#include <string>
 
 namespace jar::wit {
 

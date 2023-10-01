@@ -31,7 +31,11 @@ MessageRecognition::MessageRecognition(io::any_io_executor executor,
                                        std::string port,
                                        std::string auth,
                                        std::shared_ptr<Channel> channel)
-    : RemoteRecognition{std::move(executor), context, std::move(host), std::move(port), std::move(auth)}
+    : RemoteRecognition{std::move(executor),
+                        context,
+                        std::move(host),
+                        std::move(port),
+                        std::move(auth)}
     , _channel{std::move(channel)}
 {
     BOOST_ASSERT(_channel);
@@ -43,8 +47,8 @@ MessageRecognition::process()
     std::string message;
     beast::flat_buffer buffer;
     static const int kBufferSize = 64;
-    while(_channel->active() or not _channel->empty()) {
-        onCancel().assign([channel = _channel](auto){
+    while (_channel->active() or not _channel->empty()) {
+        onCancel().assign([channel = _channel](auto) {
             LOGD("Close channel upon cancel request");
             channel->close();
         });
