@@ -7,6 +7,7 @@ target_sources(${TARGET}
             src/MessageRecognitionTest.cpp
             src/SpeechRecognitionTest.cpp
             src/ConfigTest.cpp
+            src/UtilsTest.cpp
 )
 
 target_include_directories(${TARGET}
