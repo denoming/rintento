@@ -18,6 +18,7 @@ target_link_libraries(${TARGET}
             Boost::program_options
     PRIVATE Jarvisto::Jarvisto
             Rintento::Intent
+            Rintento::Wit
 )
 
 target_compile_features(${TARGET} PRIVATE cxx_std_23)

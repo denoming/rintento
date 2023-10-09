@@ -1,6 +1,6 @@
 #include "cli/Clients.hpp"
 
-#include "intent/Utils.hpp"
+#include "wit/Utils.hpp"
 
 #include <jarvisto/Logger.hpp>
 
@@ -59,7 +59,7 @@ recognizeMessage(io::any_io_executor executor,
     }
 
     {
-        const auto target = format::messageTarget(message);
+        const auto target = wit::messageTarget(message);
         http::request<http::empty_body> req{http::verb::get, target, net::kHttpVersion11};
         req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
         LOGD("Writing recognize message request upon <{}{}> target",
@@ -112,7 +112,7 @@ recognizeSpeech(io::any_io_executor executor,
     }
 
     {
-        const auto target = format::speechTarget();
+        const auto target = wit::speechTarget();
         http::request<http::empty_body> req{http::verb::post, target, net::kHttpVersion11};
         req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
         req.set(http::field::transfer_encoding, "chunked");
