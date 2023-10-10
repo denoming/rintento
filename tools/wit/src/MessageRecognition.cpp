@@ -44,24 +44,32 @@ MessageRecognition::MessageRecognition(io::any_io_executor executor,
 io::awaitable<wit::Utterances>
 MessageRecognition::process()
 {
+    onCancel().assign([channel = _channel](auto) {
+        LOGD("Close channel upon cancel request");
+        channel->close();
+    });
+
     std::string message;
     beast::flat_buffer buffer;
-    static const int kBufferSize = 64;
-    while (_channel->active() or not _channel->empty()) {
-        onCancel().assign([channel = _channel](auto) {
-            LOGD("Close channel upon cancel request");
-            channel->close();
-        });
-        auto outputSeq = buffer.prepare(kBufferSize);
-        const std::size_t size = co_await _channel->receive(outputSeq);
-        if (cancelled()) {
-            throw sys::system_error{sys::errc::make_error_code(sys::errc::operation_canceled)};
+    static const size_t kBatchSize = 64;
+    while (true) {
+        auto outputSeq = buffer.prepare(kBatchSize);
+        const auto [ec, size] = co_await _channel->recv(outputSeq);
+        if (size > 0) {
+            buffer.commit(size);
+            const auto inputSeq = buffer.data();
+            message.append(static_cast<const char*>(inputSeq.data()), inputSeq.size());
+            buffer.consume(size);
         }
-
-        buffer.commit(size);
-        const auto inputSeq = buffer.data();
-        message.append(static_cast<const char*>(inputSeq.data()), inputSeq.size());
-        buffer.consume(size);
+        if (ec) {
+            if (ec.value() == io::error::eof) {
+                LOGD("End of channel is reached");
+                break;
+            } else {
+                LOGE("Unable to receive message: error<{}>", ec.message());
+                throw sys::system_error{io::error::operation_aborted};
+            }
+        }
     }
 
     http::request<http::empty_body> req;

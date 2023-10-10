@@ -1,7 +1,7 @@
 #pragma once
 
 #include "common/Recognition.hpp"
-#include "coro/BoundedDataChannel.hpp"
+#include "coro/BoundedChannel.hpp"
 
 #include <memory>
 
@@ -9,7 +9,7 @@ namespace jar {
 
 class IRecognitionFactory {
 public:
-    using DataChannel = coro::BoundedDataChannel<char>;
+    using DataChannel = coro::BoundedChannel<char>;
 
     virtual ~IRecognitionFactory() = default;
 

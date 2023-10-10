@@ -2,7 +2,7 @@
 
 #include "wit/RemoteRecognition.hpp"
 
-#include "coro/BoundedDataChannel.hpp"
+#include "coro/BoundedChannel.hpp"
 
 #include <memory>
 #include <string_view>
@@ -13,7 +13,7 @@ class SpeechRecognition final : public RemoteRecognition,
                                 public std::enable_shared_from_this<SpeechRecognition> {
 public:
     using Ptr = std::shared_ptr<SpeechRecognition>;
-    using Channel = coro::BoundedDataChannel<char>;
+    using Channel = coro::BoundedChannel<char>;
 
     static Ptr
     create(io::any_io_executor executor,

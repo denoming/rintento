@@ -1,6 +1,6 @@
 #pragma once
 
-#include "coro/BoundedDataChannel.hpp"
+#include "coro/BoundedChannel.hpp"
 #include "intent/RecognitionHandler.hpp"
 
 #include <memory>
@@ -15,7 +15,7 @@ class RecognitionMessageHandler final
       public std::enable_shared_from_this<RecognitionMessageHandler> {
 public:
     using Ptr = std::shared_ptr<RecognitionMessageHandler>;
-    using Channel = coro::BoundedDataChannel<char>;
+    using Channel = coro::BoundedChannel<char>;
 
     [[nodiscard]] static Ptr
     create(Stream& stream,

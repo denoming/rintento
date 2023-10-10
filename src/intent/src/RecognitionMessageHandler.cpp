@@ -61,6 +61,7 @@ RecognitionMessageHandler::sendMessageData(std::shared_ptr<Channel> channel)
     const auto request = _parser.release();
     if (auto messageOpt = parser::peekMessage(request.target()); messageOpt) {
         std::ignore = co_await channel->send(io::buffer(*messageOpt));
+        co_await channel->send(io::error::eof);
         channel->close();
     } else {
         throw std::runtime_error{"Missing message in request target"};

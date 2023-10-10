@@ -101,6 +101,7 @@ RecognitionSpeechHandler::sendSpeechData(std::shared_ptr<Channel> channel)
         co_await channel->send(io::buffer(chunk));
     }
 
+    co_await channel->send(io::error::eof);
     channel->close();
 }
 

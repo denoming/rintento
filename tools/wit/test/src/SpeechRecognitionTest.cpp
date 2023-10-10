@@ -85,6 +85,7 @@ TEST_F(SpeechRecognitionTest, RecognizeSpeech)
             auto fileData = readFile(kAudioFile, fileSize);
             auto buffer = io::buffer(fileData.get(), fileSize);
             co_await channel->send(buffer);
+            co_await channel->send(io::error::eof);
             channel->close();
         },
         [&](const std::exception_ptr& eptr) {

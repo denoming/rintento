@@ -66,6 +66,7 @@ TEST_F(MessageRecognitionTest, RecognizeMessage)
         [channel]() -> io::awaitable<void> {
             std::string message = wit::messageTargetWithDate("turn off the light");
             std::ignore = co_await channel->send(io::buffer(message));
+            co_await channel->send(io::error::eof);
             channel->close();
         },
         [&](const std::exception_ptr& eptr) {

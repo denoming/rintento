@@ -80,24 +80,31 @@ SpeechRecognition::process()
     static const int kMinChunkSize = 512;
     n = 0;
     io::streambuf channelBuffer;
-    while (_channel->active() or not _channel->empty()) {
+    while (true) {
         onCancel().assign([channel = _channel](auto) {
             LOGD("Close channel upon cancel request");
             channel->close();
         });
         auto outputSeq = channelBuffer.prepare(kMinChunkSize);
-        const std::size_t size = co_await _channel->receive(outputSeq);
-        if (cancelled()) {
-            throw sys::system_error{sys::errc::make_error_code(sys::errc::operation_canceled)};
+        const auto [ec, size] = co_await _channel->recv(outputSeq);
+        if (size > 0) {
+            channelBuffer.commit(size);
+            const auto inputSeq = channelBuffer.data();
+            net::resetTimeout(stream());
+            n += co_await io::async_write(stream(),
+                                          http::make_chunk(inputSeq),
+                                          io::bind_cancellation_slot(onCancel(), io::use_awaitable));
+            channelBuffer.consume(size);
         }
-
-        channelBuffer.commit(size);
-        const auto inputSeq = channelBuffer.data();
-        net::resetTimeout(stream());
-        n += co_await io::async_write(stream(),
-                                      http::make_chunk(inputSeq),
-                                      io::bind_cancellation_slot(onCancel(), io::use_awaitable));
-        channelBuffer.consume(size);
+        if (ec) {
+            if (ec.value() == io::error::eof) {
+                LOGD("End of channel is reached");
+                break;
+            } else {
+                LOGE("Unable to receive message: error<{}>", ec.message());
+                throw sys::system_error{io::error::operation_aborted};
+            }
+        }
     }
     LOGD("Writing audio chunk was done: transferred<{}>", n);
 

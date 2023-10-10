@@ -1,6 +1,6 @@
 #pragma once
 
-#include "coro/BoundedDataChannel.hpp"
+#include "coro/BoundedChannel.hpp"
 #include "wit/RemoteRecognition.hpp"
 
 #include <memory>
@@ -11,7 +11,7 @@ class MessageRecognition final : public RemoteRecognition,
                                  public std::enable_shared_from_this<MessageRecognition> {
 public:
     using Ptr = std::shared_ptr<MessageRecognition>;
-    using Channel = coro::BoundedDataChannel<char>;
+    using Channel = coro::BoundedChannel<char>;
 
     static Ptr
     create(io::any_io_executor executor,
