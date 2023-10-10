@@ -132,7 +132,9 @@ ScriptAction::scheduleTimer()
     _runningTimer = std::make_unique<io::steady_timer>(_executor, _timeout);
     _runningTimer->async_wait([weakSelf = weak_from_this()](sys::error_code ec) {
         if (ec) {
-            LOGE("Unable to wait given timeout: error<{}>", ec.message());
+            if (ec != io::error::operation_aborted) {
+                LOGE("Unable to wait given timeout: error<{}>", ec.message());
+            }
         } else {
             if (auto self = weakSelf.lock()) {
                 self->terminate();
