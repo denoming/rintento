@@ -23,7 +23,7 @@ namespace {
 std::shared_ptr<IRecognitionFactory>
 getFactory()
 {
-#ifndef ENABLE_WIT_SUPPORT
+#ifdef ENABLE_WIT_SUPPORT
     return std::make_shared<wit::RecognitionFactory>();
 #else
     LOGE("There is no recognition provider");
