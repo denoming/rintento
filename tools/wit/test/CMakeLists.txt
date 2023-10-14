@@ -17,6 +17,7 @@ target_include_directories(${TARGET}
 target_link_libraries(${TARGET}
     PRIVATE Rintento::Wit
             Rintento::Test
+            SndFile::sndfile
 )
 
 install(

@@ -39,13 +39,23 @@
       "name": "boost-beast",
       "version>=": "1.81.0"
     },
-    "spdlog",
-    "libsndfile"
+    "spdlog"
   ],
   "features": {
     "cli": {
       "description": "CLI supporting",
       "dependencies": [
+        {
+          "name": "libsndfile",
+          "version>=": "1.2.0",
+          "default-features": false
+        }
+      ]
+    },
+    "tests": {
+      "description": "Tests supporting",
+      "dependencies": [
+        "gtest",
         {
           "name": "libsndfile",
           "version>=": "1.2.0",

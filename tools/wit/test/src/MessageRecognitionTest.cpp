@@ -36,12 +36,12 @@ wit::Config MessageRecognitionTest::config;
 
 TEST_F(MessageRecognitionTest, RecognizeMessage)
 {
-    const std::string_view Message{"turn off the light"};
+    static const std::string_view kMessage{"turn off the light in the bedroom"};
 
     io::io_context context{1};
 
     MockFunction<void(std::exception_ptr, RecognitionResult)> callback1;
-    EXPECT_CALL(callback1, Call(IsFalse(), understoodIntent("light_control")));
+    EXPECT_CALL(callback1, Call(IsFalse(), understoodIntent("light_turn_off_bedroom")));
 
     auto executor = context.get_executor();
     auto channel = std::make_shared<wit::MessageRecognition::Channel>(executor, 128);
@@ -64,7 +64,7 @@ TEST_F(MessageRecognitionTest, RecognizeMessage)
     io::co_spawn(
         context.get_executor(),
         [channel]() -> io::awaitable<void> {
-            std::string message = wit::messageTargetWithDate("turn off the light");
+            std::string message = wit::messageTargetWithDate(kMessage);
             std::ignore = co_await channel->send(io::buffer(message));
             co_await channel->send(io::error::eof);
             channel->close();

@@ -6,6 +6,9 @@ add_feature_info(
 )
 
 option(ENABLE_TESTS "Enable testing" ON)
+if(ENABLE_TESTS)
+    list(APPEND VCPKG_MANIFEST_FEATURES "tests")
+endif()
 add_feature_info(
     ENABLE_TESTS ENABLE_TESTS "Build project with tests"
 )
@@ -16,7 +19,7 @@ add_feature_info(
 )
 
 option(ENABLE_CLI "Enable CLI" OFF)
-if (ENABLE_CLI)
+if(ENABLE_CLI)
     list(APPEND VCPKG_MANIFEST_FEATURES "cli")
 endif()
 add_feature_info(

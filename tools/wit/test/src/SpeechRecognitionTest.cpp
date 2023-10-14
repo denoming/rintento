@@ -5,32 +5,17 @@
 #include "wit/Matchers.hpp"
 #include "wit/RecognitionFactory.hpp"
 #include "wit/SpeechRecognition.hpp"
-#include "wit/Utils.hpp"
 
 #include <jarvisto/SecureContext.hpp>
+#include <sndfile.hh>
 
 #include <chrono>
 #include <exception>
-#include <fstream>
 
 using namespace testing;
 using namespace jar;
 
 namespace fs = std::filesystem;
-
-namespace {
-
-std::unique_ptr<char[]>
-readFile(const fs::path& filePath, std::size_t& fileSize)
-{
-    std::fstream stream{filePath, std::ios::in | std::ios::binary};
-    fileSize = static_cast<long>(fs::file_size(filePath));
-    auto fileData = std::make_unique<char[]>(fileSize);
-    stream.read(reinterpret_cast<char*>(fileData.get()), std::streamsize(fileSize));
-    return fileData;
-}
-
-} // namespace
 
 class SpeechRecognitionTest : public Test {
 public:
@@ -57,7 +42,7 @@ TEST_F(SpeechRecognitionTest, RecognizeSpeech)
     io::io_context context{1};
 
     MockFunction<void(std::exception_ptr, RecognitionResult)> callback1;
-    EXPECT_CALL(callback1, Call(IsFalse(), understoodIntent("light_control")));
+    EXPECT_CALL(callback1, Call(IsFalse(), understoodIntent("light_turn_off_bedroom")));
 
     auto executor = context.get_executor();
     auto channel = std::make_shared<wit::SpeechRecognition::Channel>(executor, kChannelCapacity);
@@ -77,14 +62,25 @@ TEST_F(SpeechRecognitionTest, RecognizeSpeech)
         });
 
     /* Spawn data provider coroutine */
-    static const fs::path kAudioFile{kAssetAudioPath / "turn-off-the-light.raw"};
+    static const fs::path kAudioFilePath{kAssetAudioPath / "turn-off-the-light-bedroom.wav"};
     io::co_spawn(
         context.get_executor(),
         [channel]() -> io::awaitable<void> {
-            std::size_t fileSize{0};
-            auto fileData = readFile(kAudioFile, fileSize);
-            auto buffer = io::buffer(fileData.get(), fileSize);
-            co_await channel->send(buffer);
+            SndfileHandle audioFile{kAudioFilePath};
+            if (not audioFile) {
+                throw std::runtime_error{"Unable to read audio file"};
+            }
+
+            sf_count_t bytesRead;
+            constexpr const std::size_t kBufferSize{1024};
+            std::array<char, kBufferSize> buffer = {0};
+            do {
+                bytesRead = audioFile.readRaw(buffer.data(), kBufferSize);
+                if (bytesRead > 0) {
+                    co_await channel->send(io::const_buffer(buffer.data(), bytesRead));
+                }
+            } while (bytesRead == kBufferSize);
+
             co_await channel->send(io::error::eof);
             channel->close();
         },
