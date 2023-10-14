@@ -15,6 +15,14 @@ add_feature_info(
     ENABLE_DLT ENABLE_DLT "Build project with DLT logging"
 )
 
+option(ENABLE_CLI "Enable CLI" OFF)
+if (ENABLE_CLI)
+    list(APPEND VCPKG_MANIFEST_FEATURES "cli")
+endif()
+add_feature_info(
+    ENABLE_CLI ENABLE_CLI "Build project with CLI"
+)
+
 option(ENABLE_WIT_SUPPORT "Enable wit.ai support" ON)
 add_feature_info(
     ENABLE_WIT_SUPPORT ENABLE_WIT_SUPPORT "Build project with wit.ai support"

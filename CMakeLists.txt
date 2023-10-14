@@ -1,11 +1,12 @@
 cmake_minimum_required(VERSION 3.22)
 
+include(cmake/ProjectOptions.cmake)
+
 project(rintento
     VERSION 1.0.1
     DESCRIPTION "Rintento Speech Project"
 )
 
-include(cmake/ProjectOptions.cmake)
 include(cmake/ProjectConfigs.cmake)
 include(cmake/ProjectInstall.cmake)
 

@@ -6,7 +6,7 @@ add_executable(Rintento::Cli ALIAS ${TARGET})
 target_sources(${TARGET}
     PRIVATE
         src/main.cpp
-        src/Clients.cpp
+        src/Recognizer.cpp
 )
 
 target_include_directories(${TARGET}
@@ -19,6 +19,7 @@ target_link_libraries(${TARGET}
     PRIVATE Jarvisto::Jarvisto
             Rintento::Intent
             Rintento::Wit
+            SndFile::sndfile
 )
 
 target_compile_features(${TARGET} PRIVATE cxx_std_23)

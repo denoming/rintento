@@ -34,5 +34,6 @@ include(AddBoost)
 include(AddOpenSsl)
 include(AddSpdLog)
 include(AddJarvisto)
+include(AddSndFile)
 
 include(EnableCcache)
