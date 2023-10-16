@@ -1,5 +1,6 @@
 #include "wit/RemoteRecognition.hpp"
 
+#include <jarvisto/Http.hpp>
 #include <jarvisto/Logger.hpp>
 
 namespace jar::wit {
@@ -90,11 +91,11 @@ RemoteRecognition::connect()
     }
 
     std::error_code ec;
-    net::setServerHostname(_stream, _remoteHost, ec);
+    setServerHostname(_stream, _remoteHost, ec);
     if (ec) {
         LOGW("Unable to set server to use in verification process");
     }
-    net::setSniHostname(_stream, _remoteHost, ec);
+    setSniHostname(_stream, _remoteHost, ec);
     if (ec) {
         LOGW("Unable to set SNI hostname");
     }
@@ -110,13 +111,13 @@ RemoteRecognition::connect()
     LOGD("Resolving backend address was done: endpoints<{}>", endpoints.size());
 
     LOGD("Connect to endpoints");
-    net::resetTimeout(_stream);
+    resetTimeout(_stream);
     const auto endpoint = co_await get_lowest_layer(_stream).async_connect(
         endpoints, io::bind_cancellation_slot(onCancel(), io::use_awaitable));
     LOGD("Connecting to <{}> endpoint was done", endpoint.address().to_string());
 
     LOGD("Handshake with host");
-    net::resetTimeout(_stream);
+    resetTimeout(_stream);
     co_await _stream.async_handshake(ssl::stream_base::client,
                                      io::bind_cancellation_slot(onCancel(), io::use_awaitable));
     LOGD("Handshaking was done");
@@ -131,7 +132,7 @@ RemoteRecognition::process()
 io::awaitable<void>
 RemoteRecognition::shutdown()
 {
-    net::resetTimeout(_stream);
+    resetTimeout(_stream);
 
     LOGD("Shutdown stream");
     std::ignore = co_await _stream.async_shutdown(io::as_tuple(io::use_awaitable));

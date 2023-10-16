@@ -3,6 +3,7 @@
 #include "wit/Utils.hpp"
 
 #include <boost/json.hpp>
+#include <jarvisto/Http.hpp>
 #include <jarvisto/Logger.hpp>
 #include <sndfile.hh>
 
@@ -39,7 +40,7 @@ Recognizer::recognizeMessage(std::string_view host, std::string_view port, std::
 
     {
         const auto target = wit::messageTarget(message);
-        http::request<http::empty_body> req{http::verb::get, target, net::kHttpVersion11};
+        http::request<http::empty_body> req{http::verb::get, target, kHttpVersion11};
         req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
         LOGD("Writing recognize message request");
         std::size_t bytesTransferred = http::write(stream, req, error);
@@ -96,7 +97,7 @@ Recognizer::recognizeSpeech(std::string_view host,
 
     {
         const auto target = wit::speechTarget();
-        http::request<http::empty_body> req{http::verb::post, target, net::kHttpVersion11};
+        http::request<http::empty_body> req{http::verb::post, target, kHttpVersion11};
         req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
         req.set(http::field::transfer_encoding, "chunked");
         req.set(http::field::expect, "100-continue");

@@ -4,7 +4,7 @@
 #include "intent/DeferredJob.hpp"
 #include "intent/LaunchStrategy.hpp"
 
-#include <jarvisto/Network.hpp>
+#include <jarvisto/Asio.hpp>
 
 #include <functional>
 #include <memory>

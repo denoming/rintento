@@ -2,7 +2,7 @@
 
 #include "common/IRecognitionFactory.hpp"
 
-#include <jarvisto/Network.hpp>
+#include <jarvisto/Asio.hpp>
 #include <jarvisto/SecureContext.hpp>
 
 #include <optional>

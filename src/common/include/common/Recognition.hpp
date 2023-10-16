@@ -2,8 +2,8 @@
 
 #include "common/Types.hpp"
 
+#include <jarvisto/Asio.hpp>
 #include <jarvisto/Cancellable.hpp>
-#include <jarvisto/Network.hpp>
 
 namespace jar {
 

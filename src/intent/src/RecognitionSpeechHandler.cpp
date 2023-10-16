@@ -3,6 +3,7 @@
 #include "common/IRecognitionFactory.hpp"
 #include "intent/Utils.hpp"
 
+#include <jarvisto/Http.hpp>
 #include <jarvisto/Logger.hpp>
 
 #include <boost/asio/experimental/awaitable_operators.hpp>
@@ -65,7 +66,7 @@ RecognitionSpeechHandler::sendSpeechData(std::shared_ptr<Channel> channel)
         throw std::runtime_error{"Missing expect field in request header"};
     }
 
-    http::response<http::empty_body> res{http::status::continue_, net::kHttpVersion11};
+    http::response<http::empty_body> res{http::status::continue_, kHttpVersion11};
     res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
     co_await http::async_write(stream(), res, io::use_awaitable);
 

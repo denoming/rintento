@@ -3,6 +3,7 @@
 #include "wit/IntentParser.hpp"
 #include "wit/Utils.hpp"
 
+#include <jarvisto/Http.hpp>
 #include <jarvisto/Logger.hpp>
 
 #include <boost/assert.hpp>
@@ -73,7 +74,7 @@ MessageRecognition::process()
     }
 
     http::request<http::empty_body> req;
-    req.version(net::kHttpVersion11);
+    req.version(kHttpVersion11);
     req.method(http::verb::get);
     req.set(http::field::host, remoteHost());
     req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
@@ -85,14 +86,14 @@ MessageRecognition::process()
         req.target(messageTargetWithDate(message));
     }
 
-    net::resetTimeout(stream());
+    resetTimeout(stream());
 
     LOGD("Write request");
     std::size_t n = co_await http::async_write(
         stream(), req, io::bind_cancellation_slot(onCancel(), io::use_awaitable));
     LOGD("Writing request was done: transferred<{}>", n);
 
-    net::resetTimeout(stream());
+    resetTimeout(stream());
 
     LOGD("Read recognition result");
     http::response<http::string_body> res;

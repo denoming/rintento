@@ -3,7 +3,7 @@
 #include "intent/Action.hpp"
 #include "intent/DeferredJob.hpp"
 
-#include <jarvisto/Network.hpp>
+#include <jarvisto/Asio.hpp>
 
 #include <memory>
 

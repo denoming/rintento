@@ -2,7 +2,8 @@
 
 #include "common/Types.hpp"
 
-#include <jarvisto/Network.hpp>
+#include <jarvisto/Asio.hpp>
+#include <jarvisto/Http.hpp>
 
 #include <functional>
 #include <memory>

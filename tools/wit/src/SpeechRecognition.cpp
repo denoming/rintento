@@ -3,6 +3,7 @@
 #include "wit/IntentParser.hpp"
 #include "wit/Utils.hpp"
 
+#include <jarvisto/Http.hpp>
 #include <jarvisto/Logger.hpp>
 
 #include <boost/assert.hpp>
@@ -45,7 +46,7 @@ io::awaitable<Utterances>
 SpeechRecognition::process()
 {
     http::request<http::empty_body> req;
-    req.version(net::kHttpVersion11);
+    req.version(kHttpVersion11);
     req.target(speechTargetWithDate());
     req.method(http::verb::post);
     req.set(http::field::host, remoteHost());
@@ -56,7 +57,7 @@ SpeechRecognition::process()
     req.set(http::field::transfer_encoding, "chunked");
     req.set(http::field::expect, "100-continue");
 
-    net::resetTimeout(stream());
+    resetTimeout(stream());
 
     LOGD("Write request header");
     http::request_serializer<http::empty_body, http::fields> serializer{req};
@@ -64,7 +65,7 @@ SpeechRecognition::process()
         stream(), serializer, io::bind_cancellation_slot(onCancel(), io::use_awaitable));
     LOGD("Writing request header: bytes<{}>", n);
 
-    net::resetTimeout(stream());
+    resetTimeout(stream());
 
     LOGD("Read response");
     http::response<http::string_body> res;
@@ -90,10 +91,11 @@ SpeechRecognition::process()
         if (size > 0) {
             channelBuffer.commit(size);
             const auto inputSeq = channelBuffer.data();
-            net::resetTimeout(stream());
-            n += co_await io::async_write(stream(),
-                                          http::make_chunk(inputSeq),
-                                          io::bind_cancellation_slot(onCancel(), io::use_awaitable));
+            resetTimeout(stream());
+            n += co_await io::async_write(
+                stream(),
+                http::make_chunk(inputSeq),
+                io::bind_cancellation_slot(onCancel(), io::use_awaitable));
             channelBuffer.consume(size);
         }
         if (ec) {
@@ -108,7 +110,7 @@ SpeechRecognition::process()
     }
     LOGD("Writing audio chunk was done: transferred<{}>", n);
 
-    net::resetTimeout(stream());
+    resetTimeout(stream());
 
     LOGD("Write last audio chunk");
     n = co_await io::async_write(stream(),
@@ -116,7 +118,7 @@ SpeechRecognition::process()
                                  io::bind_cancellation_slot(onCancel(), io::use_awaitable));
     LOGD("Writing last audio chunk was done: transferred<{}>", n);
 
-    net::resetTimeout(stream());
+    resetTimeout(stream());
 
     LOGD("Read recognition result");
     n = co_await http::async_read(
