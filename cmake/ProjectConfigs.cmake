@@ -12,6 +12,8 @@ include(BuildType)
 include(BuildLocation)
 include(BuildOptions)
 
+include(EnableCcache)
+
 if(ENABLE_CODE_FORMAT)
     # Include all dirs with source code
     set(CLANG_FORMAT_INCLUDE_DIRS
@@ -37,5 +39,4 @@ include(AddJarvisto)
 if(ENABLE_CLI OR ENABLE_TESTS)
     include(AddSndFile)
 endif()
-
-include(EnableCcache)
+include(AddLibConfig)

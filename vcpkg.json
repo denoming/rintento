@@ -39,7 +39,8 @@
       "name": "boost-beast",
       "version>=": "1.81.0"
     },
-    "spdlog"
+    "spdlog",
+    "libconfig"
   ],
   "features": {
     "cli": {

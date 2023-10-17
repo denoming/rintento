@@ -18,8 +18,8 @@ public:
     remoteAuth() const;
 
 private:
-    void
-    doParse(const boost::property_tree::ptree& root) final;
+    bool
+    doParse(const libconfig::Config& config) final;
 
 private:
     std::string _remoteHost;

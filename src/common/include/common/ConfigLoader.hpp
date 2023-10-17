@@ -1,30 +1,30 @@
 #pragma once
 
-#include <boost/property_tree/ptree.hpp>
-
 #include <filesystem>
+#include <string_view>
+
+#include <libconfig.h++>
 
 namespace jar {
 
 class ConfigLoader {
 public:
+    ConfigLoader() = default;
+
     virtual ~ConfigLoader() = default;
 
     [[nodiscard]] bool
     load();
 
     [[nodiscard]] bool
-    load(std::istream& stream);
-
-    [[nodiscard]] bool
     load(std::string_view str);
 
     [[nodiscard]] bool
-    load(std::filesystem::path path);
+    load(std::filesystem::path file);
 
 protected:
-    virtual void
-    doParse(const boost::property_tree::ptree& root)
+    virtual bool
+    doParse(const libconfig::Config& config)
         = 0;
 };
 

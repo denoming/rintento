@@ -7,8 +7,7 @@ target_sources(${TARGET}
             src/UtilsTest.cpp
             src/AutomationTest.cpp
             src/ScriptActionTest.cpp
-            src/GeneralConfigTest.cpp
-            src/AutomationConfigTest.cpp
+            src/ConfigTest.cpp
 )
 
 target_include_directories(${TARGET}

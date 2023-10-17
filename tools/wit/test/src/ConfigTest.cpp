@@ -7,15 +7,17 @@
 using namespace jar;
 using namespace testing;
 
-static const std::string_view kConfigValue = R"({
-    "wit": {
-      "remote": {
-        "host": "api.wit.ai",
-        "port": "https",
-        "auth": "Bearer 123456789"
-      }
-    }
-})";
+static const std::string_view kConfigValue = R"(
+wit =
+{
+    remote =
+    {
+        host = "api.wit.ai";
+        port = "https";
+        auth = "Bearer 123456789";
+    };
+};
+)";
 
 TEST(ConfigTest, Load)
 {

@@ -3,12 +3,7 @@
 #include <jarvisto/Logger.hpp>
 #include <jarvisto/Utils.hpp>
 
-#include <boost/property_tree/json_parser.hpp>
-
-#include <fstream>
-
 namespace fs = std::filesystem;
-namespace pt = boost::property_tree;
 
 namespace jar {
 
@@ -26,49 +21,31 @@ ConfigLoader::load()
 }
 
 bool
-ConfigLoader::load(std::istream& stream)
-{
-    try {
-        pt::ptree tree;
-        pt::read_json(stream, tree);
-        doParse(tree);
-    } catch (const pt::json_parser_error& e) {
-        LOGE("Unable to parse <{}> config file on <{}> line: {}",
-             e.filename(),
-             e.line(),
-             e.message());
-        return false;
-    }
-    return true;
-}
-
-bool
 ConfigLoader::load(std::string_view str)
 {
-    if (str.empty()) {
-        LOGE("Config is empty");
-        return false;
+    try {
+        libconfig::Config cfg;
+        cfg.readString(str.data());
+        return doParse(cfg);
+    } catch (const libconfig::ParseException& e) {
+        LOGE("Unable to parse string on <{}> line: {}", e.getLine(), e.getError());
     }
-    std::istringstream stream{std::string{str}, std::ios::in};
-    return load(stream);
+    return false;
 }
 
 bool
-ConfigLoader::load(fs::path path)
+ConfigLoader::load(std::filesystem::path file)
 {
-    std::error_code error;
-    if (!fs::exists(path, error)) {
-        LOGE("Config file <{}> doesn't exist", path);
-        return false;
+    try {
+        libconfig::Config cfg;
+        cfg.readFile(file);
+        return doParse(cfg);
+    } catch (const libconfig::FileIOException& e) {
+        LOGE("Unable to read file: {}", e.what());
+    } catch (const libconfig::ParseException& e) {
+        LOGE("Unable to parse <{}> file on <{}> line: {}", e.getFile(), e.getLine(), e.getError());
     }
-
-    std::ifstream stream{path};
-    if (!stream) {
-        LOGE("Unable to open file stream for <{}> config file", path);
-        return false;
-    }
-
-    return load(stream);
+    return false;
 }
 
 } // namespace jar

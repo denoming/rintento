@@ -22,41 +22,25 @@ Config::remoteAuth() const
     return _remoteAuth;
 }
 
-void
-Config::doParse(const boost::property_tree::ptree& root)
+bool
+Config::doParse(const libconfig::Config& config)
 {
-    if (auto hostOpt = root.get_optional<std::string>("wit.remote.host"); hostOpt) {
-        if (hostOpt->empty()) {
-            LOGW("Invalid 'host' option value");
-            _remoteHost.clear();
-        } else {
-            _remoteHost = std::move(*hostOpt);
-        }
-    } else {
+    if (not config.lookupValue("wit.remote.host", _remoteHost)) {
         LOGW("Mandatory 'host' option value is absent");
+        return false;
     }
 
-    if (auto portOpt = root.get_optional<std::string>("wit.remote.port"); portOpt) {
-        if (portOpt->empty()) {
-            LOGW("Invalid 'port' option value: {}", *portOpt);
-            _remotePort.clear();
-        } else {
-            _remotePort = std::move(*portOpt);
-        }
-    } else {
+    if (not config.lookupValue("wit.remote.port", _remotePort)) {
         LOGW("Mandatory 'port' option value is absent");
+        return false;
     }
 
-    if (auto authOpt = root.get_optional<std::string>("wit.remote.auth"); authOpt) {
-        if (authOpt->empty()) {
-            LOGW("Invalid 'auth' option value");
-            _remoteAuth.clear();
-        } else {
-            _remoteAuth = std::move(*authOpt);
-        }
-    } else {
+    if (not config.lookupValue("wit.remote.auth", _remoteAuth)) {
         LOGW("Mandatory 'auth' option value is absent");
+        return false;
     }
+
+    return true;
 }
 
 } // namespace jar::wit

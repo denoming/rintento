@@ -10,6 +10,8 @@ target_include_directories(${TARGET}
 target_link_libraries(${TARGET}
     PUBLIC Jarvisto::Jarvisto
            Boost::headers
+           libconfig::config
+           libconfig::config++
 )
 
 target_sources(${TARGET}

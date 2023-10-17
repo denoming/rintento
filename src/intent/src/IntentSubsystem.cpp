@@ -1,9 +1,8 @@
 #include "intent/IntentSubsystem.hpp"
 
-#include "intent/AutomationConfig.hpp"
 #include "intent/AutomationPerformer.hpp"
 #include "intent/AutomationRegistry.hpp"
-#include "intent/GeneralConfig.hpp"
+#include "intent/Config.hpp"
 #include "intent/RecognitionServer.hpp"
 #include "rintento/Options.hpp"
 #ifdef ENABLE_WIT_SUPPORT
@@ -41,16 +40,13 @@ public:
     initialize(Application& /*application*/)
     {
         _registry = std::make_shared<AutomationRegistry>();
-        _generalConfig = std::make_unique<GeneralConfig>();
-        if (not _generalConfig->load()) {
-            LOGE("Unable to load general config");
-        }
-        _automationConfig = std::make_unique<AutomationConfig>(_registry);
-        if (not _automationConfig->load()) {
-            LOGE("Unable to load automation config");
+
+        _config = std::make_unique<Config>(_registry);
+        if (not _config->load()) {
+            LOGE("Unable to load config");
         }
 
-        _worker = std::make_unique<Worker>(_generalConfig->serverThreads());
+        _worker = std::make_unique<Worker>(_config->serverThreads());
         _performer = AutomationPerformer::create(_worker->executor(), _registry);
         _factory = getFactory();
         if (not _factory) {
@@ -66,7 +62,7 @@ public:
         BOOST_ASSERT(_worker);
         _worker->start();
 
-        const auto port = _generalConfig->serverPort();
+        const auto port = _config->serverPort();
         BOOST_ASSERT(_server);
         _server->listen(port);
     }
@@ -86,14 +82,12 @@ public:
         _factory.reset();
         _worker.reset();
         _performer.reset();
+        _config.reset();
         _registry.reset();
-        _generalConfig.reset();
-        _automationConfig.reset();
     }
 
 private:
-    std::unique_ptr<GeneralConfig> _generalConfig;
-    std::unique_ptr<AutomationConfig> _automationConfig;
+    std::unique_ptr<Config> _config;
     std::shared_ptr<AutomationRegistry> _registry;
     std::shared_ptr<AutomationPerformer> _performer;
     std::unique_ptr<Worker> _worker;

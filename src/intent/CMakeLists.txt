@@ -36,8 +36,7 @@ target_sources(${TARGET}
             src/DeferredJob.cpp
             src/ScriptAction.cpp
             src/SequentLaunchStrategy.cpp
-            src/GeneralConfig.cpp
-            src/AutomationConfig.cpp
+            src/Config.cpp
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_23)

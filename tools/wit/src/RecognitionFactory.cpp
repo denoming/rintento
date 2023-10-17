@@ -15,7 +15,7 @@ RecognitionFactory::RecognitionFactory()
         _remotePort = config.remotePort();
         _remoteAuth = config.remoteAuth();
     } else {
-        LOGE("Unable to load WIT configuration");
+        LOGE("Unable to load WIT config");
     }
 }
 
