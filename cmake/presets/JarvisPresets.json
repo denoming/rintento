@@ -1,0 +1,51 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
+  "include": [
+    "LegacyPresets.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "dc-jar-x86_64",
+      "hidden": true,
+      "toolchainFile": "$env{JAR_ROOT}/jarsdk-x86_64-linux.cmake"
+    },
+    {
+      "name": "dc-jar-aarch64",
+      "hidden": true,
+      "toolchainFile": "$env{JAR_ROOT}/jarsdk-aarch64-linux.cmake"
+    },
+    {
+      "name": "dc-debug-jar-x86_64",
+      "hidden": true,
+      "inherits": ["dc-debug", "dc-jar-x86_64"],
+      "displayName": "Debug - Jarvis (x86_64)",
+      "binaryDir": "build-debug-jar-x86_64"
+    },
+    {
+      "name": "dc-debug-jar-aarch64",
+      "hidden": true,
+      "inherits": ["dc-debug", "dc-jar-aarch64"],
+      "displayName": "Debug - Jarvis (aarch64)",
+      "binaryDir": "build-debug-jar-aarch64"
+    },
+    {
+      "name": "dc-release-jar-x86_64",
+      "hidden": true,
+      "inherits": ["dc-release", "dc-jar-x86_64"],
+      "displayName": "Release - Jarvis (x86_64)",
+      "binaryDir": "build-release-jar-x86_64"
+    },
+    {
+      "name": "dc-release-jar-aarch64",
+      "hidden": true,
+      "inherits": ["dc-release", "dc-jar-aarch64"],
+      "displayName": "Release - Jarvis (aarch64)",
+      "binaryDir": "build-release-jar-aarch64"
+    }
+  ]
+}

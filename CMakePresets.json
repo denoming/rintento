@@ -1,0 +1,13 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
+  "include": [
+    "cmake/presets/LegacyPresets.json",
+    "cmake/presets/VcpkgPresets.json",
+    "cmake/presets/JarvisPresets.json"
+  ]
+}
