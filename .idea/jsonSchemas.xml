@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="JsonSchemaMappingsProjectConfiguration">
+    <state>
+      <map>
+        <entry key="CMake Presets Schema">
+          <value>
+            <SchemaInfo>
+              <option name="name" value="CMake Presets Schema" />
+              <option name="relativePathToSchema" value="jar://$APPLICATION_HOME_DIR$/plugins/clion-ide/lib/clion-ide.jar!/presets/schema.json" />
+              <option name="schemaVersion" value="JSON Schema version 7" />
+              <option name="applicationDefined" value="true" />
+              <option name="patterns">
+                <list>
+                  <Item>
+                    <option name="path" value="cmake/presets/JarvisPresets.json" />
+                  </Item>
+                  <Item>
+                    <option name="path" value="cmake/presets/LegacyPresets.json" />
+                  </Item>
+                  <Item>
+                    <option name="path" value="cmake/presets/VcpkgPresets.json" />
+                  </Item>
+                </list>
+              </option>
+            </SchemaInfo>
+          </value>
+        </entry>
+      </map>
+    </state>
+  </component>
+</project>
