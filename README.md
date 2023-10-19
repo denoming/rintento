@@ -27,4 +27,8 @@ The service provides following public API (see [api.md](docs/api.md)).
 
 ## Audio
 
-The service requires humar speech in specific format (see [audio.md](doc/audio.md)).
+The service requires human speech in specific format (see [audio.md](doc/audio.md)).
+
+## License
+
+See the [LICENSE](LICENSE.md) file for license rights and limitations (MIT).
