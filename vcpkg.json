@@ -1,6 +1,11 @@
 {
   "name": "rintento",
-  "version": "1.0.1",
+  "version-semver": "1.0.1",
+  "license": "MIT",
+  "maintainers": [
+    "Denys Asauliak <d.asauliak@gmail.com>"
+  ],
+  "supports": "linux and !windows",
   "dependencies": [
     "jarvisto",
     {
