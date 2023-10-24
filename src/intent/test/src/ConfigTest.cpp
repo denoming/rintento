@@ -55,17 +55,13 @@ automations =
         actions =
         (
             {
-                type = "script";
-                exec = "program2";
-                args = ["-arg1", "-arg2", "value"];
-                home = "/path/to/home/directory2";
-                env =
-                {
-                    env3 = "VAR3";
-                    env4 = "VAR4";
-                };
-                inheritParentEnv = true;
-                timeout = 3000;
+                type = "mqtt";
+                topic = "z2m/hallway/light-switch1/set";
+                value = "{\"state\": \"ON\"}";
+                host = "192.168.1.43";
+                port = 1883;
+                user = "denys";
+                pass = "123456";
             }
         );
     }

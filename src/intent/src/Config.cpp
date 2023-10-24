@@ -2,6 +2,7 @@
 
 #include "intent/Automation.hpp"
 #include "intent/IAutomationRegistry.hpp"
+#include "intent/MqttAction.hpp"
 #include "intent/ScriptAction.hpp"
 #include "intent/SequentLaunchStrategy.hpp"
 #include "rintento/Options.hpp"
@@ -15,6 +16,40 @@ namespace fs = std::filesystem;
 namespace jar {
 
 namespace {
+
+Action::Ptr
+parseMqttAction(const libconfig::Setting& root)
+{
+    std::string topic;
+    if (not root.lookupValue("topic", topic)) {
+        LOGE("No 'topic' field");
+        return {};
+    }
+    std::string value;
+    if (not root.lookupValue("value", value)) {
+        LOGE("No 'value' field");
+        return {};
+    }
+    std::string host;
+    if (not root.lookupValue("host", host)) {
+        LOGE("No 'host' field");
+        return {};
+    }
+    uint32_t port{MqttAction::kDefaultPort};
+    root.lookupValue("port", port);
+
+    auto action = MqttAction::create(std::move(topic), std::move(value), std::move(host), port);
+    BOOST_ASSERT(action);
+
+    std::string user, pass;
+    if (root.lookupValue("user", user)) {
+        if (root.lookupValue("pass", pass)) {
+            action->credentials(std::move(user), std::move(pass));
+        }
+    }
+
+    return action;
+}
 
 Action::Ptr
 parseScriptAction(const libconfig::Setting& root)
@@ -78,6 +113,12 @@ parseActions(const libconfig::Setting& root)
         } else {
             if (type == "script") {
                 if (auto action = parseScriptAction(root[i]); action) {
+                    actions.push_back(std::move(action));
+                }
+                continue;
+            }
+            if (type == "mqtt") {
+                if (auto action = parseMqttAction(root[i]); action) {
                     actions.push_back(std::move(action));
                 }
                 continue;

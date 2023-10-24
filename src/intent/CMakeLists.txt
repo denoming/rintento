@@ -35,6 +35,7 @@ target_sources(${TARGET}
             src/AutomationRegistry.cpp
             src/DeferredJob.cpp
             src/ScriptAction.cpp
+            src/MqttAction.cpp
             src/SequentLaunchStrategy.cpp
             src/Config.cpp
 )
