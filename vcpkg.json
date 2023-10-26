@@ -17,7 +17,7 @@
       "version>=": "1.81.0"
     },
     {
-      "name": "boost-property-tree",
+      "name": "boost-url",
       "version>=": "1.81.0"
     },
     {
@@ -38,10 +38,6 @@
       "features": [
         "ssl"
       ]
-    },
-    {
-      "name": "boost-beast",
-      "version>=": "1.81.0"
     },
     "spdlog",
     "libconfig"
