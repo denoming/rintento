@@ -2,6 +2,9 @@
 
 #include "intent/Action.hpp"
 
+#include <string>
+#include <optional>
+
 namespace jar {
 
 class MqttAction : public Action {
