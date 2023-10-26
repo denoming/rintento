@@ -3,12 +3,11 @@
 set -e
 
 DOCKER_IMAGE_NAME=my/rintento-dev-image
-
 USER_NAME=${USER}
 USER_UID=$(id -u)
 USER_GID=$(id -g)
-
-PROJECT_DIR=$(dirname "$(dirname "$(realpath -s $0)")")
+FILES_DIR=$(dirname "$(dirname "$(realpath -s $0)")")
+SHARE_DIR="/usr/share/rintento"
 
 command -v docker > /dev/null
 if [ $? != 0 ]; then
@@ -22,7 +21,9 @@ build_image() {
   --build-arg UNAME=${USER_NAME} \
   --build-arg UID=${USER_UID} \
   --build-arg GID=${USER_GID} \
-  --file ${PROJECT_DIR}/Dockerfile ${PROJECT_DIR}
+  --build-arg FILES_DIR=${FILES_DIR} \
+  --build-arg SHARE_DIR=${SHARE_DIR} \
+  ${FILES_DIR}
   "
 
   if [ -z "$(docker images -q ${DOCKER_IMAGE_NAME})" ]; then
@@ -37,11 +38,12 @@ run_image() {
   --hostname "${USER_NAME}" \
   --rm \
   --user="${USER_UID}:${USER_GID}" \
-  --volume="${PROJECT_DIR}:${PROJECT_DIR}:rw" \
-  --volume="$HOME/.local/share/rintento:$HOME/.local/share/rintento" \
+  --volume="${HOME}/.ssh:${HOME}/.ssh" \
+  --volume="${FILES_DIR}:${FILES_DIR}:rw" \
+  --volume="${HOME}/.local/share/rintento:${HOME}/.local/share/rintento" \
   --network=bridge \
-  --workdir="${PROJECT_DIR}" \
-  --env RINTENTO_CONFIG="$HOME/.local/share/rintento/rintento-config.cfg" \
+  --workdir="${FILES_DIR}" \
+  --env RINTENTO_CONFIG="${HOME}/.local/share/rintento/rintento-config.cfg" \
   "${DOCKER_IMAGE_NAME}")
 
   if [ -n "$(docker images -q ${DOCKER_IMAGE_NAME})" ]; then

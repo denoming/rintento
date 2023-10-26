@@ -9,5 +9,51 @@
     "cmake/presets/LegacyPresets.json",
     "cmake/presets/VcpkgPresets.json",
     "cmake/presets/JarvisPresets.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "debug-wit",
+      "inherits": ["dc-debug-vcpkg"],
+      "binaryDir": "build-debug",
+      "displayName": "Debug (Wit)",
+      "cacheVariables": {
+        "ENABLE_CLI": true,
+        "ENABLE_WIT_SUPPORT": true
+      }
+    },
+    {
+      "name": "release-wit",
+      "inherits": ["dc-release-vcpkg"],
+      "binaryDir": "build-release",
+      "displayName": "Release (Wit)",
+      "cacheVariables": {
+        "ENABLE_CLI": true,
+        "ENABLE_WIT_SUPPORT": true
+      }
+    },
+    {
+      "name": "debug-docker-wit",
+      "inherits": ["debug-wit"],
+      "binaryDir": "build-debug-docker",
+      "displayName": "Debug [Docker] (Wit)"
+    },
+    {
+      "name": "release-docker-wit",
+      "inherits": ["release-wit"],
+      "binaryDir": "build-release-docker",
+      "displayName": "Release [Docker] (Wit)"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "component-tests",
+      "configurePreset": "debug-docker-wit",
+      "displayName": "Component Tests",
+      "filter": {
+        "include": {
+          "label": "Component"
+        }
+      }
+    }
   ]
 }

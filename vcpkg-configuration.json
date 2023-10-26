@@ -7,7 +7,7 @@
   "registries": [
     {
       "kind": "git",
-      "baseline": "688d90122a509b8f546d0e4c539c07ae9d77b00d",
+      "baseline": "4fccee83ab3d3bd98af1afa901a1ee1569a73ab5",
       "repository": "git@github.com:karz0n/vcpkg-registry.git",
       "packages": [ "automotive-dlt", "mosquitto", "jarvisto", "libconfig" ]
     }
