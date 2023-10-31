@@ -12,42 +12,68 @@
   ],
   "configurePresets": [
     {
-      "name": "debug-wit",
+      "name": "debug",
       "inherits": ["dc-debug-vcpkg"],
       "binaryDir": "build-debug",
-      "displayName": "Debug (Wit)",
+      "displayName": "Debug",
       "cacheVariables": {
         "ENABLE_CLI": true,
         "ENABLE_WIT_SUPPORT": true
       }
     },
     {
-      "name": "release-wit",
+      "name": "release",
       "inherits": ["dc-release-vcpkg"],
       "binaryDir": "build-release",
-      "displayName": "Release (Wit)",
+      "displayName": "Release",
       "cacheVariables": {
         "ENABLE_CLI": true,
         "ENABLE_WIT_SUPPORT": true
       }
     },
     {
-      "name": "debug-docker-wit",
-      "inherits": ["debug-wit"],
+      "name": "debug-docker",
+      "inherits": ["debug"],
       "binaryDir": "build-debug-docker",
-      "displayName": "Debug [Docker] (Wit)"
+      "displayName": "Debug [Docker]"
     },
     {
-      "name": "release-docker-wit",
-      "inherits": ["release-wit"],
+      "name": "release-docker",
+      "inherits": ["release"],
       "binaryDir": "build-release-docker",
-      "displayName": "Release [Docker] (Wit)"
+      "displayName": "Release [Docker]"
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "build-debug",
+      "displayName": "Build [Debug]",
+      "configurePreset": "debug",
+      "jobs": 0
+    },
+    {
+      "name": "build-release",
+      "displayName": "Build [Release]",
+      "configurePreset": "release",
+      "jobs": 0
+    },
+    {
+      "name": "build-debug-docker",
+      "displayName": "Build [Debug]",
+      "configurePreset": "debug-docker",
+      "jobs": 0
+    },
+    {
+      "name": "build-release-docker",
+      "displayName": "Build [Release]",
+      "configurePreset": "release-docker",
+      "jobs": 0
     }
   ],
   "testPresets": [
     {
       "name": "component-tests",
-      "configurePreset": "debug-docker-wit",
+      "configurePreset": "debug-docker",
       "displayName": "Component Tests",
       "filter": {
         "include": {

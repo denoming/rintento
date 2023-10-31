@@ -7,8 +7,6 @@ Upon client request service initiates recognizing and running previously configu
 
 ![](asset/misc/overview.png)
 
-## Purpose
-
 The main purpose of the service is running an action upon client requests.
 Where each client request represented by:
 * text message (e.g. "turn on the light")
@@ -17,17 +15,47 @@ Where each client request represented by:
 After recognizing intent the service perform matching obtained intents and previously configured action.
 After matching procedure the service runs particular actions.
 
-## Setup
+For more information please visit [documentation file](doc%2Findex.md).
 
-The service requires additional setup (see [setup.md](doc/setup.md)).
+## Building
 
-## API
+### Locally
 
-The service provides following public API (see [api.md](docs/api.md)).
+Debug configuration:
+```shell
+$ cmake --preset debug
+$ cmake --build --preset build-debug
+```
+Release configuration:
+```shell
+$ cmake --preset release
+$ cmake --build --preset build-release
+```
 
-## Audio
+### Inside docker
 
-The service requires human speech in specific format (see [audio.md](doc/audio.md)).
+Debug configuration:
+```shell
+$ bash scripts/run-test-env.sh
+$ cmake --preset debug-docker
+$ cmake --build --preset build-debug-docker
+```
+Release configuration:
+```shell
+$ bash scripts/run-test-env.sh
+$ cmake --preset release-docker
+$ cmake --build --preset build-release-docker
+```
+
+## Testing
+
+Run component tests:
+```shell
+$ bash scripts/run-test-env.sh
+$ cmake --preset debug-docker
+$ cmake --build --preset build-debug-docker
+$ ctest --preset "component-tests"
+```
 
 ## License
 
