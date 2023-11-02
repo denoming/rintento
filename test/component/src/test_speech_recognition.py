@@ -6,7 +6,7 @@ import pathlib
 
 LOGGER = logging.getLogger(__name__)
 CHUNK_SIZE = 512
-AUDIO_FILE = pathlib.Path.cwd().joinpath("asset/audio/turn-off-the-light-bedroom.wav")
+AUDIO_FILE = pathlib.Path.cwd().joinpath("asset/audio/turn-off-light-bedroom.wav")
 
 
 def audio_data_gen():

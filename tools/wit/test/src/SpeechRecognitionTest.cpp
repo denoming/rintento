@@ -62,7 +62,7 @@ TEST_F(SpeechRecognitionTest, RecognizeSpeech)
         });
 
     /* Spawn data provider coroutine */
-    static const fs::path kAudioFilePath{kAssetAudioPath / "turn-off-the-light-bedroom.wav"};
+    static const fs::path kAudioFilePath{kAssetAudioPath / "turn-off-light-bedroom.wav"};
     io::co_spawn(
         context.get_executor(),
         [channel]() -> io::awaitable<void> {
