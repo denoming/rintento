@@ -14,9 +14,6 @@ DeferredJob::complete(std::error_code ec)
     if (_onComplete) {
         _onComplete(ec);
     }
-
-    /* Nullify callable object  */
-    _onComplete = nullptr;
 }
 
 } // namespace jar

@@ -27,18 +27,6 @@ SequentLaunchStrategy::launch(io::any_io_executor executor, Action::List actions
     executeNextAction();
 }
 
-void
-SequentLaunchStrategy::reset()
-{
-    _executor = nullptr;
-
-    _currIndex = 0;
-    _nextIndex = 0;
-
-    _actions.clear();
-    _actions.shrink_to_fit();
-}
-
 Action::Ptr
 SequentLaunchStrategy::currentAction() const
 {
@@ -64,7 +52,7 @@ void
 SequentLaunchStrategy::executeNextAction()
 {
     BOOST_ASSERT(_nextIndex < _actions.size());
-    auto& nextAction = _actions[_nextIndex];
+    auto nextAction = _actions[_nextIndex];
     _currIndex = _nextIndex++;
 
     BOOST_ASSERT(nextAction);
@@ -84,13 +72,11 @@ SequentLaunchStrategy::onActionDone(std::error_code ec)
     LOGI("Executing the <{}> action is done: result<{}>", currentActionIndex() + 1, ec.message());
 
     if (ec) {
-        reset();
         complete(ec);
     } else {
         if (hasNextAction()) {
             executeNextAction();
         } else {
-            reset();
             complete();
         }
     }

@@ -20,9 +20,6 @@ public:
     launch(io::any_io_executor executor, Action::List actions) final;
 
 private:
-    void
-    reset();
-
     [[nodiscard]] Action::Ptr
     currentAction() const;
 

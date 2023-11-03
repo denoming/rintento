@@ -75,7 +75,7 @@ Automation::clone()
 {
     Action::List actions;
     std::for_each(_actions.cbegin(), _actions.cend(), [&](const Action::Ptr& action) {
-        actions.emplace_back(action->clone());
+        actions.push_back(action->clone());
     });
     BOOST_ASSERT(not actions.empty());
 

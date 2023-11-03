@@ -42,14 +42,14 @@ AutomationPerformer::perform(const RecognitionResult& result)
     const auto id = automation->id();
     _runningList.insert({id, automation});
 
-    const auto alias = automation->alias();
-    automation->onComplete([id, alias, weakSelf = weak_from_this()](std::error_code ec) {
-        if (auto self = weakSelf.lock()) {
-            self->onAutomationDone(id, alias, ec);
-        }
-    });
+    automation->onComplete(
+        [id, alias = automation->alias(), weakSelf = weak_from_this()](std::error_code ec) {
+            if (auto self = weakSelf.lock()) {
+                self->onAutomationDone(id, alias, ec);
+            }
+        });
 
-    LOGI("Execute <{} ({})> automation", alias, id);
+    LOGI("Execute <{} ({})> automation", automation->alias(), id);
     automation->execute(_executor);
 }
 
