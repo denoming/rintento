@@ -49,12 +49,34 @@ $ cmake --build --preset build-release-docker
 
 ## Testing
 
-Run component tests:
+Prerequisites:
+* application at [wit.ai](https://wit.ai/apps) service is present (`asset/wit.ai` dir contains config and exported data); 
+* test preset in `CMakeUserPresets.json` file at the root of the project.
+
+### Component tests
+
+Custom test preset template for component tests:
+```
+{
+  "version": 6,
+  "testPresets": [
+    {
+      "name": "my-component-tests",
+      "inherits": ["component-tests"],
+      "environment": {
+        "RINTENTO_WIT_AUTH": "PUT-YOUR-AUTH-TOKEN-HERE"
+      }
+    }
+  ]
+}
+```
+
+Running component tests:
 ```shell
 $ bash scripts/run-test-env.sh
 $ cmake --preset debug-docker
 $ cmake --build --preset build-debug-docker
-$ ctest --preset "component-tests"
+$ ctest --preset "my-component-tests"
 ```
 
 ## License

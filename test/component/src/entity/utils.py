@@ -1,3 +1,4 @@
+import pathlib
 from datetime import date
 from urllib.parse import urlencode
 
@@ -21,3 +22,10 @@ def get_speech_target() -> str:
     return "/speech?" + urlencode({
         'v': date.today().strftime("%Y%m%d")
     })
+
+
+def replace_keywords(file_path: pathlib.Path, keywords: dict):
+    data = file_path.read_text()
+    for key, value in keywords.items():
+        data = data.replace(key, value)
+    file_path.write_text(data)

@@ -10,9 +10,13 @@ class Server:
     __process: subprocess.Popen | None
     __executable: pathlib.Path
 
-    def __init__(self, executable: pathlib.Path):
+    def __init__(self, executable: pathlib.Path, stdout: pathlib.Path = "/tmp/stdout.txt"):
+        self.__stdout = open(stdout, "wt")
         self.__process = None
         self.__executable = executable
+
+    def __del__(self):
+        self.__stdout.close()
 
     def active(self) -> bool:
         if self.__process is not None:
@@ -27,7 +31,8 @@ class Server:
         try:
             self.__process = subprocess.Popen(
                 args=[f"{self.__executable.absolute()}"],
-                stdout=subprocess.PIPE
+                stdout=self.__stdout,
+                stderr=subprocess.STDOUT
             )
             rc = self.__process.poll()
             if rc is None:
