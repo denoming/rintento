@@ -1,4 +1,4 @@
-FROM python:3.11-bookworm
+FROM python:3.12-bookworm
 
 ARG UNAME=dev
 ARG UID=1000
@@ -11,17 +11,13 @@ ENV VCPKG_ROOT="/home/$UNAME/.vcpkg"
 USER root
 
 RUN apt update && \
-    apt install -y build-essential sudo vim git cmake ninja-build curl tar zip unzip
+    apt install -y build-essential sudo vim git cmake ninja-build gdb curl tar zip unzip
 
 # Create default user
 RUN groupadd -f -g $GID $UNAME
 RUN useradd -l -g $GID --uid $UID -ms /bin/bash $UNAME
 RUN echo $UNAME:$UNAME | chpasswd
 RUN echo $UNAME 'ALL=(ALL) NOPASSWD:SETENV: ALL' > /etc/sudoers.d/$UNAME || true
-
-# Install runner package
-ADD --chown=$UNAME tools/runner $SHARE_DIR/runner
-RUN pip install -q -e $SHARE_DIR/runner
 
 # Install component tests packages
 ADD --chown=$UNAME test/component/requirements.txt $SHARE_DIR/test/component/requirements.txt
