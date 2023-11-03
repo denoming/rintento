@@ -17,7 +17,7 @@ using namespace jar;
 
 namespace fs = std::filesystem;
 
-class SpeechRecognitionTest : public Test {
+class WitSpeechRecognitionTest : public Test {
 public:
     const std::size_t kChannelCapacity{512};
     const fs::path kAssetAudioPath{fs::current_path() / "asset" / "audio"};
@@ -35,9 +35,9 @@ public:
     wit::RecognitionFactory factory;
 };
 
-wit::Config SpeechRecognitionTest::config;
+wit::Config WitSpeechRecognitionTest::config;
 
-TEST_F(SpeechRecognitionTest, RecognizeSpeech)
+TEST_F(WitSpeechRecognitionTest, RecognizeSpeech)
 {
     io::io_context context{1};
 
@@ -93,7 +93,7 @@ TEST_F(SpeechRecognitionTest, RecognizeSpeech)
     context.run();
 }
 
-TEST_F(SpeechRecognitionTest, CancelRecognizeSpeech)
+TEST_F(WitSpeechRecognitionTest, CancelRecognizeSpeech)
 {
     io::io_context context{1};
 

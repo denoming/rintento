@@ -8,13 +8,13 @@ using namespace testing;
 
 #include <regex>
 
-TEST(UtilsTest, MessageTarget)
+TEST(WitUtilsTest, MessageTarget)
 {
     static const std::string_view in{"turn on the light"};
     EXPECT_THAT(wit::messageTarget(in), Eq("/message?q=turn+on+the+light"));
 }
 
-TEST(UtilsTest, MessageTargetWithDate)
+TEST(WitUtilsTest, MessageTargetWithDate)
 {
     static const std::string_view in{"turn on the light"};
     const auto out = wit::messageTargetWithDate(in);
@@ -22,13 +22,13 @@ TEST(UtilsTest, MessageTargetWithDate)
     EXPECT_THAT(std::regex_match(out, re), IsTrue());
 }
 
-TEST(UtilsTest, SpeechTarget)
+TEST(WitUtilsTest, SpeechTarget)
 {
     const auto out = wit::speechTarget();
     EXPECT_THAT(out, Eq("/speech"));
 }
 
-TEST(UtilsTest, SpeechTargetWithDate)
+TEST(WitUtilsTest, SpeechTargetWithDate)
 {
     const auto out = wit::speechTargetWithDate();
     static const std::regex re{R"(\/speech\?v=\d{8})"};

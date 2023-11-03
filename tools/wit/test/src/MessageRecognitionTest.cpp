@@ -15,7 +15,7 @@
 using namespace testing;
 using namespace jar;
 
-class MessageRecognitionTest : public Test {
+class WitMessageRecognitionTest : public Test {
 public:
     const std::size_t kChannelCapacity{64};
 
@@ -32,9 +32,9 @@ public:
     wit::RecognitionFactory factory;
 };
 
-wit::Config MessageRecognitionTest::config;
+wit::Config WitMessageRecognitionTest::config;
 
-TEST_F(MessageRecognitionTest, RecognizeMessage)
+TEST_F(WitMessageRecognitionTest, RecognizeMessage)
 {
     static const std::string_view kMessage{"turn off the light in the bedroom"};
 
@@ -78,7 +78,7 @@ TEST_F(MessageRecognitionTest, RecognizeMessage)
     context.run();
 }
 
-TEST_F(MessageRecognitionTest, CancelRecognizeMessage)
+TEST_F(WitMessageRecognitionTest, CancelRecognizeMessage)
 {
     io::io_context context{1};
 

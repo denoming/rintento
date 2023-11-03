@@ -19,7 +19,7 @@ wit =
 };
 )";
 
-TEST(ConfigTest, Load)
+TEST(WitConfigTest, Load)
 {
     wit::Config config;
     ASSERT_TRUE(config.load(kConfigValue));

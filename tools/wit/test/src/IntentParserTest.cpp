@@ -287,7 +287,7 @@ isUtterance(std::string_view text,
                  Field("final", &wit::Utterance::final, final));
 }
 
-TEST(IntentParserTest, ParseMessageResult1)
+TEST(WitIntentParserTest, ParseMessageResult1)
 {
     const auto entries = wit::IntentParser::parseMessageResult(kMessageResult1);
     ASSERT_TRUE(entries.has_value());
@@ -302,7 +302,7 @@ TEST(IntentParserTest, ParseMessageResult1)
                     Contains(isConfidentIntent("get_air_quality_status", 0.9f)))));
 }
 
-TEST(IntentParserTest, ParseMessageResult2)
+TEST(WitIntentParserTest, ParseMessageResult2)
 {
     const auto entries = wit::IntentParser::parseMessageResult(kMessageResult2);
     ASSERT_TRUE(entries.has_value());
@@ -318,7 +318,7 @@ TEST(IntentParserTest, ParseMessageResult2)
                     Contains(isConfidentIntent("get_air_quality_status", 0.9f)))));
 }
 
-TEST(IntentParserTest, ParseSpeechResult)
+TEST(WitIntentParserTest, ParseSpeechResult)
 {
     EXPECT_THAT(
         wit::IntentParser::parseSpeechResult(kSpeechInput),
@@ -326,7 +326,7 @@ TEST(IntentParserTest, ParseSpeechResult)
             "Turn off the light", IsEmpty(), Contains(isConfidentIntent("light_off", 0.9f))))));
 }
 
-TEST(IntentParserTest, ErrorParse)
+TEST(WitIntentParserTest, ErrorParse)
 {
     static const std::string_view kInvalidResult{R"(
         {
@@ -340,7 +340,7 @@ TEST(IntentParserTest, ErrorParse)
     EXPECT_FALSE(wit::IntentParser::parseSpeechResult(kInvalidResult));
 }
 
-TEST(IntentParserTest, ParseEmpty)
+TEST(WitIntentParserTest, ParseEmpty)
 {
     EXPECT_FALSE(wit::IntentParser::parseMessageResult(""));
     EXPECT_FALSE(wit::IntentParser::parseSpeechResult(""));
