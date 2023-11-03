@@ -72,6 +72,16 @@
   ],
   "testPresets": [
     {
+      "name": "unit-tests",
+      "configurePreset": "debug-docker",
+      "displayName": "Unit Tests",
+      "filter": {
+        "include": {
+          "label": "Unit"
+        }
+      }
+    },
+    {
       "name": "component-tests",
       "configurePreset": "debug-docker",
       "displayName": "Component Tests",

@@ -25,5 +25,8 @@ install(
 )
 
 if (NOT CMAKE_CROSSCOMPILING)
-    gtest_discover_tests(${TARGET} WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+    gtest_discover_tests(${TARGET}
+        WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+        PROPERTIES LABELS "Unit"
+    )
 endif()
