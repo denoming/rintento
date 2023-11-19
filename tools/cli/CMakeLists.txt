@@ -19,7 +19,7 @@ target_link_libraries(${TARGET}
             Jarvisto::Jarvisto
             Rintento::Intent
             Rintento::Wit
-            SndFile::sndfile
+            PkgConfig::SndFile
 )
 
 target_compile_features(${TARGET} PRIVATE cxx_std_23)
