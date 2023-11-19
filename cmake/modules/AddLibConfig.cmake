@@ -1,4 +1,3 @@
-# Find libconfig package (C interface)
-find_package(libconfig REQUIRED)
-# Find libconfig++ package (C++ interface)
-find_package(libconfig++ REQUIRED NAMES libconfig CONFIGS libconfig++Config.cmake)
+find_package(PkgConfig)
+
+pkg_check_modules(LibConfig REQUIRED IMPORTED_TARGET libconfig++)
