@@ -8,33 +8,14 @@
   "supports": "linux and !windows",
   "dependencies": [
     "jarvisto",
-    {
-      "name": "boost-core",
-      "version>=": "1.85.0"
-    },
-    {
-      "name": "boost-json",
-      "version>=": "1.85.0"
-    },
-    {
-      "name": "boost-url",
-      "version>=": "1.85.0"
-    },
-    {
-      "name": "boost-process",
-      "version>=": "1.85.0"
-    },
-    {
-      "name": "boost-circular-buffer",
-      "version>=": "1.85.0"
-    },
-    {
-      "name": "boost-uuid",
-      "version>=": "1.85.0"
-    },
+    "boost-core",
+    "boost-json",
+    "boost-url",
+    "boost-process",
+    "boost-circular-buffer",
+    "boost-uuid",
     {
       "name": "boost-asio",
-      "version>=": "1.85.0",
       "features": [
         "ssl"
       ]
@@ -48,7 +29,6 @@
       "dependencies": [
         {
           "name": "libsndfile",
-          "version>=": "1.2.2",
           "default-features": false
         }
       ]
@@ -59,7 +39,6 @@
         "gtest",
         {
           "name": "libsndfile",
-          "version>=": "1.2.2",
           "default-features": false
         }
       ]
