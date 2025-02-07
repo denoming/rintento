@@ -16,7 +16,7 @@ target_include_directories(${TARGET}
 target_link_libraries(${TARGET}
     PRIVATE Boost::headers
             Boost::program_options
-            Jarvisto::Jarvisto
+            Jarvisto::Network
             Rintento::Intent
             Rintento::Wit
             PkgConfig::SndFile

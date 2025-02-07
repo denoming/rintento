@@ -3,7 +3,7 @@
 #include "common/Recognition.hpp"
 #include "wit/Types.hpp"
 
-#include <jarvisto/Http.hpp>
+#include <jarvisto/network/Http.hpp>
 
 namespace jar::wit {
 

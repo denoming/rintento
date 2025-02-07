@@ -4,7 +4,7 @@
 #include "intent/AutomationPerformer.hpp"
 #include "intent/RecognitionSession.hpp"
 
-#include <jarvisto/Logger.hpp>
+#include <jarvisto/core/Logger.hpp>
 
 #include <functional>
 

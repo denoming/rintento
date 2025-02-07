@@ -1,6 +1,6 @@
 #pragma once
 
-#include <jarvisto/Application.hpp>
+#include <jarvisto/core/Application.hpp>
 
 namespace jar {
 

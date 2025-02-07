@@ -2,7 +2,7 @@
 
 #include "intent/DeferredJob.hpp"
 
-#include <jarvisto/Asio.hpp>
+#include <jarvisto/network/Asio.hpp>
 
 #include <memory>
 #include <vector>

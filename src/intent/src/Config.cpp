@@ -9,7 +9,7 @@
 
 #include <boost/assert.hpp>
 
-#include <jarvisto/Logger.hpp>
+#include <jarvisto/core/Logger.hpp>
 
 namespace fs = std::filesystem;
 

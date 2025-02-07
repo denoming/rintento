@@ -7,7 +7,7 @@
 #include "wit/RecognitionFactory.hpp"
 #include "wit/Utils.hpp"
 
-#include <jarvisto/SecureContext.hpp>
+#include <jarvisto/network/SecureContext.hpp>
 
 #include <chrono>
 #include <exception>

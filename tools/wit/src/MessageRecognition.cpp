@@ -3,8 +3,8 @@
 #include "wit/IntentParser.hpp"
 #include "wit/Utils.hpp"
 
-#include <jarvisto/Http.hpp>
-#include <jarvisto/Logger.hpp>
+#include <jarvisto/core/Logger.hpp>
+#include <jarvisto/network/Http.hpp>
 
 #include <boost/assert.hpp>
 

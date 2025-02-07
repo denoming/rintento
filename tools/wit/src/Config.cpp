@@ -1,6 +1,6 @@
 #include "wit/Config.hpp"
 
-#include <jarvisto/Logger.hpp>
+#include <jarvisto/core/Logger.hpp>
 
 namespace jar::wit {
 

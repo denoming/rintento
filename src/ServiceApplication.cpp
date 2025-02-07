@@ -3,7 +3,7 @@
 #include "intent/IntentSubsystem.hpp"
 #include "rintento/Options.hpp"
 
-#include <jarvisto/LoggerInitializer.hpp>
+#include <jarvisto/core/LoggerInitializer.hpp>
 
 namespace jar {
 

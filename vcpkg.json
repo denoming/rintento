@@ -9,10 +9,12 @@
   "dependencies": [
     "jarvisto",
     "boost-core",
+    "boost-program-options",
     "boost-json",
     "boost-url",
     "boost-process",
     "boost-circular-buffer",
+    "boost-filesystem",
     "boost-uuid",
     {
       "name": "boost-asio",

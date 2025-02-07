@@ -1,6 +1,6 @@
 #include "intent/SequentLaunchStrategy.hpp"
 
-#include <jarvisto/Logger.hpp>
+#include <jarvisto/core/Logger.hpp>
 
 #include <boost/assert.hpp>
 

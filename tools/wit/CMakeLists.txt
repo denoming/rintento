@@ -8,7 +8,7 @@ target_include_directories(${TARGET}
 )
 
 target_link_libraries(${TARGET}
-    PUBLIC Jarvisto::Jarvisto
+    PUBLIC Jarvisto::Core
            Boost::headers
            Rintento::Coro
            Rintento::Common

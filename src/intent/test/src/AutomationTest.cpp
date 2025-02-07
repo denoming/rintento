@@ -5,7 +5,7 @@
 #include "intent/SequentLaunchStrategy.hpp"
 #include "test/Waiter.hpp"
 
-#include <jarvisto/Worker.hpp>
+#include <jarvisto/network/Worker.hpp>
 
 #include <chrono>
 #include <thread>

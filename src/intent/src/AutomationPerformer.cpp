@@ -3,7 +3,7 @@
 #include "intent/Automation.hpp"
 #include "intent/AutomationRegistry.hpp"
 
-#include <jarvisto/Logger.hpp>
+#include <jarvisto/core/Logger.hpp>
 
 #include <boost/assert.hpp>
 

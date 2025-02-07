@@ -1,6 +1,6 @@
 #pragma once
 
-#include <jarvisto/Timestamp.hpp>
+#include <jarvisto/core/Timestamp.hpp>
 
 #include <optional>
 #include <string>

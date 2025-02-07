@@ -9,9 +9,9 @@
 #include "wit/RecognitionFactory.hpp"
 #endif
 
-#include <jarvisto/Application.hpp>
-#include <jarvisto/Logger.hpp>
-#include <jarvisto/Worker.hpp>
+#include <jarvisto/core/Application.hpp>
+#include <jarvisto/core/Logger.hpp>
+#include <jarvisto/network/Worker.hpp>
 
 #include <boost/assert.hpp>
 

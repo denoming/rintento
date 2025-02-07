@@ -2,8 +2,8 @@
 
 #include "common/IRecognitionFactory.hpp"
 
-#include <jarvisto/Asio.hpp>
-#include <jarvisto/SecureContext.hpp>
+#include <jarvisto/network/Asio.hpp>
+#include <jarvisto/network/SecureContext.hpp>
 
 #include <optional>
 #include <string>

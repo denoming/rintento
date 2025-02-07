@@ -2,7 +2,7 @@
 
 #include "intent/Automation.hpp"
 
-#include <jarvisto/Logger.hpp>
+#include <jarvisto/core/Logger.hpp>
 
 namespace jar {
 

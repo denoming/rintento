@@ -1,6 +1,6 @@
 #pragma once
 
-#include <jarvisto/Asio.hpp>
+#include <jarvisto/network/Asio.hpp>
 
 #include <boost/circular_buffer.hpp>
 

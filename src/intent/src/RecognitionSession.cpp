@@ -7,7 +7,7 @@
 #include "intent/RecognitionSpeechHandler.hpp"
 #include "intent/RecognitionTerminalHandler.hpp"
 
-#include <jarvisto/Logger.hpp>
+#include <jarvisto/core/Logger.hpp>
 
 #include <boost/assert.hpp>
 

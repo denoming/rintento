@@ -6,7 +6,7 @@
 #include "wit/RecognitionFactory.hpp"
 #include "wit/SpeechRecognition.hpp"
 
-#include <jarvisto/SecureContext.hpp>
+#include <jarvisto/network/SecureContext.hpp>
 #include <sndfile.hh>
 
 #include <chrono>

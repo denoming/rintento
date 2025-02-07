@@ -1,7 +1,7 @@
 #include "intent/RecognitionHandler.hpp"
 
-#include <jarvisto/Http.hpp>
-#include <jarvisto/Logger.hpp>
+#include <jarvisto/core/Logger.hpp>
+#include <jarvisto/network/Http.hpp>
 
 #include <boost/assert.hpp>
 #include <boost/json.hpp>

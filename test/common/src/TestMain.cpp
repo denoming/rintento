@@ -1,4 +1,4 @@
-#include <jarvisto/LoggerInitializer.hpp>
+#include <jarvisto/core/LoggerInitializer.hpp>
 
 #include <gtest/gtest.h>
 

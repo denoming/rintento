@@ -3,7 +3,7 @@
 #include "intent/Action.hpp"
 #include "intent/LaunchStrategy.hpp"
 
-#include <jarvisto/Logger.hpp>
+#include <jarvisto/core/Logger.hpp>
 
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>

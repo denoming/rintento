@@ -1,6 +1,6 @@
 #include "wit/IntentParser.hpp"
 
-#include <jarvisto/DateTime.hpp>
+#include <jarvisto/core/DateTime.hpp>
 
 #include <boost/json.hpp>
 

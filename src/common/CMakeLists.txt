@@ -8,7 +8,8 @@ target_include_directories(${TARGET}
 )
 
 target_link_libraries(${TARGET}
-    PUBLIC Jarvisto::Jarvisto
+    PUBLIC Jarvisto::Core
+    PUBLIC Jarvisto::Network
            Boost::headers
            PkgConfig::LibConfig
 )

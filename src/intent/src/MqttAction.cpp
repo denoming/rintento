@@ -1,8 +1,8 @@
 #include "intent/MqttAction.hpp"
 
-#include <jarvisto/Formatters.hpp>
-#include <jarvisto/Logger.hpp>
-#include <jarvisto/MqttAsyncClient.hpp>
+#include <jarvisto/core/Logger.hpp>
+#include <jarvisto/network/Formatters.hpp>
+#include <jarvisto/network/MqttAsyncClient.hpp>
 
 #include <exception>
 

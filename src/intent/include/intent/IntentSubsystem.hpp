@@ -1,6 +1,6 @@
 #pragma once
 
-#include <jarvisto/Subsystem.hpp>
+#include <jarvisto/core/Subsystem.hpp>
 
 #include <memory>
 

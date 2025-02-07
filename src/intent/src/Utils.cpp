@@ -1,6 +1,6 @@
 #include "intent/Utils.hpp"
 
-#include "jarvisto/Logger.hpp"
+#include <jarvisto/core/Logger.hpp>
 
 #include <boost/url/encode.hpp>
 #include <boost/url/parse.hpp>

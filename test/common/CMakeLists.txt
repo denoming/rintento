@@ -14,7 +14,7 @@ target_include_directories(${TARGET}
 target_link_libraries(${TARGET}
     PUBLIC GTest::gtest
            GTest::gmock
-           Jarvisto::Jarvisto
+           Jarvisto::Core
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_23)

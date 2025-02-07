@@ -1,7 +1,7 @@
 #pragma once
 
-#include <jarvisto/Asio.hpp>
-#include <jarvisto/Http.hpp>
+#include <jarvisto/network/Asio.hpp>
+#include <jarvisto/network/Http.hpp>
 
 #include <memory>
 

@@ -9,15 +9,16 @@ target_include_directories(${TARGET}
 )
 
 target_link_libraries(${TARGET}
-    PUBLIC Jarvisto::Jarvisto
+    PUBLIC Jarvisto::Network
            Boost::headers
            Rintento::Coro
            Rintento::Wit
-    PRIVATE Rintento::Process
-            OpenSSL::SSL
+    PRIVATE OpenSSL::SSL
             OpenSSL::Crypto
             Boost::url
             Boost::json
+            Boost::process
+            Boost::filesystem
 )
 
 target_sources(${TARGET}
@@ -44,6 +45,8 @@ target_compile_features(${TARGET} PUBLIC cxx_std_23)
 
 target_compile_definitions(${TARGET}
     PRIVATE BOOST_ASIO_NO_DEPRECATED=1
+            BOOST_PROCESS_VERSION=2
+            #BOOST_PROCESS_USE_STD_FS=1
 )
 
 if(ENABLE_TESTS)

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <jarvisto/Asio.hpp>
+#include <jarvisto/network/Asio.hpp>
 
 #include <expected>
 #include <filesystem>

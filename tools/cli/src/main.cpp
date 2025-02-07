@@ -2,9 +2,9 @@
 
 #include "cli/Recognizer.hpp"
 
-#include <jarvisto/Logger.hpp>
-#include <jarvisto/LoggerInitializer.hpp>
-#include <jarvisto/Worker.hpp>
+#include <jarvisto/core/Logger.hpp>
+#include <jarvisto/core/LoggerInitializer.hpp>
+#include <jarvisto/network/Worker.hpp>
 
 #include <boost/program_options.hpp>
 
