@@ -16,6 +16,7 @@ target_link_libraries(${TARGET}
 
 target_sources(${TARGET}
     PRIVATE src/ConfigLoader.cpp
+            src/ServiceLogger.cpp
 )
 
 target_compile_features(${TARGET} PUBLIC cxx_std_23)

@@ -38,7 +38,7 @@ ConfigLoader::load(std::filesystem::path file)
 {
     try {
         libconfig::Config cfg;
-        cfg.readFile(file);
+        cfg.readFile(file.c_str());
         return doParse(cfg);
     } catch (const libconfig::FileIOException& e) {
         LOGE("Unable to read file: {}", e.what());

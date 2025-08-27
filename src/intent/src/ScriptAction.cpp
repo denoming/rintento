@@ -1,7 +1,10 @@
 #include "intent/ScriptAction.hpp"
 
 #include <boost/assert.hpp>
-#include <boost/process.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/optional.hpp>
+#include <boost/process/v2.hpp>
+
 #include <jarvisto/core/Logger.hpp>
 
 #include <chrono>
@@ -64,7 +67,7 @@ ScriptAction::execute(io::any_io_executor executor)
 void
 ScriptAction::run()
 {
-    _exec = fs::path{pr::environment::find_executable(boost::filesystem::path{_exec}).string()};
+    _exec = fs::path{pr::environment::find_executable(_exec).string()};
     if (_exec.empty()) {
         LOGE("Unable to locate program executable file");
         complete(std::make_error_code(std::errc::invalid_argument));
@@ -102,13 +105,13 @@ ScriptAction::run()
         }
     };
 
+    // ToDo: Add `process_environment(env)` as an argument when boost::process is updated
     pr::async_execute(
         pr::process{
             _executor,
-            boost::filesystem::path{_exec},
+            _exec,
             _args,
-            pr::process_environment{env},
-            pr::process_start_dir{boost::filesystem::path{_home}},
+            pr::process_start_dir{_home},
             pr::process_stdio{nullptr, nullptr, nullptr},
         },
         io::bind_cancellation_slot(_runningSig.slot(), std::move(onComplete)));

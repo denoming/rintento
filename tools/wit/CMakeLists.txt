@@ -12,8 +12,8 @@ target_link_libraries(${TARGET}
            Boost::headers
            Rintento::Coro
            Rintento::Common
-    PRIVATE OpenSSL::SSL
-            OpenSSL::Crypto
+    PRIVATE PkgConfig::OpenSSL
+            PkgConfig::OpenCrypto
             Boost::url
             Boost::json
 )

@@ -13,11 +13,10 @@ target_link_libraries(${TARGET}
            Boost::headers
            Rintento::Coro
            Rintento::Wit
-    PRIVATE OpenSSL::SSL
-            OpenSSL::Crypto
+    PRIVATE PkgConfig::OpenSSL
+            PkgConfig::OpenCrypto
             Boost::url
             Boost::json
-            Boost::process
             Boost::filesystem
 )
 
@@ -46,7 +45,7 @@ target_compile_features(${TARGET} PUBLIC cxx_std_23)
 target_compile_definitions(${TARGET}
     PRIVATE BOOST_ASIO_NO_DEPRECATED=1
             BOOST_PROCESS_VERSION=2
-            #BOOST_PROCESS_USE_STD_FS=1
+            BOOST_PROCESS_USE_STD_FS
 )
 
 if(ENABLE_TESTS)
