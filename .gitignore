@@ -35,5 +35,5 @@
 .venv
 
 # CMake
-build*
+/build-*
 CMakeUserPresets.json

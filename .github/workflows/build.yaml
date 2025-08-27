@@ -1,0 +1,90 @@
+name: Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+    branches: [ "main" ]
+
+env:
+  CMAKE_PRESET: release-docker
+
+jobs:
+  build-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Docker - Set platforms
+        id: vars
+        run: |
+          [ "${{ contains(github.event.head_commit.message, '[run arm64]') }}" == "true" ] && PLATFORMS=linux/amd64,linux/arm64 || PLATFORMS=linux/amd64
+          echo "platforms=$PLATFORMS" >> $GITHUB_OUTPUT
+      - name: Docker - Set up Docker
+        uses: docker/setup-docker-action@v4
+        with:
+          daemon-config: |
+            {
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+      - name: Docker - Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Docker - Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Docker - Build and push
+        uses: docker/build-push-action@v6
+        with:
+          platforms: ${{ steps.vars.outputs.platforms }}
+          push: true
+          tags: denoming/rintento:latest
+          build-args: >
+            BASE_CONTAINER=python:3.12-bookworm
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-project-amd64:
+    needs: [build-image]
+    runs-on: ubuntu-latest
+    container:
+      image: denoming/rintento:latest
+      options: --platform linux/amd64
+    steps:
+      - name: Project - Checkout
+        uses: actions/checkout@v4
+      - name: Project - Build
+        run: >
+          cmake --workflow --preset ${{ env.CMAKE_PRESET }}
+
+  build-project-arm64:
+    if: contains(github.event.head_commit.message, '[run arm64]')
+    needs: [build-image]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Env - Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Env - Set up Docker
+        uses: docker/setup-docker-action@v4
+        with:
+          daemon-config: |
+            {
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+      - name: Project - Checkout
+        uses: actions/checkout@v4
+      - name: Project - Build
+        run: >
+          docker run
+          --rm
+          --platform linux/arm64
+          --volume "$(pwd):$(pwd)"
+          --workdir "$(pwd)"
+          denoming/rintento:latest
+          cmake --workflow --preset ${{ env.CMAKE_PRESET }}
+
