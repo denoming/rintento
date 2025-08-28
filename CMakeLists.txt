@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.25)
 include(cmake/ProjectOptions.cmake)
 
 project(rintento
-    VERSION 1.0.1
+    VERSION 1.0.2
     DESCRIPTION "Rintento Speech Project"
 )
 
