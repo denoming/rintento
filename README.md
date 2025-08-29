@@ -1,5 +1,8 @@
 # Rintento
 
+[![CI](https://github.com/denoming/rintento/actions/workflows/build.yaml/badge.svg)](https://github.com/denoming/rintento/actions/workflows/build.yaml)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
 ## Introduction
 
 The service is intended for running an action upon client intent. Recognizing intent is made by configured backend.
