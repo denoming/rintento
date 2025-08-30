@@ -52,9 +52,9 @@ if(CLANG_FORMAT_BIN)
         ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 
-    if(CLANG_FORMAT_VERSION_OUTPUT MATCHES "^clang-format version .*")
+    if(CLANG_FORMAT_VERSION_OUTPUT MATCHES ".*clang-format version .*")
         string(REGEX
-               REPLACE "clang-format version ([.0-9]+).*" "\\1"
+               REPLACE ".*clang-format version ([.0-9]+).*" "\\1"
                        ClangFormat_VERSION "${CLANG_FORMAT_VERSION_OUTPUT}"
         )
     else()
