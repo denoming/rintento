@@ -21,7 +21,7 @@ apt update
 apt install -y build-essential sudo vim git cmake ninja-build gdb curl tar zip unzip \
                libgtest-dev libgmock-dev libspdlog-dev libhowardhinnant-date-dev nlohmann-json3-dev \
                libboost-json1.81-dev libboost-program-options1.81-dev libboost-filesystem1.81-dev libboost-url1.81-dev \
-               libssl-dev libmosquittopp-dev libsndfile1-dev libconfig++-dev libsigc++-3.0-dev
+               libssl-dev libmosquittopp-dev libsndfile1-dev libconfig++-dev libsigc++-3.0-dev clang-format-16
 
 # Install libjarvisto dependency
 wget -O /tmp/jarvisto1.deb $JARVISTO_URL1
