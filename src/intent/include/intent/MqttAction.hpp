@@ -16,8 +16,8 @@
 
 #include "intent/Action.hpp"
 
-#include <string>
 #include <optional>
+#include <string>
 
 namespace jar {
 

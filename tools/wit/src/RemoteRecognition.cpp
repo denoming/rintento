@@ -14,8 +14,8 @@
 
 #include "wit/RemoteRecognition.hpp"
 
-#include <jarvisto/network/Http.hpp>
 #include <jarvisto/core/Logger.hpp>
+#include <jarvisto/network/Http.hpp>
 
 namespace jar::wit {
 

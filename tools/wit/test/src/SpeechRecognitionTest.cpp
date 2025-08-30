@@ -93,7 +93,8 @@ TEST_F(WitSpeechRecognitionTest, RecognizeSpeech)
                 if (bytesRead > 0) {
                     co_await channel->send(io::const_buffer(buffer.data(), bytesRead));
                 }
-            } while (bytesRead == kBufferSize);
+            }
+            while (bytesRead == kBufferSize);
 
             co_await channel->send(io::error::eof);
             channel->close();

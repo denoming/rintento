@@ -14,8 +14,8 @@
 
 #include "common/ConfigLoader.hpp"
 
-#include <jarvisto/core/Logger.hpp>
 #include <jarvisto/core/Environment.hpp>
+#include <jarvisto/core/Logger.hpp>
 
 namespace fs = std::filesystem;
 
