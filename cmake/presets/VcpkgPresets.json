@@ -12,6 +12,9 @@
     {
       "name": "dc-vcpkg",
       "hidden": true,
+      "environment": {
+        "VCPKG_ROOT": "$env{HOME}/.local/opt/vcpkg"
+      },
       "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
     },
     {
